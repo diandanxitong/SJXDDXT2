@@ -1,0 +1,3231 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>扫码点单</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Archivo+Black&family=Ma+Shan+Zheng&family=Cormorant+Garamond:wght@500;600&family=Noto+Serif+TC:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+  @font-face{
+    font-family:'Zihun Suzhou';
+    src:url("../字体/字体.ttf") format('truetype');
+    font-weight:400;
+    font-display:swap;
+  }
+  :root{
+    --bg:#1A120F;
+    --bg-soft:#231713;
+    --card:#2C1D17;
+    --card-line:#4A3024;
+    --ember:#E3421F;
+    --ember-dark:#B22F14;
+    --cinnabar:#C81E2C;
+    --jade:#2F7A5E;
+    --jade-dark:#245F49;
+    --gold:#E8A23D;
+    --gold-line:rgba(232,162,61,.4);
+    --text:#F3ECE1;
+    --text-muted:#AFA396;
+    --radius:16px;
+    --brush:'Ma Shan Zheng',cursive;
+    --ease-silk:cubic-bezier(.22,1,.36,1);
+    --dur-fast:.18s;
+    --dur:.32s;
+    --gold-hi:#F6DFA0;
+    --gold-deep:#9C6A1E;
+    --shadow-card:0 1px 2px rgba(10,6,4,.35), 0 16px 32px -16px rgba(10,6,4,.7);
+    --shadow-card-active:0 2px 4px rgba(10,6,4,.4), 0 22px 40px -14px rgba(10,6,4,.75);
+    --shadow-pop:0 22px 54px rgba(0,0,0,.62);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{background:var(--bg);color:var(--text);}
+  body{
+    font-family:'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif;
+    min-height:100vh;
+  }
+  body.lang-zh-custom{
+    font-family:'Zihun Suzhou','Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif;
+  }
+  body.lang-zh-hant{
+    font-family:'Noto Serif TC','PingFang TC','Microsoft JhengHei',serif;
+  }
+  body{
+    display:flex;
+    justify-content:center;
+    background-color:var(--bg);
+    background-image:
+      radial-gradient(circle at 12% 8%, rgba(200,30,44,.10) 0, transparent 42%),
+      radial-gradient(circle at 88% 92%, rgba(232,162,61,.08) 0, transparent 46%),
+      repeating-linear-gradient(45deg, rgba(232,162,61,.025) 0 2px, transparent 2px 26px),
+      repeating-linear-gradient(-45deg, rgba(200,30,44,.025) 0 2px, transparent 2px 26px);
+    background-attachment:fixed;
+  }
+  #app{
+    width:100%;max-width:480px;min-height:100vh;position:relative;padding-bottom:110px;
+    box-shadow:0 0 0 1px rgba(232,162,61,.06);
+  }
+  #app::before{
+    content:"";position:absolute;top:0;left:0;right:0;height:4px;
+    background:linear-gradient(90deg,var(--cinnabar),var(--gold) 50%,var(--cinnabar));
+  }
+  .eyebrow{
+    font-size:12px;letter-spacing:.14em;color:var(--gold);
+    text-transform:uppercase;font-weight:700;
+  }
+  /* ---------- table picker (test mode) ---------- */
+  .pick-screen{padding:64px 24px;text-align:center;}
+  .pick-screen h1{
+    font-family:var(--brush);
+    font-weight:400;
+    font-size:44px;margin:10px 0 6px;color:var(--text);
+    text-shadow:0 0 18px rgba(200,30,44,.45);
+  }
+  .pick-hint{color:var(--text-muted);font-size:14px;margin-bottom:32px;}
+  .table-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+  .table-grid button{
+    aspect-ratio:1;border-radius:14px;border:1px solid var(--card-line);
+    background:var(--card);color:var(--text);font-size:20px;font-weight:700;
+    font-family:'Archivo Black',sans-serif;cursor:pointer;
+  }
+  .table-grid button:hover{border-color:var(--gold);color:var(--gold);}
+  .table-grid button:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+
+  /* ---------- header ---------- */
+  header.bar{
+    padding:26px 24px 22px;
+    position:relative;overflow:hidden;
+  }
+  header.bar::after{
+    content:"";position:absolute;top:-42px;right:-42px;width:120px;height:120px;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><g fill='none' stroke='%23E8A23D' stroke-width='2'><circle cx='50' cy='50' r='30'/><path d='M20 50 Q35 30 50 50 Q65 70 80 50'/><path d='M20 50 Q35 70 50 50 Q65 30 80 50'/></g></svg>");
+    background-size:contain;background-repeat:no-repeat;opacity:.1;pointer-events:none;
+  }
+  .bar-row{position:relative;z-index:1;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
+  .table-badge{display:flex;flex-direction:column;align-items:flex-start;gap:10px;position:relative;}
+  .table-badge-row{display:flex;align-items:baseline;gap:14px;}
+  .table-badge .num{
+    font-family:'Archivo Black',sans-serif;
+    font-size:36px;color:var(--ember);line-height:1;
+    text-shadow:0 0 22px rgba(227,66,31,.5);
+  }
+  .masthead-rule{
+    margin-top:2px;height:1px;position:relative;
+    background:linear-gradient(90deg, var(--gold-line), transparent 85%);
+  }
+  .change-table{
+    background:none;border:1px solid var(--card-line);color:var(--text-muted);
+    font-size:12px;padding:6px 10px;border-radius:20px;cursor:pointer;
+  }
+  .change-table:hover{color:var(--gold);border-color:var(--gold-line);}
+
+  /* ---------- panda nav ----------
+     On the menu screen it's docked inline in the header (.menu-panda-slot)
+     so it scrolls away with the page instead of floating forever; #panda-nav
+     is the fixed fallback root used on the other (less-visited) screens. */
+  #panda-nav{position:fixed;top:18px;right:18px;z-index:60;display:flex;flex-direction:column;align-items:flex-end;}
+  .menu-panda-slot{position:relative;z-index:56;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;}
+  .panda-overlay{position:fixed;inset:0;z-index:55;background:none;border:none;padding:0;margin:0;cursor:default;}
+  .my-order-btn{
+    position:relative;z-index:56;
+    display:flex;align-items:center;gap:7px;background:none;border:none;cursor:pointer;
+    padding:0;font-family:inherit;color:var(--text);
+  }
+  .panda-avatar{
+    width:38px;height:38px;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;line-height:1;
+  }
+  .panda-avatar img{display:block;width:100%;height:100%;object-fit:contain;}
+  .my-order-label{font-size:12.5px;font-weight:700;color:var(--text-muted);}
+  .my-order-btn:hover .my-order-label{color:var(--gold);}
+  .panda-dropdown{
+    position:relative;z-index:56;margin-top:8px;min-width:136px;
+    background:var(--card);border:1px solid var(--gold-line);border-radius:12px;
+    overflow:hidden;box-shadow:0 10px 26px rgba(0,0,0,.5);
+  }
+  .panda-dropdown button{
+    display:block;width:100%;text-align:left;background:none;border:none;color:var(--text);
+    font-size:13.5px;font-weight:700;padding:12px 16px;cursor:pointer;font-family:inherit;
+  }
+  .panda-dropdown button+button{border-top:1px solid var(--card-line);}
+  .panda-dropdown button:hover{background:var(--bg-soft);color:var(--cinnabar);}
+
+  /* ---------- menu ---------- */
+  .menu-title-row{
+    padding:20px 24px 8px;display:flex;align-items:center;justify-content:space-between;gap:10px;
+  }
+  .menu-title{
+    font-size:26px;font-weight:400;color:var(--gold);
+    font-family:var(--brush);letter-spacing:.04em;
+  }
+  .allergen-info-btn{
+    flex-shrink:0;background:none;border:1px solid var(--gold-line);color:var(--gold);
+    font-size:11px;font-weight:700;padding:6px 12px;border-radius:20px;cursor:pointer;
+    white-space:nowrap;font-family:inherit;
+  }
+  .allergen-info-btn:hover{background:rgba(232,162,61,.1);}
+  .allergen-modal{padding-bottom:8px;}
+  .allergen-grid{padding:4px 18px 16px;display:grid;grid-template-columns:1fr 1fr;gap:9px 14px;}
+  .allergen-grid-item{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text);}
+  /* ---------- chef's-special carousel (one photo, auto-advances every 3s) ---------- */
+  .chef-carousel{padding:22px 0 6px;}
+  .chef-slide{
+    position:relative;display:block;width:calc(100% - 48px);margin:0 24px;aspect-ratio:16/9;
+    border-radius:16px;overflow:hidden;border:1px solid var(--gold-line);
+    background:var(--card);padding:0;cursor:pointer;font-family:inherit;
+  }
+  .chef-slide-photo{
+    width:100%;height:100%;object-fit:cover;display:block;
+    transition:opacity .3s ease;
+  }
+  .chef-slide-tag{
+    position:absolute;left:14px;top:14px;z-index:2;
+    background:rgba(20,14,11,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
+    border:1px solid var(--gold-line);color:var(--gold-hi);
+    font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+    padding:5px 11px;border-radius:20px;
+  }
+  .chef-slide-caption{
+    position:absolute;left:0;right:0;bottom:0;padding:30px 16px 14px;
+    background:linear-gradient(0deg, rgba(0,0,0,.76) 0%, rgba(0,0,0,0) 100%);
+    color:#fff;font-size:15px;font-weight:800;letter-spacing:.01em;text-align:left;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    transition:opacity .3s ease;
+  }
+  .menu-body{display:flex;align-items:flex-start;}
+  .category-nav{
+    width:84px;flex-shrink:0;display:flex;flex-direction:column;
+    border-right:1px solid rgba(232,162,61,.14);
+    position:sticky;top:0;align-self:flex-start;
+    max-height:100vh;overflow-y:auto;
+    scrollbar-width:none;
+    padding:4px 0;
+  }
+  .category-nav::-webkit-scrollbar{display:none;}
+  .cat-btn{
+    position:relative;
+    background:none;border:none;color:var(--text-muted);
+    font-size:13px;font-weight:700;padding:12px 6px;cursor:pointer;text-align:center;
+    font-family:inherit;line-height:1.3;
+    margin:2px 8px;border-radius:11px;
+  }
+  .cat-btn.active{
+    color:var(--gold-hi);
+    background:linear-gradient(160deg, rgba(232,162,61,.16), rgba(232,162,61,.04));
+    box-shadow:inset 0 0 0 1px var(--gold-line);
+  }
+  .cat-btn:hover{color:var(--text);}
+  .dish-panel{flex:1;min-width:0;padding-right:16px;}
+  .dish-list{padding:0 0 0 16px;display:flex;flex-direction:column;gap:14px;}
+  .dish-group-header{
+    font-size:13px;font-weight:800;letter-spacing:.04em;color:var(--gold);
+    padding:2px 2px 0;margin-top:2px;
+  }
+  .dish-group-header:first-child{margin-top:0;}
+  .dish-card{
+    position:relative;overflow:hidden;
+    background:linear-gradient(160deg,var(--card) 0%,var(--bg-soft) 100%);
+    border:1px solid var(--card-line);border-top:1px solid var(--gold-line);
+    border-radius:var(--radius);
+  }
+  .dish-photo-wrap{
+    position:relative;width:100%;aspect-ratio:3/2;overflow:hidden;
+    background:linear-gradient(160deg,var(--bg-soft) 0%,var(--card) 100%);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .dish-photo-wrap::before{
+    content:"🍽";font-size:36px;opacity:.28;position:absolute;
+  }
+  .dish-photo{position:relative;z-index:1;width:100%;height:100%;object-fit:cover;display:block;}
+  .dish-body{padding:15px 18px 16px;}
+  .dish-title-row{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+  .dish-name{font-size:14.5px;font-weight:900;letter-spacing:.01em;line-height:1.32;color:var(--text);}
+  .dish-price{
+    flex-shrink:0;font-family:'Archivo Black',sans-serif;font-size:11.5px;color:var(--bg);
+    background:linear-gradient(160deg,var(--gold-hi),var(--gold) 62%,var(--gold-deep));
+    white-space:nowrap;padding:3px 9px 4px;border-radius:7px;margin-top:1px;
+  }
+  .dish-body .tag{font-size:12.5px;color:var(--text-muted);margin-top:6px;line-height:1.55;overflow-wrap:break-word;}
+  .dish-card.sold-out .dish-photo-wrap::after{
+    content:"";position:absolute;inset:0;z-index:2;
+    background:rgba(245,241,236,.6);
+  }
+  .dish-card.sold-out .dish-name{color:var(--text-muted);}
+  .sold-out-msg{font-size:13px;font-weight:800;color:var(--gold);text-align:center;margin-top:10px;}
+  .allergen-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px;}
+  .allergen-chip{
+    font-size:10px;font-weight:800;letter-spacing:.02em;color:var(--text-muted);
+    border:1px solid var(--card-line);border-radius:6px;padding:2px 6px;cursor:default;
+    background:none;font-family:inherit;
+  }
+  .allergen-row .allergen-chip{cursor:pointer;}
+  .allergen-row .allergen-chip:hover, .allergen-row .allergen-chip:active{
+    border-color:var(--gold);color:var(--gold);background:rgba(232,162,61,.1);
+  }
+  .allergen-tap-hint{font-size:10.5px;color:var(--text-muted);margin-top:5px;}
+  .allergen-popup{
+    position:fixed;z-index:75;transform:translate(-50%,-100%) translateY(-10px);
+    max-width:min(78vw,260px);
+    display:flex;align-items:flex-start;gap:8px;
+    background:var(--card);border:1px solid var(--gold-line);border-radius:10px;
+    padding:9px 12px;box-shadow:0 10px 26px rgba(0,0,0,.5);
+    font-size:12.5px;color:var(--text);line-height:1.4;
+  }
+  .allergen-popup-code{
+    flex-shrink:0;font-weight:900;color:var(--gold);font-size:11px;
+    background:rgba(232,162,61,.14);border-radius:6px;padding:1px 6px;
+  }
+  .size-row{display:flex;gap:6px;margin-top:12px;}
+  .size-pill{
+    flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+    padding:7px 4px;border-radius:10px;border:1px solid var(--card-line);
+    background:var(--bg-soft);color:var(--text-muted);font-size:11px;cursor:pointer;text-align:center;
+  }
+  .size-pill .size-label{font-weight:700;}
+  .size-pill .size-price{font-size:10.5px;opacity:.85;}
+  .size-pill.active{border-color:var(--cinnabar);color:var(--gold);background:rgba(200,30,44,.16);}
+  .option-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;}
+  .option-chip{
+    display:flex;align-items:center;gap:5px;
+    padding:6px 10px;border-radius:20px;border:1px solid var(--card-line);
+    background:var(--bg-soft);color:var(--text-muted);font-size:11.5px;cursor:pointer;font-family:inherit;
+  }
+  .option-chip .option-check{
+    width:13px;height:13px;flex-shrink:0;border-radius:4px;border:1px solid var(--card-line);
+    display:flex;align-items:center;justify-content:center;font-size:10px;line-height:1;color:var(--bg);
+  }
+  .option-chip.active{border-color:var(--jade);color:var(--text);background:rgba(47,122,94,.16);}
+  .option-chip.active .option-check{background:var(--jade);border-color:var(--jade);color:#fff;}
+  .dish-actions{display:flex;justify-content:flex-end;margin-top:14px;padding-top:12px;border-top:1px dashed var(--card-line);}
+  .stepper{
+    display:flex;align-items:center;gap:0;flex-shrink:0;
+    border:1px solid var(--card-line);border-radius:999px;padding:3px;
+    background:var(--bg-soft);
+  }
+  .stepper button{
+    width:30px;height:30px;border-radius:999px;border:none;
+    background:none;color:var(--text);font-size:17px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;line-height:1;
+  }
+  .stepper button:disabled{opacity:.35;cursor:not-allowed;}
+  .stepper button:not(:disabled):hover{color:var(--ember);}
+  .stepper button.stepper-add{
+    border-radius:50%;background:var(--jade);color:#fff;font-size:19px;
+  }
+  .stepper button.stepper-add:not(:disabled):hover{background:var(--jade-dark);color:#fff;}
+  .dish-card .stepper button.stepper-add{font-size:17px;}
+  .stepper .qty{
+    width:28px;text-align:center;font-weight:700;font-size:15px;
+    font-family:'Archivo Black',sans-serif;
+  }
+  .dish-card .stepper button{width:27px;height:27px;font-size:15px;}
+  .dish-card .stepper .qty{width:24px;font-size:13.5px;}
+  .spice-row{display:flex;gap:6px;margin-top:14px;padding-top:14px;border-top:1px dashed var(--card-line);}
+  .spice-pill{
+    flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+    padding:8px 4px;border-radius:10px;border:1px solid var(--card-line);
+    background:var(--bg-soft);color:var(--text-muted);font-size:11px;line-height:1.2;cursor:pointer;
+    text-align:center;
+  }
+  .spice-pill .flames{display:flex;gap:1px;flex-shrink:0;}
+  .spice-pill .spice-label{overflow-wrap:break-word;}
+  .spice-pill.active{border-color:var(--cinnabar);color:var(--gold);background:rgba(200,30,44,.16);}
+  .flame{fill:var(--card-line);}
+  .spice-pill.active .flame.lit{fill:var(--cinnabar);}
+  .spice-pill:not(.active) .flame.lit{fill:var(--text-muted);}
+
+  /* ---------- sticky bottom bar ---------- */
+  .bottom-bar{
+    position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;z-index:30;
+    background:linear-gradient(180deg,rgba(27,22,19,0) 0%,var(--bg) 30%);
+    padding:20px 16px 26px;
+  }
+  .bottom-bar-inner{
+    width:100%;max-width:448px;display:flex;align-items:stretch;gap:12px;
+  }
+  .submit-btn{
+    flex:1;background:linear-gradient(160deg,var(--ember) 0%,var(--ember-dark) 100%);
+    color:#fff;border:1px solid var(--gold-line);border-radius:14px;
+    padding:14px 10px;font-size:15px;font-weight:700;cursor:pointer;
+    font-family:'Noto Sans SC',sans-serif;
+    box-shadow:0 6px 18px rgba(178,47,20,.35);
+  }
+  .submit-btn:disabled{background:var(--card-line);color:var(--text-muted);cursor:not-allowed;box-shadow:none;border-color:var(--card-line);}
+  .submit-btn:not(:disabled):active{background:var(--ember-dark);}
+
+  /* one unified pill spanning most of the screen width, slim, split unevenly into two actions */
+  .action-pill-wrap{position:relative;width:84%;max-width:380px;min-width:280px;margin:0 auto;}
+  .action-pill{
+    position:relative;display:flex;align-items:stretch;
+    border-radius:999px;overflow:hidden;
+    background:var(--card);
+    border:1px solid var(--gold-line);
+    box-shadow:0 12px 28px rgba(0,0,0,.45);
+  }
+  .action-pill::before{
+    content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
+    background:linear-gradient(180deg, rgba(255,255,255,.1) 0%, rgba(255,255,255,0) 42%);
+  }
+  .action-pill::after{
+    content:"";position:absolute;z-index:2;top:20%;bottom:20%;left:40%;width:1px;
+    background:linear-gradient(180deg, transparent, rgba(232,162,61,.45), transparent);
+    pointer-events:none;
+  }
+  .cart-btn, .order-now-btn{
+    min-width:0;border:none;cursor:pointer;font-family:inherit;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+    padding:10px 8px;text-align:center;
+  }
+  .cart-btn{flex:2;background:none;color:var(--gold-hi);}
+  .order-now-btn{flex:3;background:linear-gradient(160deg,var(--ember) 0%,var(--ember-dark) 100%);color:#fff;}
+  .cart-btn .cart-btn-sub{color:var(--text-muted);}
+  .cart-btn:disabled{color:var(--text-muted);cursor:not-allowed;}
+  .order-now-btn:disabled{background:var(--card-line);color:var(--text-muted);cursor:not-allowed;box-shadow:none;}
+  .cart-btn:not(:disabled):active{background:rgba(232,162,61,.1);}
+  .order-now-btn:not(:disabled):active{background:var(--ember-dark);}
+  .cart-btn-title, .order-now-title{font-size:16px;font-weight:900;letter-spacing:.02em;overflow-wrap:break-word;}
+  .cart-btn-sub, .order-now-sub{font-size:10px;font-weight:500;opacity:.85;overflow-wrap:break-word;}
+
+  /* ---------- cart button: slim vertical tab docked to the right edge ---------- */
+  .cart-side-fab{
+    position:fixed;right:0;top:56%;transform:translateY(-50%);z-index:40;
+    width:32px;padding:12px 4px;font-family:inherit;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;
+    background:linear-gradient(160deg,var(--card) 0%,var(--bg-soft) 100%);
+    border:1px solid var(--gold-line);border-right:none;border-radius:14px 0 0 14px;
+    color:var(--text);cursor:pointer;
+    box-shadow:-4px 6px 16px rgba(0,0,0,.4);
+  }
+  .cart-side-fab:active:not(:disabled){transform:translateY(-50%) scale(.96);}
+  .cart-side-fab-icon-wrap{position:relative;flex-shrink:0;display:flex;}
+  .cart-side-fab-icon{width:20px;height:20px;object-fit:contain;pointer-events:none;display:block;}
+  .cart-side-fab-badge{
+    position:absolute;top:-7px;right:-9px;min-width:16px;height:16px;padding:0 3px;
+    border-radius:999px;background:var(--cinnabar);color:#fff;
+    font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;
+    border:1.5px solid var(--bg-soft);
+  }
+  .cart-side-fab-label{
+    font-family:inherit;font-size:10.5px;font-weight:700;letter-spacing:.03em;color:var(--gold-hi);
+    writing-mode:vertical-rl;text-orientation:upright;white-space:nowrap;line-height:1.2;
+    min-height:38px;
+  }
+  .cart-side-fab-label.latin{
+    text-orientation:sideways;letter-spacing:.02em;
+  }
+  .cart-side-overlay{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.45);border:none;padding:0;margin:0;cursor:default;}
+  .cart-side-panel{
+    position:fixed;right:14px;top:50%;transform:translateY(-50%);transform-origin:right center;
+    animation:cart-side-in .26s cubic-bezier(.2,1,.3,1);
+    z-index:71;width:min(84vw,340px);max-height:70vh;overflow-y:auto;
+    background:var(--card);border:1px solid var(--gold-line);border-radius:20px;
+    box-shadow:0 20px 50px rgba(0,0,0,.6);padding:18px 18px 14px;
+  }
+  @keyframes cart-side-in{
+    from{opacity:0;transform:translateY(-50%) translateX(24px) scale(.94);}
+    to{opacity:1;transform:translateY(-50%) translateX(0) scale(1);}
+  }
+  .cart-side-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+  .cart-side-title{font-family:var(--brush);font-weight:400;font-size:20px;color:var(--gold);}
+  .cart-side-close{
+    flex-shrink:0;background:none;border:1px solid var(--card-line);color:var(--text-muted);
+    width:26px;height:26px;border-radius:50%;font-size:12px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .cart-side-close:hover{color:var(--gold);border-color:var(--gold-line);}
+  .cart-side-panel .order-summary{margin:0;}
+
+  /* ---------- add-to-cart dumpling/hotpot animation ---------- */
+  .hotpot-toast{
+    position:fixed;left:50%;bottom:148px;z-index:80;pointer-events:none;
+    display:flex;flex-direction:column;align-items:center;gap:8px;
+    animation:hotpot-toast-life 1.7s ease forwards;
+  }
+  @keyframes hotpot-toast-life{
+    0%{opacity:0;transform:translateX(-50%) translateY(10px) scale(.9);}
+    10%{opacity:1;transform:translateX(-50%) translateY(0) scale(1);}
+    82%{opacity:1;transform:translateX(-50%) translateY(0) scale(1);}
+    100%{opacity:0;transform:translateX(-50%) translateY(-8px) scale(.96);}
+  }
+  .hotpot-pot{position:relative;width:112px;height:84px;}
+  .hotpot-pot svg{position:absolute;left:0;top:0;filter:drop-shadow(0 8px 14px rgba(0,0,0,.45));}
+  .hotpot-dumpling{
+    position:absolute;left:50%;top:50%;font-size:26px;line-height:1;
+    transform:translate(-50%,-120px) rotate(-25deg);
+    animation:dumpling-drop .55s cubic-bezier(.55,0,.85,.6) .3s forwards;
+  }
+  @keyframes dumpling-drop{
+    0%{transform:translate(-50%,-120px) rotate(-25deg);opacity:1;}
+    85%{transform:translate(-50%,-14px) rotate(20deg);opacity:1;}
+    100%{transform:translate(-50%,-10px) rotate(15deg) scale(.92);opacity:1;}
+  }
+  .hotpot-splash{
+    position:absolute;left:50%;top:36%;font-size:20px;
+    transform:translate(-50%,-50%) scale(.2);opacity:0;
+    animation:hotpot-splash .45s ease-out .82s forwards;
+  }
+  @keyframes hotpot-splash{
+    0%{transform:translate(-50%,-50%) scale(.2);opacity:0;}
+    35%{transform:translate(-50%,-50%) scale(1.3);opacity:1;}
+    100%{transform:translate(-50%,-60%) scale(1.6);opacity:0;}
+  }
+  .hotpot-steam{
+    position:absolute;color:rgba(255,255,255,.55);font-size:16px;font-weight:700;opacity:0;
+    animation:hotpot-steam-rise 1.6s ease-in-out infinite;
+  }
+  .hotpot-steam.s1{left:36%;top:4px;animation-delay:0s;}
+  .hotpot-steam.s2{left:58%;top:0;animation-delay:.5s;}
+  @keyframes hotpot-steam-rise{
+    0%{opacity:0;transform:translateY(4px) scale(.8);}
+    30%{opacity:.8;}
+    100%{opacity:0;transform:translateY(-22px) scale(1.15);}
+  }
+  .hotpot-caption{
+    background:var(--card);border:1px solid var(--card-line);color:var(--text);
+    font-size:12.5px;font-weight:700;padding:6px 14px;border-radius:20px;
+    opacity:0;animation:hotpot-caption-in .4s ease .9s forwards;
+  }
+  .call-toast-bell{font-size:48px;line-height:1;animation:call-bell-ring .5s ease-in-out .1s 3;}
+  @keyframes call-bell-ring{
+    0%,100%{transform:rotate(0);}
+    20%{transform:rotate(-18deg);}
+    40%{transform:rotate(14deg);}
+    60%{transform:rotate(-10deg);}
+    80%{transform:rotate(6deg);}
+  }
+  @keyframes hotpot-caption-in{
+    0%{opacity:0;transform:translateY(6px);}
+    100%{opacity:1;transform:translateY(0);}
+  }
+
+  /* ---------- confirm screen ---------- */
+  .confirm-screen{padding:56px 28px 40px;text-align:center;}
+  .stamp-ring{
+    width:132px;height:132px;margin:0 auto 26px;border-radius:50%;
+    border:3px solid var(--cinnabar);display:flex;align-items:center;justify-content:center;
+    transform:rotate(-8deg);position:relative;
+    box-shadow:0 0 0 1px rgba(200,30,44,.15), 0 0 26px rgba(200,30,44,.35);
+  }
+  .stamp-ring::before{
+    content:"";position:absolute;inset:8px;border:1px solid var(--cinnabar);border-radius:50%;
+  }
+  .stamp-ring span{
+    font-family:'Archivo Black',sans-serif;color:var(--cinnabar);font-size:19px;letter-spacing:.05em;
+  }
+  @media (prefers-reduced-motion:no-preference){
+    .stamp-ring{animation:pop .4s cubic-bezier(.2,1.4,.4,1);}
+  }
+  @keyframes pop{from{transform:rotate(-8deg) scale(.6);opacity:0}to{transform:rotate(-8deg) scale(1);opacity:1}}
+  .confirm-screen h2{
+    font-family:var(--brush);font-weight:400;font-size:34px;color:var(--gold);margin-bottom:22px;
+  }
+
+  /* ---------- chef-cooking animation (shown once staff confirms the order) ---------- */
+  .chef-cooking{
+    position:relative;width:170px;height:118px;margin:16px auto 4px;
+  }
+  .chef-emoji{font-size:44px;position:absolute;left:2px;bottom:4px;z-index:2;}
+  .chef-wok{font-size:54px;position:absolute;right:6px;bottom:-2px;z-index:1;}
+  .chef-ladle{
+    position:absolute;right:32px;bottom:50px;font-size:30px;
+    transform-origin:bottom center;transform:rotate(0deg);z-index:3;
+  }
+  .chef-ladle.g2{opacity:.4;z-index:2;filter:blur(.3px);}
+  .chef-ladle.g3{opacity:.18;z-index:1;filter:blur(.6px);}
+  @media (prefers-reduced-motion:no-preference){
+    .chef-ladle{animation:chef-swing .5s ease-in-out infinite;}
+    .chef-ladle.g2{animation-delay:-.09s;}
+    .chef-ladle.g3{animation-delay:-.18s;}
+  }
+  @keyframes chef-swing{
+    0%{transform:rotate(-38deg);}
+    50%{transform:rotate(30deg);}
+    100%{transform:rotate(-38deg);}
+  }
+  .kitchen-sent-title{
+    font-family:var(--brush);font-weight:400;font-size:26px;color:var(--gold);margin:4px 0 2px;
+  }
+  .order-summary{list-style:none;text-align:left;background:var(--card);border:1px solid var(--card-line);
+    border-top:1px solid var(--gold-line);
+    border-radius:var(--radius);padding:6px 18px;margin-bottom:20px;}
+  .order-summary li{padding:13px 0;font-size:15px;}
+  .order-summary li + li{border-top:1px dashed var(--card-line);}
+  .order-line-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;font-weight:700;}
+  .order-line-name{overflow-wrap:break-word;}
+  .order-line-price{color:var(--gold);font-size:13.5px;white-space:nowrap;flex-shrink:0;padding-top:1px;}
+  .order-line-bottom{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;}
+  .order-line-bottom .stepper{margin-left:auto;}
+  .order-total-line{
+    display:flex;justify-content:space-between;padding:14px 0 6px;
+    font-weight:900;font-size:15px;color:var(--gold);
+  }
+  .spice-tag{font-size:11.5px;color:var(--gold);border:1px solid var(--gold-line);border-radius:20px;padding:2px 9px;}
+  .hint{color:var(--text-muted);font-size:13.5px;margin-bottom:26px;}
+  .order-removed-notice{
+    color:var(--cinnabar);font-size:13.5px;font-weight:700;line-height:1.5;
+    background:rgba(200,30,44,.1);border:1px solid rgba(200,30,44,.35);
+    border-radius:var(--radius);padding:12px 16px;margin-bottom:22px;
+  }
+  .ghost-btn{
+    background:none;border:1px solid var(--card-line);color:var(--text-muted);
+    padding:11px 22px;border-radius:12px;font-size:14px;cursor:pointer;
+  }
+  .ghost-btn:hover{color:var(--gold);border-color:var(--gold-line);}
+
+  .back-row{text-align:left;padding:14px 24px 0;}
+  .back-btn{
+    background:none;border:none;color:var(--text-muted);
+    font-size:13px;font-weight:700;cursor:pointer;padding:6px 2px;
+    font-family:inherit;
+  }
+  .back-btn:hover{color:var(--gold);}
+
+  .my-order-card{
+    margin-top:32px;text-align:left;
+    background:var(--card);border:1px solid var(--card-line);border-top:1px solid var(--gold-line);
+    border-radius:var(--radius);
+    padding:18px 18px 16px;
+  }
+  .my-order-title{font-weight:900;font-size:15px;letter-spacing:.02em;color:var(--text);}
+  .my-order-card .order-summary{
+    margin:12px 0 0;background:none;border:none;padding:0;
+  }
+  .my-order-card .order-summary li{padding:11px 0;}
+  .my-order-card .order-summary li + li{border-top:1px dashed var(--card-line);}
+  .my-order-note{font-size:12.5px;color:var(--gold);margin:14px 0 0;}
+  .text-link-btn{
+    background:none;border:none;color:var(--cinnabar);font-weight:700;font-size:14px;
+    cursor:pointer;padding:14px 0 0;font-family:inherit;display:block;
+  }
+  .text-link-btn:hover{text-decoration:underline;}
+
+  /* ---------- welcome / language select ---------- */
+  .welcome-screen{
+    --wgold-hi:#F7E3A1;--wgold-mid:#D8AE55;--wgold-deep:#8A5A18;--wgold-line:rgba(216,174,85,.55);
+    --wcream:#F3E6C8;
+    position:relative;overflow:hidden;
+    min-height:100vh;width:100%;display:flex;align-items:center;justify-content:center;
+    padding:10vh 24px;
+    background:#7A1414 url("../image/background/back.webp") center/cover no-repeat;
+  }
+  .welcome-inner{
+    position:relative;z-index:1;
+    text-align:center;width:100%;max-width:380px;
+    display:flex;flex-direction:column;align-items:center;
+  }
+
+  .welcome-leaf{
+    width:150px;
+    opacity:0;transform:translateY(10px) scale(.86);
+    transition:opacity 1.1s cubic-bezier(.16,.9,.28,1), transform 1.1s cubic-bezier(.16,.9,.28,1);
+  }
+  .welcome-leaf.in{opacity:1;transform:translateY(0) scale(1);}
+  .welcome-leaf img{
+    display:block;width:100%;height:auto;
+  }
+
+  .welcome-word{
+    margin:24px 0 0;min-height:1.3em;
+    opacity:0;transform:translateY(10px);
+    transition:opacity .8s cubic-bezier(.2,.9,.3,1), transform .8s cubic-bezier(.2,.9,.3,1);
+    font-family:'Cormorant Garamond','Songti SC','Noto Serif SC',serif;
+    font-weight:500;font-size:clamp(26px,6.4vw,32px);
+    letter-spacing:.02em;color:var(--wcream);
+    text-shadow:0 1px 10px rgba(0,0,0,.3);
+  }
+  .welcome-word.in{opacity:1;transform:translateY(0);}
+  .welcome-word.swap{opacity:0;transform:translateY(6px);transition:opacity .38s ease, transform .38s ease;}
+
+  .welcome-divider{
+    width:0%;height:1px;margin:22px 0 20px;
+    background:linear-gradient(90deg, transparent, var(--wgold-line) 50%, transparent);
+    transition:width 1s ease;
+  }
+  .welcome-divider.in{width:64%;}
+
+  .welcome-wordmark{
+    opacity:0;transform:translateY(14px);
+    transition:opacity .8s cubic-bezier(.2,.9,.3,1), transform .8s cubic-bezier(.2,.9,.3,1);
+  }
+  .welcome-wordmark.in{opacity:1;transform:translateY(0);}
+  .welcome-wordmark h1{
+    margin:0;
+    font-family:'Cormorant Garamond',Georgia,'Songti SC',serif;
+    font-weight:500;font-size:clamp(30px,7.6vw,40px);
+    letter-spacing:.14em;text-transform:uppercase;line-height:1.15;
+    background:linear-gradient(180deg, var(--wgold-hi) 0%, var(--wgold-mid) 48%, var(--wgold-deep) 100%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+    color:var(--wgold-mid);
+    text-shadow:0 1px 0 rgba(0,0,0,.18);
+  }
+
+  .welcome-kicker{
+    margin-top:16px;
+    opacity:0;transform:translateY(8px);
+    transition:opacity .8s cubic-bezier(.2,.9,.3,1), transform .8s cubic-bezier(.2,.9,.3,1);
+    font-size:11px;letter-spacing:.34em;text-transform:uppercase;color:var(--wgold-line);
+  }
+  .welcome-kicker.in{opacity:1;transform:translateY(0);}
+
+  .welcome-btn-wrap{
+    margin-top:38px;
+    opacity:0;transform:translateY(10px);
+    transition:opacity .8s cubic-bezier(.2,.9,.3,1), transform .8s cubic-bezier(.2,.9,.3,1);
+    position:relative;
+  }
+  .welcome-btn-wrap.in{opacity:1;transform:translateY(0);}
+  .lang-select-btn{
+    position:relative;z-index:56;
+    display:inline-flex;align-items:center;gap:10px;
+    background:linear-gradient(160deg, rgba(216,174,85,.16), rgba(216,174,85,.05));
+    border:1px solid var(--wgold-line);color:var(--wcream);
+    padding:13px 26px;border-radius:999px;font-size:13px;font-weight:700;
+    letter-spacing:.05em;cursor:pointer;font-family:inherit;
+    box-shadow:0 8px 22px rgba(20,2,2,.4);
+    transition:border-color .2s ease, box-shadow .2s ease, transform .2s ease, background .2s ease;
+  }
+  .lang-select-btn:hover{border-color:var(--wgold-mid);box-shadow:0 10px 26px rgba(216,174,85,.22);transform:translateY(-1px);background:linear-gradient(160deg, rgba(216,174,85,.24), rgba(216,174,85,.08));}
+  .lang-select-icon{font-size:16px;}
+  .lang-panel{
+    position:relative;z-index:56;margin-top:14px;
+    background:linear-gradient(165deg, #7E1B15, #591009);
+    border:1px solid var(--wgold-line);
+    border-radius:16px;overflow:hidden;box-shadow:0 14px 34px rgba(0,0,0,.5);
+    text-align:left;
+  }
+  .lang-panel button{
+    display:flex;align-items:center;justify-content:space-between;width:100%;
+    background:none;border:none;color:var(--wcream);font-family:'PingFang SC','Microsoft YaHei','Noto Sans SC',sans-serif;
+    padding:14px 18px;font-size:14.5px;font-weight:700;cursor:pointer;
+  }
+  .lang-panel button+button{border-top:1px solid rgba(216,174,85,.2);}
+  .lang-panel button:hover{background:rgba(216,174,85,.12);}
+  .lang-panel .lang-check{color:var(--wgold-mid);opacity:0;font-size:13px;}
+  .lang-panel button.active .lang-check{opacity:1;}
+
+  @media (prefers-reduced-motion: reduce){
+    .welcome-leaf,.welcome-word,.welcome-divider,.welcome-wordmark,.welcome-kicker,.welcome-btn-wrap{
+      transition:none !important;
+    }
+  }
+
+  /* ---------- in-app language switcher ---------- */
+  .lang-switcher-overlay{position:fixed;inset:0;z-index:65;background:rgba(0,0,0,.5);border:none;padding:0;margin:0;cursor:default;}
+  .lang-switcher-panel{
+    position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
+    z-index:66;width:calc(100% - 56px);max-width:340px;
+    background:var(--card);border:1px solid var(--gold-line);border-radius:18px;
+    overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.6);
+  }
+  .lang-switcher-title{padding:16px 18px 8px;font-size:12px;letter-spacing:.1em;color:var(--gold);text-transform:uppercase;font-weight:700;}
+
+  /* ---------- order review page ---------- */
+  .review-field{margin-top:16px;}
+  .review-input{
+    width:100%;padding:15px 18px;border-radius:999px;
+    border:1px solid var(--card-line);background:var(--bg-soft);color:var(--text);
+    font-size:14px;font-family:inherit;
+  }
+  .review-input::placeholder{color:var(--text-muted);}
+  .review-input:focus{outline:none;border-color:var(--gold-line);}
+  .review-field-stepper{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:11px 10px 11px 18px;border-radius:999px;
+    border:1px solid var(--card-line);background:var(--bg-soft);
+  }
+  .review-field-label{font-size:14px;color:var(--text);font-weight:700;}
+
+  /* ---------- drink/dessert upsell modal ---------- */
+  .upsell-modal{
+    position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
+    z-index:70;width:calc(100% - 48px);max-width:380px;max-height:calc(100vh - 80px);overflow-y:auto;
+    background:var(--card);border:1px solid var(--gold-line);border-radius:20px;
+    box-shadow:0 20px 50px rgba(0,0,0,.6);padding:20px;
+  }
+  .upsell-title{
+    text-align:center;font-family:var(--brush);font-size:21px;font-weight:400;
+    color:var(--gold);margin-bottom:16px;
+  }
+  .upsell-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .upsell-tile{
+    display:flex;flex-direction:column;align-items:center;gap:4px;
+    border:1px solid var(--card-line);border-radius:14px;overflow:hidden;
+    background:var(--bg-soft);padding:0 0 10px;cursor:pointer;font-family:inherit;text-align:center;
+  }
+  .upsell-tile.selected{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold-line);}
+  .upsell-photo-wrap{position:relative;width:100%;aspect-ratio:1/1;}
+  .upsell-photo{width:100%;height:100%;object-fit:cover;display:block;}
+  .upsell-check{
+    position:absolute;top:7px;right:7px;width:22px;height:22px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;
+    background:rgba(20,14,11,.55);color:rgba(255,255,255,.35);
+    transition:background .15s ease, color .15s ease;
+  }
+  .upsell-tile.selected .upsell-check{background:var(--jade);color:#fff;}
+  .upsell-name{font-size:12px;font-weight:800;color:var(--text);margin-top:6px;padding:0 6px;line-height:1.3;}
+  .upsell-price{font-size:11px;color:var(--gold);}
+  .upsell-actions{display:flex;gap:10px;margin-top:18px;}
+  .upsell-add-btn, .upsell-later-btn{
+    flex:1;min-width:0;border-radius:12px;padding:12px 8px;font-size:13.5px;font-weight:700;
+    cursor:pointer;font-family:inherit;
+  }
+  .upsell-add-btn{background:linear-gradient(160deg,var(--jade) 0%,var(--jade-dark) 100%);color:#fff;border:1px solid var(--gold-line);}
+  .upsell-later-btn{background:none;border:1px solid var(--card-line);color:var(--text-muted);}
+  .upsell-later-btn:hover{color:var(--gold);border-color:var(--gold-line);}
+
+  /* ---------- premium motion & depth pass ---------- */
+  button, .dish-card, .cat-btn, .size-pill, .option-chip, .spice-pill,
+  .allergen-chip, .upsell-tile, .lang-panel button, .table-grid button,
+  .review-input, .review-field-stepper{
+    transition:
+      transform var(--dur-fast) var(--ease-silk),
+      background-color var(--dur) var(--ease-silk),
+      background var(--dur) var(--ease-silk),
+      border-color var(--dur) var(--ease-silk),
+      box-shadow var(--dur) var(--ease-silk),
+      color var(--dur) var(--ease-silk),
+      opacity var(--dur) var(--ease-silk);
+  }
+  button:active:not(:disabled){transform:scale(.96);}
+
+  .dish-card{
+    box-shadow:var(--shadow-card);
+    animation:dish-in .5s var(--ease-silk) both;
+  }
+  .dish-card:nth-of-type(1){animation-delay:0ms}
+  .dish-card:nth-of-type(2){animation-delay:35ms}
+  .dish-card:nth-of-type(3){animation-delay:70ms}
+  .dish-card:nth-of-type(4){animation-delay:105ms}
+  .dish-card:nth-of-type(5){animation-delay:140ms}
+  .dish-card:nth-of-type(6){animation-delay:175ms}
+  @keyframes dish-in{
+    from{opacity:0;transform:translateY(12px) scale(.985);}
+    to{opacity:1;transform:translateY(0) scale(1);}
+  }
+  .dish-card:active{transform:translateY(-1px);box-shadow:var(--shadow-card-active);}
+  @media (hover:hover){
+    .dish-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-card-active);}
+  }
+  .dish-photo{transition:transform .6s var(--ease-silk);}
+  .dish-card:active .dish-photo{transform:scale(1.05);}
+  @media (hover:hover){
+    .dish-card:hover .dish-photo{transform:scale(1.05);}
+  }
+
+  .chef-slide{box-shadow:var(--shadow-card);}
+  .chef-slide-photo{animation:hero-kenburns 10s ease-in-out infinite alternate;}
+  @keyframes hero-kenburns{from{transform:scale(1);}to{transform:scale(1.07);}}
+
+  .menu-title, .cart-side-title, .kitchen-sent-title, .confirm-screen h2, .upsell-title{
+    background:linear-gradient(180deg, var(--gold-hi) 0%, var(--gold) 55%, var(--gold-deep) 100%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+    color:var(--gold);
+  }
+
+  .cart-side-overlay, .lang-switcher-overlay{
+    backdrop-filter:blur(7px) saturate(140%);-webkit-backdrop-filter:blur(7px) saturate(140%);
+    animation:overlay-fade .22s ease;
+  }
+  .panda-overlay{animation:overlay-fade .22s ease;}
+  @keyframes overlay-fade{from{opacity:0}to{opacity:1}}
+
+  .lang-switcher-panel, .upsell-modal{
+    animation:modal-pop-in .3s var(--ease-silk) both;
+  }
+  @keyframes modal-pop-in{
+    from{opacity:0;transform:translate(-50%,-50%) scale(.94);}
+    to{opacity:1;transform:translate(-50%,-50%) scale(1);}
+  }
+
+  .review-input:focus{box-shadow:0 0 0 3px rgba(232,162,61,.16);}
+
+  .cart-side-fab-badge.bump{animation:badge-bump .38s var(--ease-silk);}
+  @keyframes badge-bump{
+    0%{transform:scale(1);}
+    35%{transform:scale(1.35);}
+    100%{transform:scale(1);}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .dish-card, .chef-slide-photo, .lang-switcher-panel, .upsell-modal,
+    .cart-side-overlay, .lang-switcher-overlay, .panda-overlay, .cart-side-fab-badge.bump{
+      animation:none !important;
+    }
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="panda-nav"></div>
+<div id="cart-popup-root"></div>
+<div id="allergen-popup-root"></div>
+
+<script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: 'AIzaSyBUFdqFcmnmGyuS1-ZWq7bEv0fUxTNNAFU',
+  authDomain: 'ddxt-bc353.firebaseapp.com',
+  projectId: 'ddxt-bc353',
+  storageBucket: 'ddxt-bc353.firebasestorage.app',
+  messagingSenderId: '624541373179',
+  appId: '1:624541373179:web:72e5f44322ad337406165e',
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+// 餐厅 wifi 经常是带代理/防火墙的访客网络，会挡掉 Firestore 默认用的 WebSocket 长连接，
+// 导致请求悬在那里既不成功也不报错。这里让 SDK 自动探测并回退到长轮询，兼容性更好。
+db.settings({ experimentalAutoDetectLongPolling: true });
+const ordersRef = db.collection('orders');
+const menuStatusRef = db.collection('menuStatus').doc('soldOut');
+
+// 给一个 promise 加超时：网络很差时 Firestore 请求可能一直挂着不 resolve 也不 reject，
+// 页面就会卡在"下单中"出不来。超时后统一当失败处理，好歹能提示顾客重试。
+function withTimeout(promise, ms){
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms)),
+  ]);
+}
+
+// 沽清菜品：员工在接单看板的"沽清菜品"页里勾选后写入这里，这边实时监听，
+// 让菜单里对应菜品立刻变灰、不可点选（无需刷新页面）
+let soldOutIds = new Set();
+function isSoldOut(id){ return soldOutIds.has(id); }
+menuStatusRef.onSnapshot(snap => {
+  const data = snap.data();
+  soldOutIds = new Set((data && data.ids) || []);
+  render();
+}, err => {});
+
+const LANG_ORDER = ['zh','zhHant','en','it','fr','es'];
+const LANG_META = {
+  zh:{ native:'中文', greeting:'欢迎光临' },
+  zhHant:{ native:'繁體中文', greeting:'歡迎光臨' },
+  en:{ native:'English', greeting:'Welcome' },
+  it:{ native:'Italiano', greeting:'Benvenuti' },
+  fr:{ native:'Français', greeting:'Bienvenue' },
+  es:{ native:'Español', greeting:'Bienvenido' },
+};
+
+const I18N = {
+  zh:{
+    appTitle:"扫码点单",
+    pickEyebrow:"选择桌号", pickTitle:"请选择桌号",
+    pickHint:"顾客请直接扫桌上二维码；员工帮客人点单，请选择对应桌号",
+    tablePrefix:"桌 ", tableEyebrow:"桌号", changeTable:"切换桌号",
+    menuTitle:"菜单", myPot:"我的", cart:"购物车", orderedItems:"已点菜品",
+    addToCart:"加入购物车", addToCartSub:"小纠结？先丢进购物车！",
+    callWaiter:"呼叫服务员", callWaiterSub:"有需要？点一下就好", calling:"呼叫中…", waiterCalled:"已呼叫服务员！",
+    orderNow:"立即下单", orderNowSub:"不再犹豫！", ordering:"下单中…",
+    addedToCart:"已加入购物车！", back:"返回",
+    addOnSuccess:"加单成功", orderPlaced:"已下单", waitConfirm:"请稍候，服务员马上确认～",
+    kitchenSentTitle:"订单已送进厨房", kitchenSentHint:"大厨已经开炒，请耐心等候上菜～",
+    orderRemovedNotice:"这笔订单已被工作人员删除，如有疑问请联系服务员～",
+    continueOrdering:"继续点单", myOrder:"我的订单", removeHint:"如需退菜，请联系服务员哦～",
+    loading:"加载中…", noOrderYet:"还没有点菜，去菜单看看吧～", backToMenu:"返回菜单",
+    emptyCart:"购物车是空的，去菜单选几道菜吧～",
+    orderFailed:"下单失败，请重试一次，或直接告诉服务员～",
+    languageLabel:"语言", closeMenu:"关闭菜单", decreaseQty:"减少数量", increaseQty:"增加数量",
+    allergensBtn:"过敏原", allergensModalTitle:"过敏原说明", allergenTapHint:"点击查看过敏原", totalLabel:"合计", perPersonSuffix:" /人",
+    orderReviewTitle:"确认订单", nicknamePlaceholder:"请输入你的昵称，例如：JOHN", partySizeLabel:"请选择您的就餐人数",
+    upsellTitle:"忘了点什么？", addToOrderBtn:"加入到当前订单", laterBtn:"以后再说",
+    categories:{ all:"全部", appetizers:"前菜", dumplings:"饺子", soup:"汤", chefSpecial:"厨师推荐", vegetables:"蔬菜", riceNoodles:"饭/面类", dessert:"甜品", drinks:"酒水" },
+    spice:["微辣","中辣","特辣"],
+    soldOutMsg:"暂时售罄，抱歉！",
+  },
+  zhHant:{
+    appTitle:'掃碼點單',
+    pickEyebrow:'選擇桌號', pickTitle:'請選擇桌號',
+    pickHint:'顧客請直接掃桌上二維碼；員工幫客人點單，請選擇對應桌號',
+    tablePrefix:'桌 ', tableEyebrow:'桌號', changeTable:'切換桌號',
+    menuTitle:'菜單', myPot:'我的', cart:'購物車', orderedItems:'已點菜品',
+    addToCart:'加入購物車', addToCartSub:'小糾結？先丟進購物車！',
+    callWaiter:'呼叫服務員', callWaiterSub:'有需要？點一下就好', calling:'呼叫中…', waiterCalled:'已呼叫服務員！',
+    orderNow:'立即下單', orderNowSub:'不再猶豫！', ordering:'下單中…',
+    addedToCart:'已加入購物車！', back:'返回',
+    addOnSuccess:'加單成功', orderPlaced:'已下單', waitConfirm:'請稍候，服務員馬上確認～',
+    kitchenSentTitle:'訂單已送進廚房', kitchenSentHint:'大廚已經開炒，請耐心等候上菜～',
+    orderRemovedNotice:'這筆訂單已被工作人員刪除，如有疑問請聯繫服務員～',
+    continueOrdering:'繼續點單', myOrder:'我的訂單', removeHint:'如需退菜，請聯繫服務員哦～',
+    loading:'加載中…', noOrderYet:'還沒有點菜，去菜單看看吧～', backToMenu:'返回菜單',
+    emptyCart:'購物車是空的，去菜單選幾道菜吧～',
+    orderFailed:'下單失敗，請重試一次，或直接告訴服務員～',
+    languageLabel:'語言', closeMenu:'關閉菜單', decreaseQty:'減少數量', increaseQty:'增加數量',
+    allergensBtn:'過敏原', allergensModalTitle:'過敏原說明', allergenTapHint:'點擊查看過敏原', totalLabel:'合計', perPersonSuffix:' /人',
+    orderReviewTitle:'確認訂單', nicknamePlaceholder:'請輸入你的暱稱，例如：JOHN', partySizeLabel:'請選擇您的就餐人數',
+    upsellTitle:'忘了點什麼？', addToOrderBtn:'加入到當前訂單', laterBtn:'以後再說',
+    categories:{ all:'全部', appetizers:'前菜', dumplings:'餃子', soup:'湯', chefSpecial:'廚師推薦', vegetables:'蔬菜', riceNoodles:'飯/麵類', dessert:'甜品', drinks:'酒水' },
+    spice:['微辣','中辣','特辣'],
+    soldOutMsg:'暫時售罄，抱歉！',
+  },
+  en:{
+    appTitle:"Scan to Order",
+    pickEyebrow:"Select Table", pickTitle:"Choose Your Table",
+    pickHint:"Guests: please scan the QR code on your table. Staff: select the matching table to order on a guest's behalf.",
+    tablePrefix:"Table ", tableEyebrow:"Table", changeTable:"Change Table",
+    menuTitle:"Menu", myPot:"Mine", cart:"Cart", orderedItems:"Items Ordered",
+    addToCart:"Add to Cart", addToCartSub:"Still deciding? Add it to your cart!",
+    callWaiter:"Call Waiter", callWaiterSub:"Need something? Just tap!", calling:"Calling…", waiterCalled:"Waiter called!",
+    orderNow:"Order Now", orderNowSub:"No more hesitating!", ordering:"Ordering…",
+    addedToCart:"Added to cart!", back:"Back",
+    addOnSuccess:"Add-on Placed", orderPlaced:"Order Placed", waitConfirm:"Please wait, staff will confirm shortly~",
+    kitchenSentTitle:"Sent to the Kitchen", kitchenSentHint:"The chef is already cooking — thanks for your patience~",
+    orderRemovedNotice:"This order was removed by staff. Please ask your waiter if you have questions~",
+    continueOrdering:"Continue Ordering", myOrder:"My Order", removeHint:"To remove an item, please contact staff~",
+    loading:"Loading…", noOrderYet:"No items yet — check out the menu~", backToMenu:"Back to Menu",
+    emptyCart:"Your cart is empty — pick some dishes from the menu~",
+    orderFailed:"Order failed, please try again or let staff know~",
+    languageLabel:"Language", closeMenu:"Close menu", decreaseQty:"Decrease quantity", increaseQty:"Increase quantity",
+    allergensBtn:"Allergens", allergensModalTitle:"Allergen Guide", allergenTapHint:"Tap to view allergen", totalLabel:"Total", perPersonSuffix:" / person",
+    orderReviewTitle:"Confirm Order", nicknamePlaceholder:"Enter your nickname, e.g. JOHN", partySizeLabel:"Select your party size",
+    upsellTitle:"Forgot Something?", addToOrderBtn:"Add to Order", laterBtn:"Later",
+    categories:{ all:"All", appetizers:"Appetizers", dumplings:"Dumplings", soup:"Soup", chefSpecial:"Chef's Specials", vegetables:"Vegetables", riceNoodles:"Rice & Noodles", dessert:"Dessert", drinks:"Drinks" },
+    spice:["Mild","Medium","Extra Spicy"],
+    soldOutMsg:"Sorry, temporarily sold out~",
+  },
+  it:{
+    appTitle:"Scansiona per Ordinare",
+    pickEyebrow:"Seleziona Tavolo", pickTitle:"Scegli il Tuo Tavolo",
+    pickHint:"Clienti: scansionate il codice QR sul tavolo. Staff: selezionate il tavolo corrispondente per ordinare per un cliente.",
+    tablePrefix:"Tavolo ", tableEyebrow:"Tavolo", changeTable:"Cambia Tavolo",
+    menuTitle:"Menu", myPot:"Il Mio", cart:"Carrello", orderedItems:"Piatti Ordinati",
+    addToCart:"Aggiungi al Carrello", addToCartSub:"Ancora indeciso? Mettilo nel carrello!",
+    callWaiter:"Chiama il Cameriere", callWaiterSub:"Hai bisogno di qualcosa? Basta un tocco!", calling:"Chiamata in corso…", waiterCalled:"Cameriere chiamato!",
+    orderNow:"Ordina Ora", orderNowSub:"Non esitare più!", ordering:"Ordinazione in corso…",
+    addedToCart:"Aggiunto al carrello!", back:"Indietro",
+    addOnSuccess:"Aggiunta Effettuata", orderPlaced:"Ordine Effettuato", waitConfirm:"Attendere, lo staff confermerà a breve~",
+    kitchenSentTitle:"Inviato in Cucina", kitchenSentHint:"Lo chef sta già cucinando, grazie per la pazienza~",
+    orderRemovedNotice:"Questo ordine è stato rimosso dallo staff. Per domande, contatta il cameriere~",
+    continueOrdering:"Continua a Ordinare", myOrder:"Il Mio Ordine", removeHint:"Per rimuovere un piatto, contattare lo staff~",
+    loading:"Caricamento…", noOrderYet:"Nessun piatto ancora — dai un'occhiata al menu~", backToMenu:"Torna al Menu",
+    emptyCart:"Il carrello è vuoto — scegli qualche piatto dal menu~",
+    orderFailed:"Ordine non riuscito, riprova o avvisa lo staff~",
+    languageLabel:"Lingua", closeMenu:"Chiudi menu", decreaseQty:"Diminuisci quantità", increaseQty:"Aumenta quantità",
+    allergensBtn:"Allergeni", allergensModalTitle:"Guida agli Allergeni", allergenTapHint:"Tocca per vedere l'allergene", totalLabel:"Totale", perPersonSuffix:" / persona",
+    orderReviewTitle:"Conferma Ordine", nicknamePlaceholder:"Inserisci il tuo nome, es. JOHN", partySizeLabel:"Seleziona il numero di persone",
+    upsellTitle:"Hai Dimenticato Qualcosa?", addToOrderBtn:"Aggiungi all'Ordine", laterBtn:"Più Tardi",
+    categories:{ all:"Tutti", appetizers:"Antipasti", dumplings:"Ravioli", soup:"Zuppe", chefSpecial:"Specialità dello Chef", vegetables:"Verdure", riceNoodles:"Riso e Noodles", dessert:"Dessert", drinks:"Bevande" },
+    spice:["Poco Piccante","Piccante","Molto Piccante"],
+    soldOutMsg:"Siamo spiacenti, momentaneamente esaurito~",
+  },
+  fr:{
+    appTitle:"Scanner pour Commander",
+    pickEyebrow:"Choisir une Table", pickTitle:"Choisissez Votre Table",
+    pickHint:"Clients : veuillez scanner le code QR sur votre table. Personnel : sélectionnez la table correspondante pour commander pour un client.",
+    tablePrefix:"Table ", tableEyebrow:"Table", changeTable:"Changer de Table",
+    menuTitle:"Menu", myPot:"Le Mien", cart:"Panier", orderedItems:"Plats Commandés",
+    addToCart:"Ajouter au Panier", addToCartSub:"Pas encore décidé ? Mettez-le dans le panier !",
+    callWaiter:"Appeler le Serveur", callWaiterSub:"Besoin de quelque chose ? Il suffit d'appuyer !", calling:"Appel en cours…", waiterCalled:"Serveur appelé !",
+    orderNow:"Commander", orderNowSub:"N'hésitez plus !", ordering:"Commande en cours…",
+    addedToCart:"Ajouté au panier !", back:"Retour",
+    addOnSuccess:"Ajout Effectué", orderPlaced:"Commande Passée", waitConfirm:"Veuillez patienter, le personnel confirmera bientôt~",
+    kitchenSentTitle:"Envoyée en Cuisine", kitchenSentHint:"Le chef cuisine déjà, merci de patienter~",
+    orderRemovedNotice:"Cette commande a été supprimée par le personnel. Contactez votre serveur pour toute question~",
+    continueOrdering:"Continuer à Commander", myOrder:"Ma Commande", removeHint:"Pour retirer un plat, veuillez contacter le personnel~",
+    loading:"Chargement…", noOrderYet:"Aucun plat pour l'instant — jetez un œil au menu~", backToMenu:"Retour au Menu",
+    emptyCart:"Votre panier est vide — choisissez des plats dans le menu~",
+    orderFailed:"Échec de la commande, veuillez réessayer ou prévenir le personnel~",
+    languageLabel:"Langue", closeMenu:"Fermer le menu", decreaseQty:"Diminuer la quantité", increaseQty:"Augmenter la quantité",
+    allergensBtn:"Allergènes", allergensModalTitle:"Guide des Allergènes", allergenTapHint:"Touchez pour voir l'allergène", totalLabel:"Total", perPersonSuffix:" / personne",
+    orderReviewTitle:"Confirmer la Commande", nicknamePlaceholder:"Entrez votre surnom, ex. JOHN", partySizeLabel:"Sélectionnez le nombre de convives",
+    upsellTitle:"Vous Avez Oublié Quelque Chose ?", addToOrderBtn:"Ajouter à la Commande", laterBtn:"Plus Tard",
+    categories:{ all:"Tous", appetizers:"Entrées", dumplings:"Raviolis", soup:"Soupes", chefSpecial:"Spécialités du Chef", vegetables:"Légumes", riceNoodles:"Riz et Nouilles", dessert:"Dessert", drinks:"Boissons" },
+    spice:["Peu Épicé","Épicé","Très Épicé"],
+    soldOutMsg:"Désolé, temporairement épuisé~",
+  },
+  es:{
+    appTitle:"Escanea para Pedir",
+    pickEyebrow:"Elegir Mesa", pickTitle:"Elige Tu Mesa",
+    pickHint:"Clientes: por favor escaneen el código QR de su mesa. Personal: seleccionen la mesa correspondiente para pedir en nombre de un cliente.",
+    tablePrefix:"Mesa ", tableEyebrow:"Mesa", changeTable:"Cambiar Mesa",
+    menuTitle:"Menú", myPot:"Mío", cart:"Carrito", orderedItems:"Platos Pedidos",
+    addToCart:"Añadir al Carrito", addToCartSub:"¿Aún indeciso? ¡Añádelo al carrito!",
+    callWaiter:"Llamar al Camarero", callWaiterSub:"¿Necesitas algo? ¡Solo toca!", calling:"Llamando…", waiterCalled:"¡Camarero llamado!",
+    orderNow:"Pedir Ahora", orderNowSub:"¡No lo dudes más!", ordering:"Pidiendo…",
+    addedToCart:"¡Añadido al carrito!", back:"Atrás",
+    addOnSuccess:"Pedido Adicional Realizado", orderPlaced:"Pedido Realizado", waitConfirm:"Espere, el personal confirmará en breve~",
+    kitchenSentTitle:"Enviado a la Cocina", kitchenSentHint:"El chef ya está cocinando, gracias por tu paciencia~",
+    orderRemovedNotice:"Este pedido fue eliminado por el personal. Si tienes dudas, consulta al camarero~",
+    continueOrdering:"Seguir Pidiendo", myOrder:"Mi Pedido", removeHint:"Para quitar un plato, por favor contacte al personal~",
+    loading:"Cargando…", noOrderYet:"Aún no hay platos — eche un vistazo al menú~", backToMenu:"Volver al Menú",
+    emptyCart:"Tu carrito está vacío — elige algunos platos del menú~",
+    orderFailed:"Error al pedir, inténtalo de nuevo o avisa al personal~",
+    languageLabel:"Idioma", closeMenu:"Cerrar menú", decreaseQty:"Disminuir cantidad", increaseQty:"Aumentar cantidad",
+    allergensBtn:"Alérgenos", allergensModalTitle:"Guía de Alérgenos", allergenTapHint:"Toca para ver el alérgeno", totalLabel:"Total", perPersonSuffix:" / persona",
+    orderReviewTitle:"Confirmar Pedido", nicknamePlaceholder:"Introduce tu apodo, ej. JOHN", partySizeLabel:"Selecciona tu número de comensales",
+    upsellTitle:"¿Olvidaste Algo?", addToOrderBtn:"Añadir al Pedido", laterBtn:"Más Tarde",
+    categories:{ all:"Todos", appetizers:"Entrantes", dumplings:"Empanadillas", soup:"Sopas", chefSpecial:"Especialidades del Chef", vegetables:"Verduras", riceNoodles:"Arroz y Fideos", dessert:"Postres", drinks:"Bebidas" },
+    spice:["Poco Picante","Picante","Muy Picante"],
+    soldOutMsg:"Lo sentimos, agotado temporalmente~",
+  },
+};
+
+const ALLERGEN_CODE_ORDER = ['GW','GB','C','E','S','N','CE','M','F','P','MO','MU','L','SU','SE'];
+const ALLERGEN_NAMES = {
+  GW:{zh:'麸质(小麦)',zhHant:'麩質(小麥)',en:'Wheat Gluten',it:'Glutine di Grano',fr:'Gluten de Blé',es:'Gluten de Trigo'},
+  GB:{zh:'麸质(大麦)',zhHant:'麩質(大麥)',en:'Barley Gluten',it:"Glutine d'Orzo",fr:"Gluten d'Orge",es:'Gluten de Cebada'},
+  C:{zh:'甲壳类',zhHant:'甲殼類',en:'Crustaceans',it:'Crostacei',fr:'Crustacés',es:'Crustáceos'},
+  E:{zh:'蛋',zhHant:'蛋',en:'Egg',it:'Uova',fr:'Œufs',es:'Huevo'},
+  S:{zh:'大豆',zhHant:'大豆',en:'Soybeans',it:'Soia',fr:'Soja',es:'Soja'},
+  N:{zh:'腰果',zhHant:'腰果',en:'Cashew Nuts',it:'Anacardi',fr:'Noix de Cajou',es:'Anacardos'},
+  CE:{zh:'芹菜',zhHant:'芹菜',en:'Celery',it:'Sedano',fr:'Céleri',es:'Apio'},
+  M:{zh:'奶',zhHant:'奶',en:'Milk',it:'Latte',fr:'Lait',es:'Leche'},
+  F:{zh:'鱼',zhHant:'魚',en:'Fish',it:'Pesce',fr:'Poisson',es:'Pescado'},
+  P:{zh:'花生',zhHant:'花生',en:'Peanuts',it:'Arachidi',fr:'Arachides',es:'Cacahuetes'},
+  MO:{zh:'软体动物',zhHant:'軟體動物',en:'Molluscs',it:'Molluschi',fr:'Mollusques',es:'Moluscos'},
+  MU:{zh:'芥末',zhHant:'芥末',en:'Mustard',it:'Senape',fr:'Moutarde',es:'Mostaza'},
+  L:{zh:'羽扇豆',zhHant:'羽扇豆',en:'Lupin',it:'Lupini',fr:'Lupin',es:'Altramuces'},
+  SU:{zh:'亚硫酸盐',zhHant:'亞硫酸鹽',en:'Sulphites',it:'Solfiti',fr:'Sulfites',es:'Sulfitos'},
+  SE:{zh:'芝麻',zhHant:'芝麻',en:'Sesame Seeds',it:'Semi di Sesamo',fr:'Graines de Sésame',es:'Semillas de Sésamo'},
+};
+const SIZE_LABELS = {
+  half:{zh:'半只',zhHant:'半隻',en:'Half',it:'Mezza',fr:'Demi',es:'Media'},
+  whole:{zh:'整只',zhHant:'整隻',en:'Whole',it:'Intera',fr:'Entier',es:'Entera'},
+  large:{zh:'大份',zhHant:'大份',en:'Large',it:'Grande',fr:'Grande',es:'Grande'},
+  small:{zh:'小份',zhHant:'小份',en:'Small',it:'Piccola',fr:'Petite',es:'Pequeña'},
+  glass:{zh:'杯',zhHant:'杯',en:'Glass',it:'Calice',fr:'Verre',es:'Copa'},
+  bottle:{zh:'瓶',zhHant:'瓶',en:'Bottle',it:'Bottiglia',fr:'Bouteille',es:'Botella'},
+};
+// 饺子/烧卖不提供忌口选项，只需要选蒸/煎的做法
+const COOK_METHOD_LABELS = {
+  steamed:{zh:'蒸',zhHant:'蒸',en:'Steamed',it:'Al vapore',fr:'Vapeur',es:'Al vapor'},
+  panFried:{zh:'煎',zhHant:'煎',en:'Pan-Fried',it:'In padella',fr:'Poêlé',es:'A la plancha'},
+};
+const SUBGROUP_LABELS = {
+  whiteWine:{zh:'白葡萄酒',zhHant:'白葡萄酒',en:'White Wine',it:'Vino Bianco',fr:'Vin Blanc',es:'Vino Blanco'},
+  redWine:{zh:'红葡萄酒',zhHant:'紅葡萄酒',en:'Red Wine',it:'Vino Rosso',fr:'Vin Rouge',es:'Vino Tinto'},
+  rose:{zh:'桃红',zhHant:'桃紅',en:'Rosé',it:'Rosé',fr:'Rosé',es:'Rosado'},
+  sparkling:{zh:'起泡酒',zhHant:'起泡酒',en:'Sparkling',it:'Spumante',fr:'Pétillant',es:'Espumoso'},
+  softDrink:{zh:'软饮 + 水',zhHant:'軟飲 + 水',en:'Soft Drinks & Water',it:'Bibite e Acqua',fr:'Boissons et Eau',es:'Refrescos y Agua'},
+  juice:{zh:'果汁',zhHant:'果汁',en:'Juices',it:'Succhi di Frutta',fr:'Jus de Fruits',es:'Zumos'},
+  beer:{zh:'啤酒',zhHant:'啤酒',en:'Beer',it:'Birra',fr:'Bière',es:'Cerveza'},
+};
+function tSubGroup(key){ return (SUBGROUP_LABELS[key] || {})[state.lang] || SUBGROUP_LABELS[key].zh; }
+const OPTION_LABELS = {
+  scallion:{zh:'不要葱',zhHant:'不要蔥',en:'No Spring Onion',it:'Senza Cipollotto',fr:'Sans Oignon Vert',es:'Sin Cebolleta'},
+  onion:{zh:'不要洋葱',zhHant:'不要洋蔥',en:'No Onion',it:'Senza Cipolla',fr:'Sans Oignon',es:'Sin Cebolla'},
+  ginger:{zh:'不要姜',zhHant:'不要姜',en:'No Ginger',it:'Senza Zenzero',fr:'Sans Gingembre',es:'Sin Jengibre'},
+  cilantro:{zh:'不要香菜',zhHant:'不要香菜',en:'No Coriander',it:'Senza Coriandolo',fr:'Sans Coriandre',es:'Sin Cilantro'},
+  meat:{zh:'不要肉',zhHant:'不要肉',en:'No Meat',it:'Senza Carne',fr:'Sans Viande',es:'Sin Carne'},
+};
+
+function t(key){
+  const dict = I18N[state.lang] || I18N.zh;
+  return dict[key] !== undefined ? dict[key] : I18N.zh[key];
+}
+function tCat(catId){ return (I18N[state.lang] || I18N.zh).categories[catId]; }
+function tSpice(idx){ return (I18N[state.lang] || I18N.zh).spice[idx]; }
+function tDish(id, field){ return (I18N[state.lang] || I18N.zh).dishes[id][field]; }
+function tAllergen(code){ return (ALLERGEN_NAMES[code] || {})[state.lang] || ALLERGEN_NAMES[code].zh; }
+function tSize(key){ return (SIZE_LABELS[key] || {})[state.lang] || SIZE_LABELS[key].zh; }
+function tCookMethod(key){ return (COOK_METHOD_LABELS[key] || {})[state.lang] || COOK_METHOD_LABELS[key].zh; }
+function tOption(key){ return (OPTION_LABELS[key] || {})[state.lang] || OPTION_LABELS[key].zh; }
+function displayDishName(zhName){
+  const id = ZH_NAME_TO_ID[zhName];
+  return id ? tDish(id, 'name') : zhName;
+}
+function zhDishName(id){ return I18N.zh.dishes[id].name; }
+function displaySpice(zhSpice){
+  const idx = SPICE_LEVELS.indexOf(zhSpice);
+  return idx >= 0 ? tSpice(idx) : zhSpice;
+}
+function formatPrice(v){ return '€' + v.toFixed(2); }
+function dishUnitPrice(d, item){
+  if(d.sizes){
+    const key = (item && item.size) || d.sizes[0].key;
+    const opt = d.sizes.find(s => s.key === key);
+    return opt ? opt.price : d.sizes[0].price;
+  }
+  return d.price;
+}
+function dishPriceLabel(d, item){
+  let label = formatPrice(dishUnitPrice(d, item));
+  if(d.unit === 'person') label += t('perPersonSuffix');
+  return label;
+}
+
+const CATEGORIES = ['all','appetizers','dumplings','soup','chefSpecial','vegetables','riceNoodles','dessert','drinks'];
+const SPICE_LEVELS = ['微辣','中辣','特辣'];
+
+// Each entry: id, category, price (or sizes[]+unit), allergens[], img, and i18n{lang:{name,tag}}
+const DISH_DATA = [
+  // ---------- 前菜 Appetizers ----------
+  { id:'spicyBag', category:'appetizers', price:11.80, allergens:[], img:'../image/菜品/spice bag.jpg',
+    i18n:{
+      zh:{name:'辣袋', tag:'薯条、洋葱、红甜椒、鸡柳'}, zhHant:{name:'辣袋', tag:'薯條、洋蔥、紅甜椒、雞柳'},
+      en:{name:'Spice Bag', tag:'French fries, onion, red bell pepper, chicken strips'},
+      it:{name:'Sacchetto Piccante', tag:'Patatine fritte, cipolla, peperone rosso, straccetti di pollo'},
+      fr:{name:'Sachet Épicé', tag:'Frites, oignon, poivron rouge, aiguillettes de poulet'},
+      es:{name:'Bolsa Picante', tag:'Patatas fritas, cebolla, pimiento rojo, tiras de pollo'},
+    }},
+  { id:'veggieSpringRoll', category:'appetizers', price:8.80, allergens:['GW','GB','M','E'],
+    i18n:{
+      zh:{name:'蔬菜春卷', tag:'春卷皮、木耳、卷心菜、胡萝卜、上海青'}, zhHant:{name:'蔬菜春捲', tag:'春捲皮、木耳、捲心菜、胡蘿蔔、上海青'},
+      en:{name:'Vegetable Spring Rolls', tag:'Spring roll pastry, wood ear mushroom, cabbage, carrot, pak choi'},
+      it:{name:'Involtini Primavera Vegetariani', tag:'Pasta per involtini, fungo nero, cavolo, carota, pak choi'},
+      fr:{name:'Rouleaux de Printemps aux Légumes', tag:'Pâte à rouleaux de printemps, champignon noir, chou, carotte, pak choi'},
+      es:{name:'Rollitos de Primavera Vegetales', tag:'Masa para rollitos, hongo negro, col, zanahoria, pak choi'},
+    }},
+  { id:'taroToastRoll', category:'appetizers', price:8.80, allergens:['GW','GB','E','M','SE'],
+    i18n:{
+      zh:{name:'芋头吐司卷', tag:'芋头馅、脆皮、芝麻'}, zhHant:{name:'芋頭吐司卷', tag:'芋頭餡、脆皮、芝麻'},
+      en:{name:'Taro Toast Rolls', tag:'Taro filling, crispy toast wrapper, sesame seeds'},
+      it:{name:'Involtini di Toast al Taro', tag:'Ripieno di taro, involucro croccante, semi di sesamo'},
+      fr:{name:'Rouleaux de Pain Toast au Taro', tag:'Farce de taro, enveloppe croustillante, graines de sésame'},
+      es:{name:'Rollitos de Pan Tostado con Taro', tag:'Relleno de taro, envoltura crujiente, semillas de sésamo'},
+    }},
+  { id:'prawnToast', category:'appetizers', price:9.80, allergens:['GW','GB','E','C','M','SE'],
+    i18n:{
+      zh:{name:'鲜虾多士', tag:'虾仁、多士面包、芝麻、芝麻沙拉酱'}, zhHant:{name:'鮮蝦多士', tag:'蝦仁、多士麵包、芝麻、芝麻沙拉醬'},
+      en:{name:'Prawn Toast', tag:'Prawn, toast bread, sesame seeds, sesame salad dressing'},
+      it:{name:'Toast ai Gamberi', tag:'Gamberi, pane toast, semi di sesamo, salsa al sesamo'},
+      fr:{name:'Toast aux Crevettes', tag:'Crevettes, pain toast, graines de sésame, sauce sésame'},
+      es:{name:'Tostada de Gambas', tag:'Gambas, pan tostado, semillas de sésamo, salsa de sésamo'},
+    }},
+  { id:'crispyWonton', category:'appetizers', price:9.80, allergens:['GW','GB','E','SE','C','M'],
+    i18n:{
+      zh:{name:'脆香云吞', tag:'虾仁、鸡肉、云吞皮'}, zhHant:{name:'脆香雲吞', tag:'蝦仁、雞肉、雲吞皮'},
+      en:{name:'Crispy Wontons', tag:'Prawns, chicken, wonton wrapper'},
+      it:{name:'Wonton Croccanti', tag:'Gamberi, pollo, involucro di wonton'},
+      fr:{name:'Wontons Croustillants', tag:'Crevettes, poulet, pâte à wonton'},
+      es:{name:'Wontons Crujientes', tag:'Gambas, pollo, masa de wonton'},
+    }},
+  { id:'crispySeafoodRoll', category:'appetizers', price:15.80, allergens:['GW','GB','M','E','C'],
+    i18n:{
+      zh:{name:'脆皮海鲜卷', tag:'虾仁、威化纸'}, zhHant:{name:'脆皮海鮮卷', tag:'蝦仁、威化紙'},
+      en:{name:'Crispy Seafood Rolls', tag:'Prawns, crispy wafer wrapper'},
+      it:{name:'Involtini di Mare Croccanti', tag:'Gamberi, involucro di wafer croccante'},
+      fr:{name:'Rouleaux de Fruits de Mer Croustillants', tag:'Crevettes, feuille de galette croustillante'},
+      es:{name:'Rollitos de Marisco Crujientes', tag:'Gambas, oblea crujiente'},
+    }},
+  { id:'mouthWateringChicken', category:'appetizers', price:12.80, allergens:['SE','CE','S','P','GW','GB'],
+    i18n:{
+      zh:{name:'川味口水鸡', tag:'鸡肉、黄瓜、蒜、辣椒粉'}, zhHant:{name:'川味口水雞', tag:'雞肉、黃瓜、蒜、辣椒粉'},
+      en:{name:'Sichuan Mouth-Watering Chicken', tag:'Chicken, cucumber, garlic, chilli oil'},
+      it:{name:'Pollo Piccante alla Sichuan "Acquolina"', tag:'Pollo, cetriolo, aglio, olio piccante'},
+      fr:{name:'Poulet Sichuan "Qui Fait Saliver"', tag:'Poulet, concombre, ail, huile pimentée'},
+      es:{name:'Pollo Sichuan "Boca Agua"', tag:'Pollo, pepino, ajo, aceite picante'},
+    }},
+  { id:'mustardPrawns', category:'appetizers', price:14.80, allergens:['GW','GB','M','E','C','MU'],
+    i18n:{
+      zh:{name:'芥酥芥末虾', tag:'虾仁、丘比沙拉酱、黄芥末'}, zhHant:{name:'芥酥芥末蝦', tag:'蝦仁、丘比沙拉醬、黃芥末'},
+      en:{name:'Signature Wasabi Mayo Prawns', tag:'Prawns, Kewpie mayo dressing, yellow mustard'},
+      it:{name:'Gamberi alla Senape (Specialità)', tag:'Gamberi, maionese Kewpie, senape gialla'},
+      fr:{name:'Crevettes à la Moutarde (Spécialité)', tag:'Crevettes, mayonnaise Kewpie, moutarde jaune'},
+      es:{name:'Gambas con Mostaza (Especialidad)', tag:'Gambas, mayonesa Kewpie, mostaza amarilla'},
+    }},
+  { id:'chongqingSpicyChicken', category:'appetizers', price:14.80, allergens:['SE','S','P','GW','GB'],
+    i18n:{
+      zh:{name:'重庆辣子鸡', tag:'鸡肉、干辣椒、姜、蒜'}, zhHant:{name:'重慶辣子雞', tag:'雞肉、幹辣椒、姜、蒜'},
+      en:{name:'Chongqing Chilli Chicken', tag:'Chicken, dried chillies, ginger, garlic'},
+      it:{name:'Pollo Piccante alla Chongqing', tag:'Pollo, peperoncini secchi, zenzero, aglio'},
+      fr:{name:'Poulet Épicé de Chongqing', tag:'Poulet, piments séchés, gingembre, ail'},
+      es:{name:'Pollo Picante de Chongqing', tag:'Pollo, chiles secos, jengibre, ajo'},
+    }},
+  { id:'fuqiFeipian', category:'appetizers', price:14.80, allergens:['SE','CE','S','P','GW','GB'],
+    i18n:{
+      zh:{name:'夫妻肺片', tag:'牛肉、牛舌、牛肚、芹菜、蒜、辣椒油'}, zhHant:{name:'夫妻肺片', tag:'牛肉、牛舌、牛肚、芹菜、蒜、辣椒油'},
+      en:{name:'Sliced Beef & Ox Tongue in Chilli Sauce', tag:'Beef, ox tongue, ox tripe, celery, garlic, chilli oil'},
+      it:{name:'Manzo e Lingua di Bue in Salsa Piccante', tag:'Manzo, lingua di bue, trippa di bue, sedano, aglio, olio piccante'},
+      fr:{name:'Bœuf et Langue de Bœuf en Sauce Pimentée', tag:'Bœuf, langue de bœuf, tripes de bœuf, céleri, ail, huile pimentée'},
+      es:{name:'Ternera y Lengua de Buey en Salsa Picante', tag:'Ternera, lengua de buey, callos de buey, apio, ajo, aceite picante'},
+    }},
+  { id:'cucumberSalad', category:'appetizers', price:9.80, allergens:['GW','GB','S','SE'],
+    i18n:{
+      zh:{name:'手拍黄瓜', tag:'黄瓜、蒜、辣椒油'}, zhHant:{name:'手拍黃瓜', tag:'黃瓜、蒜、辣椒油'},
+      en:{name:'Smashed Cucumber Salad', tag:'Cucumber, garlic, chilli oil'},
+      it:{name:'Insalata di Cetrioli Schiacciati', tag:'Cetriolo, aglio, olio piccante'},
+      fr:{name:'Salade de Concombre Écrasé', tag:'Concombre, ail, huile pimentée'},
+      es:{name:'Ensalada de Pepino Machacado', tag:'Pepino, ajo, aceite picante'},
+    }},
+  { id:'spicyBeefJerky', category:'appetizers', price:15.80, allergens:['GW','GB','S','SE'],
+    i18n:{
+      zh:{name:'麻辣牛肉干', tag:'牛肉、干辣椒'}, zhHant:{name:'麻辣牛肉乾', tag:'牛肉、幹辣椒'},
+      en:{name:'Mala Spiced Beef Jerky', tag:'Beef, dried chillies'},
+      it:{name:'Manzo Essiccato Piccante "Mala"', tag:'Manzo, peperoncini secchi'},
+      fr:{name:'Bœuf Séché Épicé "Mala"', tag:'Bœuf, piments séchés'},
+      es:{name:'Cecina de Ternera Picante "Mala"', tag:'Ternera, chiles secos'},
+    }},
+
+  // ---------- 饺子 Dumplings ----------
+  { id:'porkDumplings', category:'dumplings', price:9.80, allergens:['GW','GB','S','SU','E','SE'],
+    i18n:{
+      zh:{name:'猪肉饺子 (6只)', tag:'猪肉、姜'}, zhHant:{name:'豬肉餃子 (6只)', tag:'豬肉、姜'},
+      en:{name:'Pork Dumplings (6pcs)', tag:'Pork, ginger'},
+      it:{name:'Ravioli al Maiale (6pz)', tag:'Maiale, zenzero'},
+      fr:{name:'Raviolis au Porc (6pcs)', tag:'Porc, gingembre'},
+      es:{name:'Empanadillas de Cerdo (6uds)', tag:'Cerdo, jengibre'},
+    }},
+  { id:'chickenDumplings', category:'dumplings', price:9.80, allergens:['GW','GB','S','SU','E','SE'],
+    i18n:{
+      zh:{name:'鸡肉饺子 (6只)', tag:'鸡肉、姜'}, zhHant:{name:'雞肉餃子 (6只)', tag:'雞肉、姜'},
+      en:{name:'Chicken Dumplings (6pcs)', tag:'Chicken, ginger'},
+      it:{name:'Ravioli al Pollo (6pz)', tag:'Pollo, zenzero'},
+      fr:{name:'Raviolis au Poulet (6pcs)', tag:'Poulet, gingembre'},
+      es:{name:'Empanadillas de Pollo (6uds)', tag:'Pollo, jengibre'},
+    }},
+  { id:'vegDumplings', category:'dumplings', price:9.80, allergens:['GW','GB','S','E','SE'],
+    i18n:{
+      zh:{name:'蔬菜饺子 (6只)', tag:'韭菜、豆腐、鸡蛋'}, zhHant:{name:'蔬菜餃子 (6只)', tag:'韭菜、豆腐、雞蛋'},
+      en:{name:'Vegetable Dumplings (6pcs)', tag:'Leek, tofu, egg'},
+      it:{name:'Ravioli Vegetariani (6pz)', tag:'Porro, tofu, uovo'},
+      fr:{name:'Raviolis aux Légumes (6pcs)', tag:'Poireau, tofu, œuf'},
+      es:{name:'Empanadillas Vegetales (6uds)', tag:'Puerro, tofu, huevo'},
+    }},
+  { id:'siuMai', category:'dumplings', price:9.80, allergens:['GW','GB','S','SU','E','SE'],
+    i18n:{
+      zh:{name:'干蒸烧卖 (6只)', tag:'鸡肉、虾仁、烧卖皮、鱼籽、马铃薯淀粉'}, zhHant:{name:'幹蒸燒賣 (6只)', tag:'雞肉、蝦仁、燒賣皮、魚籽、馬鈴薯澱粉'},
+      en:{name:'Steamed Chicken & Prawn Siu Mai (6pcs)', tag:'Chicken, prawn, siu mai wrapper, fish roe, potato starch'},
+      it:{name:'Siu Mai al Vapore con Pollo e Gamberi (6pz)', tag:'Pollo, gamberi, involucro siu mai, uova di pesce, amido di patate'},
+      fr:{name:'Siu Mai Vapeur au Poulet et aux Crevettes (6pcs)', tag:'Poulet, crevettes, pâte à siu mai, œufs de poisson, fécule de pomme de terre'},
+      es:{name:'Siu Mai al Vapor con Pollo y Gambas (6uds)', tag:'Pollo, gambas, masa de siu mai, hueva de pescado, almidón de patata'},
+    }},
+
+  // ---------- 汤 Soup (priced per person) ----------
+  { id:'hotSourSoupVeg', category:'soup', price:6.80, unit:'person', allergens:['GW','GB','S','E','L'],
+    i18n:{
+      zh:{name:'酸辣汤(素)', tag:'香菇、木耳、豆腐'}, zhHant:{name:'酸辣湯(素)', tag:'香菇、木耳、豆腐'},
+      en:{name:'Hot & Sour Soup (Vegetable)', tag:'Mushroom, wood ear mushroom, tofu'},
+      it:{name:'Zuppa Agropiccante (Vegetariana)', tag:'Fungo, fungo nero, tofu'},
+      fr:{name:'Soupe Aigre-Piquante (Végétarienne)', tag:'Champignon, champignon noir, tofu'},
+      es:{name:'Sopa Agripicante (Vegetal)', tag:'Champiñón, hongo negro, tofu'},
+    }},
+  { id:'hotSourSoupChicken', category:'soup', price:7.80, unit:'person', allergens:['GW','GB','S','SE','L'],
+    i18n:{
+      zh:{name:'酸辣汤(鸡肉)', tag:'香菇、木耳、豆腐、鸡肉'}, zhHant:{name:'酸辣湯(雞肉)', tag:'香菇、木耳、豆腐、雞肉'},
+      en:{name:'Hot & Sour Soup (Chicken)', tag:'Mushroom, wood ear mushroom, tofu, chicken'},
+      it:{name:'Zuppa Agropiccante (Pollo)', tag:'Fungo, fungo nero, tofu, pollo'},
+      fr:{name:'Soupe Aigre-Piquante (Poulet)', tag:'Champignon, champignon noir, tofu, poulet'},
+      es:{name:'Sopa Agripicante (Pollo)', tag:'Champiñón, hongo negro, tofu, pollo'},
+    }},
+  { id:'hotSourSoupSeafood', category:'soup', price:8.80, unit:'person', allergens:['GW','GB','S','SE','L','C'],
+    i18n:{
+      zh:{name:'酸辣汤(海鲜)', tag:'香菇、木耳、豆腐、虾仁'}, zhHant:{name:'酸辣湯(海鮮)', tag:'香菇、木耳、豆腐、蝦仁'},
+      en:{name:'Hot & Sour Soup (Seafood)', tag:'Mushroom, wood ear mushroom, tofu, prawn'},
+      it:{name:'Zuppa Agropiccante (Mare)', tag:'Fungo, fungo nero, tofu, gamberi'},
+      fr:{name:'Soupe Aigre-Piquante (Fruits de Mer)', tag:'Champignon, champignon noir, tofu, crevettes'},
+      es:{name:'Sopa Agripicante (Marisco)', tag:'Champiñón, hongo negro, tofu, gambas'},
+    }},
+  { id:'cornSoupVeg', category:'soup', price:6.80, unit:'person', allergens:['M'],
+    i18n:{
+      zh:{name:'玉米汤(素)', tag:'甜玉米'}, zhHant:{name:'玉米湯(素)', tag:'甜玉米'},
+      en:{name:'Sweetcorn Soup (Vegetable)', tag:'Sweet corn'},
+      it:{name:'Zuppa di Mais (Vegetariana)', tag:'Mais dolce'},
+      fr:{name:'Soupe de Maïs (Végétarienne)', tag:'Maïs doux'},
+      es:{name:'Sopa de Maíz (Vegetal)', tag:'Maíz dulce'},
+    }},
+  { id:'cornSoupChicken', category:'soup', price:7.80, unit:'person', allergens:['M'],
+    i18n:{
+      zh:{name:'玉米汤(鸡肉)', tag:'甜玉米、鸡肉'}, zhHant:{name:'玉米湯(雞肉)', tag:'甜玉米、雞肉'},
+      en:{name:'Sweetcorn & Chicken Soup', tag:'Sweet corn, chicken'},
+      it:{name:'Zuppa di Mais e Pollo', tag:'Mais dolce, pollo'},
+      fr:{name:'Soupe de Maïs au Poulet', tag:'Maïs doux, poulet'},
+      es:{name:'Sopa de Maíz con Pollo', tag:'Maíz dulce, pollo'},
+    }},
+  { id:'nourishingChickenSoup', category:'soup', price:16.80, allergens:[],
+    i18n:{
+      zh:{name:'滋补鸡汤', tag:'鸡肉、猪肉、红枣、枸杞、姜、香菇'}, zhHant:{name:'滋補雞湯', tag:'雞肉、豬肉、紅棗、枸杞、姜、香菇'},
+      en:{name:'Nourishing Chicken Soup', tag:'Chicken, pork, jujube, goji berry, ginger, shiitake mushroom'},
+      it:{name:'Zuppa di Pollo Nutriente', tag:'Pollo, maiale, giuggiola, bacche di goji, zenzero, fungo shiitake'},
+      fr:{name:'Soupe de Poulet Nourrissante', tag:'Poulet, porc, jujube, baies de goji, gingembre, champignon shiitake'},
+      es:{name:'Sopa de Pollo Nutritiva', tag:'Pollo, cerdo, azufaifa, bayas de goji, jengibre, champiñón shiitake'},
+    }},
+
+  // ---------- 厨师推荐 Chef's Specials ----------
+  { id:'pekingDuck', category:'chefSpecial', sizes:[{key:'half',price:29.80},{key:'whole',price:52.80}], allergens:['GW','GB','C','E','M','S'],
+    i18n:{
+      zh:{name:'北京烤鸭', tag:'鸭肉、海鲜酱、黄瓜、青葱'}, zhHant:{name:'北京烤鴨', tag:'鴨肉、海鮮醬、黃瓜、青蔥'},
+      en:{name:'Peking Duck', tag:'Duck, hoisin sauce, cucumber, spring onion'},
+      it:{name:'Anatra alla Pechinese', tag:'Anatra, salsa hoisin, cetriolo, cipollotto'},
+      fr:{name:'Canard Laqué de Pékin', tag:'Canard, sauce hoisin, concombre, oignon vert'},
+      es:{name:'Pato Laqueado de Pekín', tag:'Pato, salsa hoisin, pepino, cebolleta'},
+    }},
+  { id:'kungPaoChicken', category:'chefSpecial', price:14.80, allergens:['GW','GB','SE','S','E','P','N','C'],
+    i18n:{
+      zh:{name:'宫保鸡丁', tag:'鸡肉、姜、青葱、蒜、干辣椒、花椒、花生、宫保酱'}, zhHant:{name:'宮保雞丁', tag:'雞肉、姜、青蔥、蒜、幹辣椒、花椒、花生、宮保醬'},
+      en:{name:'Kung Pao Chicken', tag:'Chicken, ginger, spring onion, garlic, dried chilli, Sichuan pepper, peanuts, Kung Pao sauce'},
+      it:{name:'Pollo alla Kung Pao', tag:'Pollo, zenzero, cipollotto, aglio, peperoncino secco, pepe di Sichuan, arachidi, salsa Kung Pao'},
+      fr:{name:'Poulet Kung Pao', tag:'Poulet, gingembre, oignon vert, ail, piment séché, poivre du Sichuan, arachides, sauce Kung Pao'},
+      es:{name:'Pollo Kung Pao', tag:'Pollo, jengibre, cebolleta, ajo, chile seco, pimienta de Sichuan, cacahuetes, salsa Kung Pao'},
+    }},
+  { id:'kungPaoPrawns', category:'chefSpecial', price:22.80, allergens:['GW','GB','SE','S','E','P','N','C'],
+    i18n:{
+      zh:{name:'宫保虾球', tag:'虾仁、姜、青葱、蒜、干辣椒、花椒、花生、宫保酱'}, zhHant:{name:'宮保蝦球', tag:'蝦仁、姜、青蔥、蒜、幹辣椒、花椒、花生、宮保醬'},
+      en:{name:'Kung Pao Prawns', tag:'Prawn, ginger, spring onion, garlic, dried chilli, Sichuan pepper, peanuts, Kung Pao sauce'},
+      it:{name:'Gamberi alla Kung Pao', tag:'Gamberi, zenzero, cipollotto, aglio, peperoncino secco, pepe di Sichuan, arachidi, salsa Kung Pao'},
+      fr:{name:'Crevettes Kung Pao', tag:'Crevettes, gingembre, oignon vert, ail, piment séché, poivre du Sichuan, arachides, sauce Kung Pao'},
+      es:{name:'Gambas Kung Pao', tag:'Gambas, jengibre, cebolleta, ajo, chile seco, pimienta de Sichuan, cacahuetes, salsa Kung Pao'},
+    }},
+  { id:'kungPaoTofu', category:'chefSpecial', price:14.80, allergens:['GW','GB','S','SE'],
+    i18n:{
+      zh:{name:'宫保豆腐', tag:'豆腐、姜、青葱、蒜、干辣椒、花椒'}, zhHant:{name:'宮保豆腐', tag:'豆腐、姜、青蔥、蒜、幹辣椒、花椒'},
+      en:{name:'Kung Pao Tofu', tag:'Tofu, ginger, spring onion, garlic, dried chilli, Sichuan pepper'},
+      it:{name:'Tofu alla Kung Pao', tag:'Tofu, zenzero, cipollotto, aglio, peperoncino secco, pepe di Sichuan'},
+      fr:{name:'Tofu Kung Pao', tag:'Tofu, gingembre, oignon vert, ail, piment séché, poivre du Sichuan'},
+      es:{name:'Tofu Kung Pao', tag:'Tofu, jengibre, cebolleta, ajo, chile seco, pimienta de Sichuan'},
+    }},
+  { id:'sweetSourChickenPineapple', category:'chefSpecial', price:14.80, allergens:['GW','GB','E','S','SE','C'],
+    i18n:{
+      zh:{name:'菠萝咕噜鸡', tag:'鸡肉、菠萝、甜椒、洋葱、糖醋汁'}, zhHant:{name:'菠蘿咕嚕雞', tag:'雞肉、菠蘿、甜椒、洋蔥、糖醋汁'},
+      en:{name:'Sweet & Sour Chicken with Pineapple', tag:'Chicken, pineapple, bell pepper, onion, sweet and sour sauce'},
+      it:{name:"Pollo Agrodolce all'Ananas", tag:'Pollo, ananas, peperone, cipolla, salsa agrodolce'},
+      fr:{name:"Poulet Aigre-Doux à l'Ananas", tag:'Poulet, ananas, poivron, oignon, sauce aigre-douce'},
+      es:{name:'Pollo Agridulce con Piña', tag:'Pollo, piña, pimiento, cebolla, salsa agridulce'},
+    }},
+  { id:'sweetSourPrawnsPineapple', category:'chefSpecial', price:22.80, allergens:['GW','GB','E','S','SE','C'], img:'../image/菜品/9菠萝咕噜虾.jpg',
+    i18n:{
+      zh:{name:'菠萝咕噜虾', tag:'虾仁、菠萝、甜椒、洋葱、糖醋汁'}, zhHant:{name:'菠蘿咕嚕蝦', tag:'蝦仁、菠蘿、甜椒、洋蔥、糖醋汁'},
+      en:{name:'Sweet & Sour Prawns with Pineapple', tag:'Prawn, pineapple, bell pepper, onion, sweet and sour sauce'},
+      it:{name:'Gamberi Agrodolci all\'Ananas', tag:'Gamberi, ananas, peperone, cipolla, salsa agrodolce'},
+      fr:{name:'Crevettes Aigre-Douces à l\'Ananas', tag:'Crevettes, ananas, poivron, oignon, sauce aigre-douce'},
+      es:{name:'Gambas Agridulces con Piña', tag:'Gambas, piña, pimiento, cebolla, salsa agridulce'},
+    }},
+  { id:'goldenCrispyChickenSalad', category:'chefSpecial', price:14.80, allergens:['SE','E','M','GW','GB'],
+    i18n:{
+      zh:{name:'香酥鸡排沙拉', tag:'鸡肉、面包糠、生菜、草莓、芒果、黄瓜、沙拉酱、甜辣酱'}, zhHant:{name:'香酥雞排沙拉', tag:'雞肉、麵包糠、生菜、草莓、芒果、黃瓜、沙拉醬、甜辣醬'},
+      en:{name:'Golden Crispy Chicken with Side Salad', tag:'Chicken, breadcrumbs, lettuce, strawberry, mango, cucumber, salad dressing, sweet chilli sauce'},
+      it:{name:'Cotoletta di Pollo Croccante con Insalata', tag:'Pollo, pangrattato, lattuga, fragola, mango, cetriolo, salsa per insalata, salsa piccante dolce'},
+      fr:{name:'Escalope de Poulet Croustillante et Salade', tag:'Poulet, chapelure, laitue, fraise, mangue, concombre, sauce salade, sauce piment doux'},
+      es:{name:'Pollo Crujiente con Ensalada', tag:'Pollo, pan rallado, lechuga, fresa, mango, pepino, aliño de ensalada, salsa dulce picante'},
+    }},
+  { id:'sweetSpicyPrawnBalls', category:'chefSpecial', price:22.80, allergens:['GW','GB','E','S','SE','C'],
+    i18n:{
+      zh:{name:'甜辣虾球', tag:'虾仁、甜椒、洋葱、甜辣酱'}, zhHant:{name:'甜辣蝦球', tag:'蝦仁、甜椒、洋蔥、甜辣醬'},
+      en:{name:'Sweet & Spicy Prawn Balls', tag:'Prawn, bell pepper, onion, sweet and spicy sauce'},
+      it:{name:'Polpette di Gamberi Dolci e Piccanti', tag:'Gamberi, peperone, cipolla, salsa dolce e piccante'},
+      fr:{name:'Boulettes de Crevettes Douces et Épicées', tag:'Crevettes, poivron, oignon, sauce douce et épicée'},
+      es:{name:'Bolitas de Gambas Dulces y Picantes', tag:'Gambas, pimiento, cebolla, salsa dulce y picante'},
+    }},
+  { id:'sweetSpicyChicken', category:'chefSpecial', price:14.80, allergens:['GW','GB','E','S','SE','C'],
+    i18n:{
+      zh:{name:'甜辣鸡肉', tag:'鸡肉、甜椒、洋葱、甜辣酱'}, zhHant:{name:'甜辣雞肉', tag:'雞肉、甜椒、洋蔥、甜辣醬'},
+      en:{name:'Sweet & Spicy Chicken', tag:'Chicken, bell pepper, onion, sweet and spicy sauce'},
+      it:{name:'Pollo Dolce e Piccante', tag:'Pollo, peperone, cipolla, salsa dolce e piccante'},
+      fr:{name:'Poulet Doux et Épicé', tag:'Poulet, poivron, oignon, sauce douce et épicée'},
+      es:{name:'Pollo Dulce y Picante', tag:'Pollo, pimiento, cebolla, salsa dulce y picante'},
+    }},
+  { id:'blackPepperBeef', category:'chefSpecial', price:16.80, allergens:['GW','GB','SE','C','S','E'],
+    i18n:{
+      zh:{name:'黑椒牛柳', tag:'牛肉、甜椒、洋葱、黑椒汁'}, zhHant:{name:'黑椒牛柳', tag:'牛肉、甜椒、洋蔥、黑椒汁'},
+      en:{name:'Black Pepper Beef', tag:'Beef, bell pepper, onion, black pepper sauce'},
+      it:{name:'Manzo al Pepe Nero', tag:'Manzo, peperone, cipolla, salsa al pepe nero'},
+      fr:{name:'Bœuf au Poivre Noir', tag:'Bœuf, poivron, oignon, sauce au poivre noir'},
+      es:{name:'Ternera a la Pimienta Negra', tag:'Ternera, pimiento, cebolla, salsa de pimienta negra'},
+    }},
+  { id:'blackPepperChicken', category:'chefSpecial', price:14.80, allergens:['GW','GB','SE','C','S','E'],
+    i18n:{
+      zh:{name:'黑椒鸡肉', tag:'鸡肉、甜椒、洋葱、黑椒汁'}, zhHant:{name:'黑椒雞肉', tag:'雞肉、甜椒、洋蔥、黑椒汁'},
+      en:{name:'Black Pepper Chicken', tag:'Chicken, bell pepper, onion, black pepper sauce'},
+      it:{name:'Pollo al Pepe Nero', tag:'Pollo, peperone, cipolla, salsa al pepe nero'},
+      fr:{name:'Poulet au Poivre Noir', tag:'Poulet, poivron, oignon, sauce au poivre noir'},
+      es:{name:'Pollo a la Pimienta Negra', tag:'Pollo, pimiento, cebolla, salsa de pimienta negra'},
+    }},
+  { id:'sirloinBeefCubes', category:'chefSpecial', price:24.80, allergens:['GW','GB','CE','SE','S'],
+    i18n:{
+      zh:{name:'招牌西冷牛肉粒', tag:'西冷牛肉、甜椒、芹菜、香辣酱'}, zhHant:{name:'招牌西冷牛肉粒', tag:'西冷牛肉、甜椒、芹菜、香辣醬'},
+      en:{name:'Signature Sirloin Beef Cubes', tag:'Sirloin beef, bell pepper, celery, spicy sauce'},
+      it:{name:'Cubetti di Controfiletto (Specialità)', tag:'Controfiletto di manzo, peperone, sedano, salsa piccante'},
+      fr:{name:'Cubes de Faux-Filet (Spécialité)', tag:'Faux-filet de bœuf, poivron, céleri, sauce piquante'},
+      es:{name:'Dados de Solomillo (Especialidad)', tag:'Solomillo de ternera, pimiento, apio, salsa picante'},
+    }},
+  { id:'signatureSpicyShrimp', category:'chefSpecial', price:22.80, allergens:['GW','GB','CE','SE','S','E','C'],
+    i18n:{
+      zh:{name:'招牌麻辣虾', tag:'虾仁、甜椒、芹菜、辣椒油'}, zhHant:{name:'招牌麻辣蝦', tag:'蝦仁、甜椒、芹菜、辣椒油'},
+      en:{name:'Signature Mala Prawns', tag:'Prawn, bell pepper, celery, chilli oil'},
+      it:{name:'Gamberi Piccanti "Mala" (Specialità)', tag:'Gamberi, peperone, sedano, olio piccante'},
+      fr:{name:'Crevettes Épicées "Mala" (Spécialité)', tag:'Crevettes, poivron, céleri, huile pimentée'},
+      es:{name:'Gambas Picantes "Mala" (Especialidad)', tag:'Gambas, pimiento, apio, aceite picante'},
+    }},
+  { id:'braisedIrishSteak', category:'chefSpecial', price:28.80, allergens:['GW','GB','S','SE','CE','C'],
+    i18n:{
+      zh:{name:'姜醋汁焗爱尔兰牛柳', tag:'爱尔兰牛柳、西兰花、姜醋汁'}, zhHant:{name:'姜醋汁焗愛爾蘭牛柳', tag:'愛爾蘭牛柳、西蘭花、姜醋汁'},
+      en:{name:'Braised Irish Steak in Ginger & Vinegar Sauce', tag:'Irish beef steak, broccoli, ginger and vinegar sauce'},
+      it:{name:'Filetto Irlandese Brasato in Salsa allo Zenzero e Aceto', tag:'Filetto di manzo irlandese, broccoli, salsa zenzero e aceto'},
+      fr:{name:'Filet Irlandais Braisé, Sauce Gingembre-Vinaigre', tag:'Filet de bœuf irlandais, brocoli, sauce gingembre-vinaigre'},
+      es:{name:'Solomillo Irlandés Guisado en Salsa de Jengibre y Vinagre', tag:'Solomillo de ternera irlandesa, brócoli, salsa de jengibre y vinagre'},
+    }},
+  { id:'sweetSourPorkChop', category:'chefSpecial', price:22.80, allergens:['GW','GB','E','S','SE'],
+    i18n:{
+      zh:{name:'糖醋猪排', tag:'猪排'}, zhHant:{name:'糖醋豬排', tag:'豬排'},
+      en:{name:'Sweet & Sour Pork Chop', tag:'Pork chop'},
+      it:{name:'Costoletta di Maiale in Agrodolce', tag:'Costoletta di maiale'},
+      fr:{name:"Côtelette de Porc à l'Aigre-Douce", tag:'Côtelette de porc'},
+      es:{name:'Chuleta de Cerdo Agridulce', tag:'Chuleta de cerdo'},
+    }},
+  { id:'mapoTofu', category:'chefSpecial', price:14.80, allergens:['GW','GB','S'],
+    i18n:{
+      zh:{name:'麻婆豆腐', tag:'豆腐、鸡肉末、青葱、辣椒粉、花椒粉'}, zhHant:{name:'麻婆豆腐', tag:'豆腐、雞肉末、青蔥、辣椒粉、花椒粉'},
+      en:{name:'Mapo Tofu', tag:'Tofu, minced chicken, spring onion, chilli powder, Sichuan pepper powder'},
+      it:{name:'Tofu Mapo', tag:'Tofu, pollo macinato, cipollotto, peperoncino in polvere, pepe di Sichuan in polvere'},
+      fr:{name:'Tofu Mapo', tag:'Tofu, poulet haché, oignon vert, piment en poudre, poivre du Sichuan en poudre'},
+      es:{name:'Tofu Mapo', tag:'Tofu, pollo picado, cebolleta, chile en polvo, pimienta de Sichuan en polvo'},
+    }},
+  { id:'stirFriedYellowBeef', category:'chefSpecial', price:18.80, allergens:['GW','GB','S','SE','E','C'],
+    i18n:{
+      zh:{name:'小炒黄牛肉', tag:'牛肉、红椒、香菜、姜、蒜'}, zhHant:{name:'小炒黃牛肉', tag:'牛肉、紅椒、香菜、姜、蒜'},
+      en:{name:'Stir-Fried Beef with Chilli & Coriander', tag:'Beef, red pepper, coriander, ginger, garlic'},
+      it:{name:'Manzo Saltato con Peperoncino e Coriandolo', tag:'Manzo, peperone rosso, coriandolo, zenzero, aglio'},
+      fr:{name:'Bœuf Sauté au Piment et à la Coriandre', tag:'Bœuf, poivron rouge, coriandre, gingembre, ail'},
+      es:{name:'Ternera Salteada con Chile y Cilantro', tag:'Ternera, pimiento rojo, cilantro, jengibre, ajo'},
+    }},
+  { id:'maoXueWang', category:'chefSpecial', sizes:[{key:'large',price:18.80},{key:'small',price:12.80}], allergens:['GW','GB','S','SE','CE'],
+    i18n:{
+      zh:{name:'四川毛血旺', tag:'土豆、卷心菜、红薯粉、木耳、牛肚、午餐肉、猪大肠、鸭血、干花椒、干辣椒'}, zhHant:{name:'四川毛血旺', tag:'土豆、捲心菜、紅薯粉、木耳、牛肚、午餐肉、豬大腸、鴨血、乾花椒、幹辣椒'},
+      en:{name:'Sichuan Mao Xue Wang (Spicy Offal Hot Pot)', tag:'Potato, cabbage, sweet potato vermicelli, wood ear mushroom, ox tripe, luncheon meat, pork intestine, blood curd, dried Sichuan pepper, dried chilli'},
+      it:{name:'Mao Xue Wang alla Sichuan (Pentola Piccante di Frattaglie)', tag:'Patata, cavolo, vermicelli di patata dolce, fungo nero, trippa di bue, luncheon meat, intestino di maiale, cagliata di sangue, pepe di Sichuan secco, peperoncino secco'},
+      fr:{name:"Mao Xue Wang du Sichuan (Marmite Épicée d'Abats)", tag:'Pomme de terre, chou, vermicelles de patate douce, champignon noir, tripes de bœuf, luncheon meat, intestin de porc, caillé de sang, poivre du Sichuan séché, piment séché'},
+      es:{name:'Mao Xue Wang de Sichuan (Cazuela Picante de Casquería)', tag:'Patata, col, fideos de boniato, hongo negro, callos de buey, luncheon meat, intestino de cerdo, cuajada de sangre, pimienta de Sichuan seca, chile seco'},
+    }},
+  { id:'kidneyFlowers', category:'chefSpecial', sizes:[{key:'large',price:18.80},{key:'small',price:12.80}], allergens:['GW','GB','S','SE','CE'],
+    i18n:{
+      zh:{name:'火爆腰花', tag:'猪腰、青葱、芹菜、干辣椒、花椒、辣椒油'}, zhHant:{name:'火爆腰花', tag:'豬腰、青蔥、芹菜、幹辣椒、花椒、辣椒油'},
+      en:{name:'Sizzling Stir-Fried Pork Kidney', tag:'Pork kidney, spring onion, celery, dried chilli, Sichuan pepper, chilli oil'},
+      it:{name:'Rognone di Maiale Saltato al Fuoco Vivo', tag:'Rognone di maiale, cipollotto, sedano, peperoncino secco, pepe di Sichuan, olio piccante'},
+      fr:{name:'Rognon de Porc Sauté au Feu Vif', tag:'Rognon de porc, oignon vert, céleri, piment séché, poivre du Sichuan, huile pimentée'},
+      es:{name:'Riñón de Cerdo Salteado a Fuego Vivo', tag:'Riñón de cerdo, cebolleta, apio, chile seco, pimienta de Sichuan, aceite picante'},
+    }},
+  { id:'twiceCookedPork', category:'chefSpecial', price:14.80, allergens:['GW','GB','S','SU'],
+    i18n:{
+      zh:{name:'青椒回锅肉', tag:'青椒、猪肉'}, zhHant:{name:'青椒回鍋肉', tag:'青椒、豬肉'},
+      en:{name:'Twice-Cooked Pork with Green Pepper', tag:'Green pepper, pork'},
+      it:{name:'Maiale Cotto Due Volte con Peperone Verde', tag:'Peperone verde, maiale'},
+      fr:{name:'Porc Deux Fois Cuit au Poivron Vert', tag:'Poivron vert, porc'},
+      es:{name:'Cerdo Cocido Dos Veces con Pimiento Verde', tag:'Pimiento verde, cerdo'},
+    }},
+  { id:'steamedSeaBass', category:'chefSpecial', price:24.80, allergens:['GW','GB','SE','F','S','SU'],
+    i18n:{
+      zh:{name:'清蒸鲈鱼', tag:'鲈鱼、青葱、蒸鱼豉油'}, zhHant:{name:'清蒸鱸魚', tag:'鱸魚、青蔥、蒸魚豉油'},
+      en:{name:'Steamed Sea Bass', tag:'Sea bass, spring onion, steamed fish soy sauce'},
+      it:{name:'Branzino al Vapore', tag:'Branzino, cipollotto, salsa di soia per pesce al vapore'},
+      fr:{name:'Bar Vapeur', tag:'Bar, oignon vert, sauce soja pour poisson vapeur'},
+      es:{name:'Lubina al Vapor', tag:'Lubina, cebolleta, salsa de soja para pescado al vapor'},
+    }},
+  { id:'steamedSeaBassChilli', category:'chefSpecial', price:24.80, allergens:['GW','GB','SE','F','S','SU'],
+    i18n:{
+      zh:{name:'剁椒蒸鲈鱼', tag:'鲈鱼、青葱、剁椒、蒸鱼豉油'}, zhHant:{name:'剁椒蒸鱸魚', tag:'鱸魚、青蔥、剁椒、蒸魚豉油'},
+      en:{name:'Steamed Sea Bass with Chopped Chilli', tag:'Sea bass, spring onion, chopped chilli, steamed fish soy sauce'},
+      it:{name:'Branzino al Vapore con Peperoncino Tritato', tag:'Branzino, cipollotto, peperoncino tritato, salsa di soia per pesce al vapore'},
+      fr:{name:'Bar Vapeur au Piment Haché', tag:'Bar, oignon vert, piment haché, sauce soja pour poisson vapeur'},
+      es:{name:'Lubina al Vapor con Chile Picado', tag:'Lubina, cebolleta, chile picado, salsa de soja para pescado al vapor'},
+    }},
+  { id:'seaBassSpicyBroth', category:'chefSpecial', price:24.80, allergens:['GW','GB','CE','SE','F','E'],
+    i18n:{
+      zh:{name:'水煮鲈鱼', tag:'鲈鱼、豆芽、香菇、芹菜、青葱、干花椒、干辣椒'}, zhHant:{name:'水煮鱸魚', tag:'鱸魚、豆芽、香菇、芹菜、青蔥、乾花椒、幹辣椒'},
+      en:{name:'Sea Bass Fillet in Sichuan Spicy Broth', tag:'Sea bass, bean sprout, mushroom, celery, spring onion, dried Sichuan pepper, dried chilli'},
+      it:{name:'Filetto di Branzino in Brodo Piccante alla Sichuan', tag:'Branzino, germogli di soia, fungo, sedano, cipollotto, pepe di Sichuan secco, peperoncino secco'},
+      fr:{name:'Filet de Bar en Bouillon Épicé du Sichuan', tag:'Bar, pousses de soja, champignon, céleri, oignon vert, poivre du Sichuan séché, piment séché'},
+      es:{name:'Filete de Lubina en Caldo Picante de Sichuan', tag:'Lubina, brotes de soja, champiñón, apio, cebolleta, pimienta de Sichuan seca, chile seco'},
+    }},
+  { id:'beefSpicyBroth', category:'chefSpecial', price:18.80, allergens:['GW','GB','CE','SE','F','E'],
+    i18n:{
+      zh:{name:'水煮牛肉', tag:'牛肉、豆芽、香菇、芹菜、青葱、干花椒、干辣椒'}, zhHant:{name:'水煮牛肉', tag:'牛肉、豆芽、香菇、芹菜、青蔥、乾花椒、幹辣椒'},
+      en:{name:'Beef Fillet in Sichuan Spicy Broth', tag:'Beef, bean sprout, mushroom, celery, spring onion, dried Sichuan pepper, dried chilli'},
+      it:{name:'Filetto di Manzo in Brodo Piccante alla Sichuan', tag:'Manzo, germogli di soia, fungo, sedano, cipollotto, pepe di Sichuan secco, peperoncino secco'},
+      fr:{name:'Filet de Bœuf en Bouillon Épicé du Sichuan', tag:'Bœuf, pousses de soja, champignon, céleri, oignon vert, poivre du Sichuan séché, piment séché'},
+      es:{name:'Filete de Ternera en Caldo Picante de Sichuan', tag:'Ternera, brotes de soja, champiñón, apio, cebolleta, pimienta de Sichuan seca, chile seco'},
+    }},
+  { id:'porkSpicyBroth', category:'chefSpecial', price:15.80, allergens:['GW','GB','CE','SE','F','E'],
+    i18n:{
+      zh:{name:'水煮猪肉', tag:'猪肉、豆芽、香菇、芹菜、青葱、干花椒、干辣椒'}, zhHant:{name:'水煮豬肉', tag:'豬肉、豆芽、香菇、芹菜、青蔥、乾花椒、幹辣椒'},
+      en:{name:'Sliced Pork in Sichuan Spicy Broth', tag:'Pork, bean sprout, mushroom, celery, spring onion, dried Sichuan pepper, dried chilli'},
+      it:{name:'Maiale a Fette in Brodo Piccante alla Sichuan', tag:'Maiale, germogli di soia, fungo, sedano, cipollotto, pepe di Sichuan secco, peperoncino secco'},
+      fr:{name:'Porc Émincé en Bouillon Épicé du Sichuan', tag:'Porc, pousses de soja, champignon, céleri, oignon vert, poivre du Sichuan séché, piment séché'},
+      es:{name:'Cerdo Fileteado en Caldo Picante de Sichuan', tag:'Cerdo, brotes de soja, champiñón, apio, cebolleta, pimienta de Sichuan seca, chile seco'},
+    }},
+  { id:'tiHuaTang', category:'chefSpecial', price:15.80, allergens:['GW'],
+    i18n:{
+      zh:{name:'老妈蹄花汤', tag:'猪蹄、薏米、金针花、白芸豆（自带川味蘸料）'}, zhHant:{name:'老媽蹄花湯', tag:'豬蹄、薏米、金針花、白芸豆（自帶川味蘸料）'},
+      en:{name:'Braised Pork Trotter Soup', tag:'Pork trotter, pearl barley, lily buds, white beans (served with a Sichuan-style dipping sauce)'},
+      it:{name:'Zuppa di Zampetti di Maiale Brasati', tag:'Zampetti di maiale, orzo perlato, fiori di giglio essiccati, fagioli bianchi (con salsa piccante alla Sichuan)'},
+      fr:{name:'Soupe de Pieds de Porc Braisés', tag:'Pieds de porc, orge perlé, boutons de lys séchés, haricots blancs (avec sauce à tremper façon Sichuan)'},
+      es:{name:'Sopa de Manitas de Cerdo Guisadas', tag:'Manitas de cerdo, cebada perlada, flores de lirio secas, judías blancas (con salsa para mojar estilo Sichuan)'},
+    }},
+  { id:'dryFriedPorkIntestine', category:'chefSpecial', price:18.80, allergens:['GW','GB','S','SE','CE'],
+    i18n:{
+      zh:{name:'干煸肥肠', tag:'猪大肠、甜椒、芹菜、蒜、干辣椒、花椒'}, zhHant:{name:'乾煸肥腸', tag:'豬大腸、甜椒、芹菜、蒜、幹辣椒、花椒'},
+      en:{name:'Dry-Fried Pork Intestine', tag:'Pork intestine, bell pepper, celery, garlic, dried chilli, Sichuan pepper'},
+      it:{name:'Intestino di Maiale Saltato a Secco', tag:'Intestino di maiale, peperone, sedano, aglio, peperoncino secco, pepe di Sichuan'},
+      fr:{name:'Intestin de Porc Sauté à Sec', tag:'Intestin de porc, poivron, céleri, ail, piment séché, poivre du Sichuan'},
+      es:{name:'Intestino de Cerdo Salteado en Seco', tag:'Intestino de cerdo, pimiento, apio, ajo, chile seco, pimienta de Sichuan'},
+    }},
+  { id:'farmhousePork', category:'chefSpecial', price:14.80, allergens:['GW','GB','S','C','SE'],
+    i18n:{
+      zh:{name:'农家小炒肉', tag:'猪肉、青椒、蒜、辣椒油'}, zhHant:{name:'農家小炒肉', tag:'豬肉、青椒、蒜、辣椒油'},
+      en:{name:'Farmhouse Stir-Fried Pork', tag:'Pork, green pepper, garlic, chilli oil'},
+      it:{name:'Maiale Saltato alla Contadina', tag:'Maiale, peperone verde, aglio, olio piccante'},
+      fr:{name:'Porc Sauté à la Fermière', tag:'Porc, poivron vert, ail, huile pimentée'},
+      es:{name:'Cerdo Salteado Estilo Campesino', tag:'Cerdo, pimiento verde, ajo, aceite picante'},
+    }},
+  { id:'griddleCauliflower', category:'chefSpecial', price:14.80, allergens:['GW','GB','C','SE','S'],
+    i18n:{
+      zh:{name:'干锅花菜', tag:'花菜、五花肉、姜、蒜、青葱、辣椒油'}, zhHant:{name:'乾鍋花菜', tag:'花菜、五花肉、姜、蒜、青蔥、辣椒油'},
+      en:{name:'Griddle Cauliflower', tag:'Cauliflower, pork belly, ginger, garlic, spring onion, chilli oil'},
+      it:{name:'Cavolfiore al Wok Piccante', tag:'Cavolfiore, pancetta di maiale, zenzero, aglio, cipollotto, olio piccante'},
+      fr:{name:'Chou-Fleur Sauté au Wok Épicé', tag:'Chou-fleur, poitrine de porc, gingembre, ail, oignon vert, huile pimentée'},
+      es:{name:'Coliflor Salteada Picante', tag:'Coliflor, panceta de cerdo, jengibre, ajo, cebolleta, aceite picante'},
+    }},
+  { id:'chickenCurry', category:'chefSpecial', price:18.80, allergens:['SE','S','F','M','E'],
+    i18n:{
+      zh:{name:'咖喱鸡肉', tag:'鸡肉、土豆、胡萝卜、咖喱汁'}, zhHant:{name:'咖喱雞肉', tag:'雞肉、土豆、胡蘿蔔、咖喱汁'},
+      en:{name:'Chicken Curry', tag:'Chicken, potato, carrot, curry sauce'},
+      it:{name:'Pollo al Curry', tag:'Pollo, patata, carota, salsa al curry'},
+      fr:{name:'Poulet au Curry', tag:'Poulet, pomme de terre, carotte, sauce curry'},
+      es:{name:'Pollo al Curry', tag:'Pollo, patata, zanahoria, salsa de curry'},
+    }},
+  { id:'beefCurry', category:'chefSpecial', price:22.80, allergens:['SE','S','F','M','E'],
+    i18n:{
+      zh:{name:'咖喱牛肉', tag:'小牛肉、土豆、胡萝卜、咖喱汁'}, zhHant:{name:'咖喱牛肉', tag:'小牛肉、土豆、胡蘿蔔、咖喱汁'},
+      en:{name:'Beef Curry', tag:'Veal, potato, carrot, curry sauce'},
+      it:{name:'Manzo al Curry', tag:'Vitello, patata, carota, salsa al curry'},
+      fr:{name:'Bœuf au Curry', tag:'Veau, pomme de terre, carotte, sauce curry'},
+      es:{name:'Ternera al Curry', tag:'Ternera, patata, zanahoria, salsa de curry'},
+    }},
+
+  // ---------- 蔬菜 Vegetables ----------
+  { id:'eggplantGreenBeans', category:'vegetables', price:14.80, allergens:['GW','GB','S','C','SE'],
+    i18n:{
+      zh:{name:'长豆角炒茄子', tag:'茄子、长豆角、蒜、辣椒油'}, zhHant:{name:'長豆角炒茄子', tag:'茄子、長豆角、蒜、辣椒油'},
+      en:{name:'Stir-Fried Eggplant with Long Beans', tag:'Eggplant, long beans, garlic, chilli oil'},
+      it:{name:'Melanzane Saltate con Fagiolini Lunghi', tag:'Melanzana, fagiolini lunghi, aglio, olio piccante'},
+      fr:{name:'Aubergine Sautée aux Haricots Longs', tag:'Aubergine, haricots longs, ail, huile pimentée'},
+      es:{name:'Berenjena Salteada con Judías Largas', tag:'Berenjena, judías largas, ajo, aceite picante'},
+    }},
+  { id:'yuXiangEggplant', category:'vegetables', price:9.80, allergens:['GW','GB','E','M'],
+    i18n:{
+      zh:{name:'鱼香茄条', tag:'茄子、糖醋辣酱'}, zhHant:{name:'魚香茄條', tag:'茄子、糖醋辣醬'},
+      en:{name:'Crispy Eggplant Strips in Yu-Xiang Sauce', tag:'Eggplant, sweet-sour-spicy sauce'},
+      it:{name:'Striscioline di Melanzana Croccanti in Salsa Yu-Xiang', tag:'Melanzana, salsa agrodolce piccante'},
+      fr:{name:'Aubergine Croustillante Sauce Yu-Xiang', tag:'Aubergine, sauce aigre-douce épicée'},
+      es:{name:'Tiras de Berenjena Crujientes en Salsa Yu-Xiang', tag:'Berenjena, salsa agridulce picante'},
+    }},
+  { id:'dryFriedGreenBeans', category:'vegetables', price:14.80, allergens:['GW','GB','S','SE'],
+    i18n:{
+      zh:{name:'干煸四季豆', tag:'四季豆、姜、蒜、辣椒油、青葱'}, zhHant:{name:'乾煸四季豆', tag:'四季豆、姜、蒜、辣椒油、青蔥'},
+      en:{name:'Dry-Fried Green Beans', tag:'Green beans, ginger, garlic, chilli oil, spring onion'},
+      it:{name:'Fagiolini Saltati a Secco', tag:'Fagiolini, zenzero, aglio, olio piccante, cipollotto'},
+      fr:{name:'Haricots Verts Sautés à Sec', tag:'Haricots verts, gingembre, ail, huile pimentée, oignon vert'},
+      es:{name:'Judías Verdes Salteadas en Seco', tag:'Judías verdes, jengibre, ajo, aceite picante, cebolleta'},
+    }},
+  { id:'garlicBroccoli', category:'vegetables', price:13.80, allergens:[],
+    i18n:{
+      zh:{name:'蒜蓉西兰花', tag:'蒜末、西兰花'}, zhHant:{name:'蒜蓉西蘭花', tag:'蒜末、西蘭花'},
+      en:{name:'Garlic Broccoli', tag:'Chopped garlic, broccoli'},
+      it:{name:"Broccoli all'Aglio", tag:'Aglio tritato, broccoli'},
+      fr:{name:"Brocoli à l'Ail", tag:'Ail haché, brocoli'},
+      es:{name:'Brócoli al Ajillo', tag:'Ajo picado, brócoli'},
+    }},
+  { id:'seasonalVeg', category:'vegetables', price:12.80, allergens:[],
+    i18n:{
+      zh:{name:'清炒时蔬', tag:''}, zhHant:{name:'清炒時蔬', tag:''},
+      en:{name:'Stir-Fried Seasonal Vegetables', tag:''},
+      it:{name:'Verdure di Stagione Saltate', tag:''},
+      fr:{name:'Légumes de Saison Sautés', tag:''},
+      es:{name:'Verduras de Temporada Salteadas', tag:''},
+    }},
+
+  // ---------- 饭/面类 Rice / Noodles ----------
+  { id:'eggFriedRice', category:'riceNoodles', price:6.30, allergens:['GW','GB','SE','SU','E'],
+    i18n:{
+      zh:{name:'鸡蛋炒饭', tag:'鸡蛋、米饭'}, zhHant:{name:'雞蛋炒飯', tag:'雞蛋、米飯'},
+      en:{name:'Egg Fried Rice', tag:'Egg, rice'},
+      it:{name:"Riso Saltato all'Uovo", tag:'Uovo, riso'},
+      fr:{name:'Riz Sauté aux Œufs', tag:'Œuf, riz'},
+      es:{name:'Arroz Frito con Huevo', tag:'Huevo, arroz'},
+    }},
+  { id:'seafoodFriedRice', category:'riceNoodles', price:10.80, allergens:['GW','GB','SE','SU','C'],
+    i18n:{
+      zh:{name:'海鲜炒饭', tag:'虾仁、米饭'}, zhHant:{name:'海鮮炒飯', tag:'蝦仁、米飯'},
+      en:{name:'Seafood Fried Rice', tag:'Prawn, rice'},
+      it:{name:'Riso Saltato ai Frutti di Mare', tag:'Gamberi, riso'},
+      fr:{name:'Riz Sauté aux Fruits de Mer', tag:'Crevettes, riz'},
+      es:{name:'Arroz Frito con Marisco', tag:'Gambas, arroz'},
+    }},
+  { id:'chickenFriedRice', category:'riceNoodles', price:8.80, allergens:['GW','GB','SE','SU'],
+    i18n:{
+      zh:{name:'鸡肉炒饭', tag:'鸡肉、米饭'}, zhHant:{name:'雞肉炒飯', tag:'雞肉、米飯'},
+      en:{name:'Chicken Fried Rice', tag:'Chicken, rice'},
+      it:{name:'Riso Saltato al Pollo', tag:'Pollo, riso'},
+      fr:{name:'Riz Sauté au Poulet', tag:'Poulet, riz'},
+      es:{name:'Arroz Frito con Pollo', tag:'Pollo, arroz'},
+    }},
+  { id:'hamFriedRice', category:'riceNoodles', price:9.80, allergens:['GW','GB','SE','SU'],
+    i18n:{
+      zh:{name:'火腿炒饭', tag:'火腿、米饭'}, zhHant:{name:'火腿炒飯', tag:'火腿、米飯'},
+      en:{name:'Ham Fried Rice', tag:'Ham, rice'},
+      it:{name:'Riso Saltato al Prosciutto', tag:'Prosciutto, riso'},
+      fr:{name:'Riz Sauté au Jambon', tag:'Jambon, riz'},
+      es:{name:'Arroz Frito con Jamón', tag:'Jamón, arroz'},
+    }},
+  { id:'vegFriedRice', category:'riceNoodles', price:7.30, allergens:['GW','GB','S','SE','SU'],
+    i18n:{
+      zh:{name:'蔬菜炒饭', tag:'甜玉米、胡萝卜、四季豆、米饭'}, zhHant:{name:'蔬菜炒飯', tag:'甜玉米、胡蘿蔔、四季豆、米飯'},
+      en:{name:'Vegetable Fried Rice', tag:'Sweet corn, carrot, green beans, rice'},
+      it:{name:'Riso Saltato alle Verdure', tag:'Mais dolce, carota, fagiolini, riso'},
+      fr:{name:'Riz Sauté aux Légumes', tag:'Maïs doux, carotte, haricots verts, riz'},
+      es:{name:'Arroz Frito con Verduras', tag:'Maíz dulce, zanahoria, judías verdes, arroz'},
+    }},
+  { id:'beefFriedNoodles', category:'riceNoodles', price:12.80, allergens:['GW','GB','SE'],
+    i18n:{
+      zh:{name:'牛肉炒面', tag:'牛肉、红甜椒、面条'}, zhHant:{name:'牛肉炒麵', tag:'牛肉、紅甜椒、麵條'},
+      en:{name:'Beef Fried Noodles', tag:'Beef, red bell pepper, noodles'},
+      it:{name:'Noodles Saltati al Manzo', tag:'Manzo, peperone rosso, noodles'},
+      fr:{name:'Nouilles Sautées au Bœuf', tag:'Bœuf, poivron rouge, nouilles'},
+      es:{name:'Fideos Fritos con Ternera', tag:'Ternera, pimiento rojo, fideos'},
+    }},
+  { id:'seafoodFriedNoodles', category:'riceNoodles', price:12.80, allergens:['GW','GB','S','SE','C'],
+    i18n:{
+      zh:{name:'海鲜炒面', tag:'虾仁、甜椒、面条'}, zhHant:{name:'海鮮炒麵', tag:'蝦仁、甜椒、麵條'},
+      en:{name:'Seafood Fried Noodles', tag:'Prawn, bell pepper, noodles'},
+      it:{name:'Noodles Saltati ai Frutti di Mare', tag:'Gamberi, peperone, noodles'},
+      fr:{name:'Nouilles Sautées aux Fruits de Mer', tag:'Crevettes, poivron, nouilles'},
+      es:{name:'Fideos Fritos con Marisco', tag:'Gambas, pimiento, fideos'},
+    }},
+  { id:'chickenFriedNoodles', category:'riceNoodles', price:11.80, allergens:['GW','GB','S','SE'],
+    i18n:{
+      zh:{name:'鸡肉炒面', tag:'鸡肉、甜椒、面条'}, zhHant:{name:'雞肉炒麵', tag:'雞肉、甜椒、麵條'},
+      en:{name:'Chicken Fried Noodles', tag:'Chicken, bell pepper, noodles'},
+      it:{name:'Noodles Saltati al Pollo', tag:'Pollo, peperone, noodles'},
+      fr:{name:'Nouilles Sautées au Poulet', tag:'Poulet, poivron, nouilles'},
+      es:{name:'Fideos Fritos con Pollo', tag:'Pollo, pimiento, fideos'},
+    }},
+  { id:'vegFriedNoodles', category:'riceNoodles', price:10.80, allergens:['GW','GB','S','SE'],
+    i18n:{
+      zh:{name:'蔬菜炒面', tag:'卷心菜、甜椒、洋葱、豆芽、面条'}, zhHant:{name:'蔬菜炒麵', tag:'捲心菜、甜椒、洋蔥、豆芽、麵條'},
+      en:{name:'Vegetable Fried Noodles', tag:'Cabbage, bell pepper, onion, bean sprout, noodles'},
+      it:{name:'Noodles Saltati alle Verdure', tag:'Cavolo, peperone, cipolla, germogli di soia, noodles'},
+      fr:{name:'Nouilles Sautées aux Légumes', tag:'Chou, poivron, oignon, pousses de soja, nouilles'},
+      es:{name:'Fideos Fritos con Verduras', tag:'Col, pimiento, cebolla, brotes de soja, fideos'},
+    }},
+  { id:'udonSeafood', category:'riceNoodles', price:12.80, allergens:['GW','GB','S','SE','C'],
+    i18n:{
+      zh:{name:'炒乌冬面(海鲜)', tag:'虾仁、甜椒、洋葱、上海青'}, zhHant:{name:'炒烏冬麵(海鮮)', tag:'蝦仁、甜椒、洋蔥、上海青'},
+      en:{name:'Fried Udon Noodles (Seafood)', tag:'Prawn, bell pepper, onion, pak choi'},
+      it:{name:'Udon Saltati (Frutti di Mare)', tag:'Gamberi, peperone, cipolla, pak choi'},
+      fr:{name:'Nouilles Udon Sautées (Fruits de Mer)', tag:'Crevettes, poivron, oignon, pak choi'},
+      es:{name:'Udon Frito (Marisco)', tag:'Gambas, pimiento, cebolla, pak choi'},
+    }},
+  { id:'udonVeg', category:'riceNoodles', price:10.80, allergens:['GW','GB','SE'],
+    i18n:{
+      zh:{name:'炒乌冬面(蔬菜)', tag:'甜椒、洋葱、上海青'}, zhHant:{name:'炒烏冬麵(蔬菜)', tag:'甜椒、洋蔥、上海青'},
+      en:{name:'Fried Udon Noodles (Vegetable)', tag:'Bell pepper, onion, pak choi'},
+      it:{name:'Udon Saltati (Verdure)', tag:'Peperone, cipolla, pak choi'},
+      fr:{name:'Nouilles Udon Sautées (Légumes)', tag:'Poivron, oignon, pak choi'},
+      es:{name:'Udon Frito (Verduras)', tag:'Pimiento, cebolla, pak choi'},
+    }},
+  { id:'beefChowFun', category:'riceNoodles', price:12.80, allergens:['GW','GB','S','E','SE','C'],
+    i18n:{
+      zh:{name:'牛肉炒河粉', tag:'牛肉、河粉、甜椒、洋葱'}, zhHant:{name:'牛肉炒河粉', tag:'牛肉、河粉、甜椒、洋蔥'},
+      en:{name:'Beef Chow Fun', tag:'Beef, rice noodles, bell pepper, onion'},
+      it:{name:'Tagliatelle di Riso Saltate al Manzo', tag:'Manzo, tagliatelle di riso, peperone, cipolla'},
+      fr:{name:'Nouilles de Riz Plates Sautées au Bœuf', tag:'Bœuf, nouilles de riz plates, poivron, oignon'},
+      es:{name:'Fideos de Arroz Anchos Salteados con Ternera', tag:'Ternera, fideos de arroz anchos, pimiento, cebolla'},
+    }},
+  { id:'steamedRice', category:'riceNoodles', price:3.00, allergens:[],
+    i18n:{
+      zh:{name:'白米饭', tag:''}, zhHant:{name:'白米飯', tag:''},
+      en:{name:'Steamed Rice', tag:''},
+      it:{name:'Riso al Vapore', tag:''},
+      fr:{name:'Riz Vapeur', tag:''},
+      es:{name:'Arroz al Vapor', tag:''},
+    }},
+
+  // ---------- 甜品 Dessert ----------
+  { id:'lemonCheesecake', category:'dessert', price:4.80, allergens:['GW','GB','E'],
+    i18n:{
+      zh:{name:'柠檬芝士蛋糕', tag:'柠檬芝士蛋糕、奶油、草莓'}, zhHant:{name:'檸檬芝士蛋糕', tag:'檸檬芝士蛋糕、奶油、草莓'},
+      en:{name:'Lemon Cheesecake', tag:'Lemon cheesecake, cream, strawberry'},
+      it:{name:'Cheesecake al Limone', tag:'Cheesecake al limone, panna, fragola'},
+      fr:{name:'Cheesecake au Citron', tag:'Cheesecake au citron, crème, fraise'},
+      es:{name:'Tarta de Queso con Limón', tag:'Tarta de queso con limón, nata, fresa'},
+    }},
+  { id:'chocoVanillaIceCream', category:'dessert', price:4.80, allergens:['E','M'],
+    i18n:{
+      zh:{name:'巧克力香草冰淇淋', tag:'巧克力酱、冰淇淋、奥利奥饼干、巧克力碎'}, zhHant:{name:'巧克力香草冰淇淋', tag:'巧克力醬、冰淇淋、奧利奧餅乾、巧克力碎'},
+      en:{name:'Chocolate & Vanilla Ice Cream', tag:'Chocolate sauce, ice cream, Oreo cookies, chocolate curls'},
+      it:{name:'Gelato al Cioccolato e Vaniglia', tag:'Salsa al cioccolato, gelato, biscotti Oreo, riccioli di cioccolato'},
+      fr:{name:'Glace Chocolat-Vanille', tag:'Sauce chocolat, glace, biscuits Oreo, copeaux de chocolat'},
+      es:{name:'Helado de Chocolate y Vainilla', tag:'Salsa de chocolate, helado, galletas Oreo, virutas de chocolate'},
+    }},
+  { id:'mangoPomeloSago', category:'dessert', price:4.80, allergens:['M'],
+    i18n:{
+      zh:{name:'杨枝甘露', tag:'芒果、柚子、西米'}, zhHant:{name:'楊枝甘露', tag:'芒果、柚子、西米'},
+      en:{name:'Mango Pomelo Sago', tag:'Mango, pomelo, sago pearls'},
+      it:{name:'Sago con Mango e Pomelo', tag:'Mango, pomelo, perle di sago'},
+      fr:{name:'Sagou à la Mangue et au Pomelo', tag:'Mangue, pomelo, perles de sagou'},
+      es:{name:'Sagú de Mango y Pomelo', tag:'Mango, pomelo, perlas de sagú'},
+    }},
+
+  // ---------- 酒水单 Drinks ----------
+  // 白葡萄酒 White Wine
+  { id:'wineMurariPinotGrigio', category:'drinks', sub:'whiteWine', sizes:[{key:'glass',price:7.90},{key:'bottle',price:28}], allergens:['SU'],
+    i18n:{
+      zh:{name:'Murari Pinot Grigio 卡斯特拉尼灰皮诺', tag:'Veneto, Italy'}, zhHant:{name:'Murari Pinot Grigio 卡斯特拉尼灰皮諾', tag:'Veneto, Italy'},
+      en:{name:'Murari Pinot Grigio', tag:'Veneto, Italy'},
+      it:{name:'Murari Pinot Grigio', tag:'Veneto, Italia'},
+      fr:{name:'Murari Pinot Grigio', tag:'Vénétie, Italie'},
+      es:{name:'Murari Pinot Grigio', tag:'Véneto, Italia'},
+    }},
+  { id:'wineBouchardSauvignonBlanc', category:'drinks', sub:'whiteWine', sizes:[{key:'glass',price:8.50},{key:'bottle',price:32}], allergens:['SU'],
+    i18n:{
+      zh:{name:'Bouchard Aine & Fils Sauvignon Blanc 长相思', tag:'Languedoc, France'}, zhHant:{name:'Bouchard Aine & Fils Sauvignon Blanc 長相思', tag:'Languedoc, France'},
+      en:{name:'Bouchard Aine & Fils Sauvignon Blanc', tag:'Languedoc, France'},
+      it:{name:'Bouchard Aine & Fils Sauvignon Blanc', tag:'Linguadoca, Francia'},
+      fr:{name:'Bouchard Aine & Fils Sauvignon Blanc', tag:'Languedoc, France'},
+      es:{name:'Bouchard Aine & Fils Sauvignon Blanc', tag:'Languedoc, Francia'},
+    }},
+  { id:'winePeterRiesling', category:'drinks', sub:'whiteWine', sizes:[{key:'glass',price:9.90},{key:'bottle',price:36}], allergens:['SU'],
+    i18n:{
+      zh:{name:'Peter & Peter Riesling', tag:'Mosel, Germany'}, zhHant:{name:'Peter & Peter Riesling', tag:'Mosel, Germany'},
+      en:{name:'Peter & Peter Riesling', tag:'Mosel, Germany'},
+      it:{name:'Peter & Peter Riesling', tag:'Mosella, Germania'},
+      fr:{name:'Peter & Peter Riesling', tag:'Moselle, Allemagne'},
+      es:{name:'Peter & Peter Riesling', tag:'Mosela, Alemania'},
+    }},
+  { id:'wineNauMaiSauvignonBlanc', category:'drinks', sub:'whiteWine', sizes:[{key:'bottle',price:39}], allergens:['SU'],
+    i18n:{
+      zh:{name:'Nau Mai Sauvignon Blanc', tag:'Marlborough, New Zealand'}, zhHant:{name:'Nau Mai Sauvignon Blanc', tag:'Marlborough, New Zealand'},
+      en:{name:'Nau Mai Sauvignon Blanc', tag:'Marlborough, New Zealand'},
+      it:{name:'Nau Mai Sauvignon Blanc', tag:'Marlborough, Nuova Zelanda'},
+      fr:{name:'Nau Mai Sauvignon Blanc', tag:'Marlborough, Nouvelle-Zélande'},
+      es:{name:'Nau Mai Sauvignon Blanc', tag:'Marlborough, Nueva Zelanda'},
+    }},
+  { id:'wineCasalVentozelaAlvarinho', category:'drinks', sub:'whiteWine', sizes:[{key:'bottle',price:45}], allergens:['SU'],
+    i18n:{
+      zh:{name:'Casal de Ventozela Alvarinho 阿瓦里诺', tag:'Vinho Verde, Portugal'}, zhHant:{name:'Casal de Ventozela Alvarinho 阿瓦里諾', tag:'Vinho Verde, Portugal'},
+      en:{name:'Casal de Ventozela Alvarinho', tag:'Vinho Verde, Portugal'},
+      it:{name:'Casal de Ventozela Alvarinho', tag:'Vinho Verde, Portogallo'},
+      fr:{name:'Casal de Ventozela Alvarinho', tag:'Vinho Verde, Portugal'},
+      es:{name:'Casal de Ventozela Alvarinho', tag:'Vinho Verde, Portugal'},
+    }},
+  { id:'wineDomaneWachauGruner', category:'drinks', sub:'whiteWine', sizes:[{key:'bottle',price:49}], allergens:['SU'],
+    i18n:{
+      zh:{name:'Domäne Wachau Grüner Veltliner Federspiel', tag:'Wachau, Austria'}, zhHant:{name:'Domäne Wachau Grüner Veltliner Federspiel', tag:'Wachau, Austria'},
+      en:{name:'Domäne Wachau Grüner Veltliner Federspiel', tag:'Wachau, Austria'},
+      it:{name:'Domäne Wachau Grüner Veltliner Federspiel', tag:'Wachau, Austria'},
+      fr:{name:'Domäne Wachau Grüner Veltliner Federspiel', tag:'Wachau, Autriche'},
+      es:{name:'Domäne Wachau Grüner Veltliner Federspiel', tag:'Wachau, Austria'},
+    }},
+  { id:'wineLouisJadotChardonnay', category:'drinks', sub:'whiteWine', sizes:[{key:'bottle',price:65}], allergens:['SU'],
+    i18n:{
+      zh:{name:"Louis Jadot Bourgogne Chardonnay 'Couvent des Jacobins' 勃艮第霞多丽", tag:'Burgundy, France'}, zhHant:{name:"Louis Jadot Bourgogne Chardonnay 'Couvent des Jacobins' 勃艮第霞多麗", tag:'Burgundy, France'},
+      en:{name:"Louis Jadot Bourgogne Chardonnay 'Couvent des Jacobins'", tag:'Burgundy, France'},
+      it:{name:"Louis Jadot Bourgogne Chardonnay 'Couvent des Jacobins'", tag:'Borgogna, Francia'},
+      fr:{name:"Louis Jadot Bourgogne Chardonnay 'Couvent des Jacobins'", tag:'Bourgogne, France'},
+      es:{name:"Louis Jadot Bourgogne Chardonnay 'Couvent des Jacobins'", tag:'Borgoña, Francia'},
+    }},
+  { id:'wineMarquisGoulaineSancerre', category:'drinks', sub:'whiteWine', sizes:[{key:'bottle',price:79}], allergens:['SU'],
+    i18n:{
+      zh:{name:"Marquis de Goulaine Sancerre 'Les Lorys' 桑塞尔", tag:'Loire Valley, France'}, zhHant:{name:"Marquis de Goulaine Sancerre 'Les Lorys' 桑塞爾", tag:'Loire Valley, France'},
+      en:{name:"Marquis de Goulaine Sancerre 'Les Lorys'", tag:'Loire Valley, France'},
+      it:{name:"Marquis de Goulaine Sancerre 'Les Lorys'", tag:'Valle della Loira, Francia'},
+      fr:{name:"Marquis de Goulaine Sancerre 'Les Lorys'", tag:'Vallée de la Loire, France'},
+      es:{name:"Marquis de Goulaine Sancerre 'Les Lorys'", tag:'Valle del Loira, Francia'},
+    }},
+
+  // 红葡萄酒 Red Wine
+  { id:'wineOrquestraTempranillo', category:'drinks', sub:'redWine', sizes:[{key:'glass',price:7.90},{key:'bottle',price:28}], allergens:['SU'],
+    i18n:{
+      zh:{name:'Orquestra Tempranillo 丹魄乐团', tag:'La Mancha, Spain'}, zhHant:{name:'Orquestra Tempranillo 丹魄樂團', tag:'La Mancha, Spain'},
+      en:{name:'Orquestra Tempranillo', tag:'La Mancha, Spain'},
+      it:{name:'Orquestra Tempranillo', tag:'La Mancha, Spagna'},
+      fr:{name:'Orquestra Tempranillo', tag:'La Mancha, Espagne'},
+      es:{name:'Orquestra Tempranillo', tag:'La Mancha, España'},
+    }},
+  { id:'wineReserveAubeSyrahMerlot', category:'drinks', sub:'redWine', sizes:[{key:'glass',price:8.50},{key:'bottle',price:32}], allergens:['SU'],
+    i18n:{
+      zh:{name:"Reserve de L'Aube Syrah Merlot 奥布西拉梅洛珍藏", tag:'Languedoc, France'}, zhHant:{name:"Reserve de L'Aube Syrah Merlot 奧布西拉梅洛珍藏", tag:'Languedoc, France'},
+      en:{name:"Reserve de L'Aube Syrah Merlot", tag:'Languedoc, France'},
+      it:{name:"Reserve de L'Aube Syrah Merlot", tag:'Linguadoca, Francia'},
+      fr:{name:"Reserve de L'Aube Syrah Merlot", tag:'Languedoc, France'},
+      es:{name:"Reserve de L'Aube Syrah Merlot", tag:'Languedoc, Francia'},
+    }},
+  { id:'wineChateauGrandVallons', category:'drinks', sub:'redWine', sizes:[{key:'glass',price:10.95},{key:'bottle',price:39}], allergens:['SU'],
+    i18n:{
+      zh:{name:'Château Les Grand Vallons 波尔多-城堡', tag:'Blaye, Côtes de Bordeaux, France'}, zhHant:{name:'Château Les Grand Vallons 波爾多-城堡', tag:'Blaye, Côtes de Bordeaux, France'},
+      en:{name:'Château Les Grand Vallons', tag:'Blaye, Côtes de Bordeaux, France'},
+      it:{name:'Château Les Grand Vallons', tag:'Blaye, Côtes de Bordeaux, Francia'},
+      fr:{name:'Château Les Grand Vallons', tag:'Blaye, Côtes de Bordeaux, France'},
+      es:{name:'Château Les Grand Vallons', tag:'Blaye, Côtes de Bordeaux, Francia'},
+    }},
+  { id:'wineFincaMonicaCrianza', category:'drinks', sub:'redWine', sizes:[{key:'bottle',price:42}], allergens:['SU'],
+    i18n:{
+      zh:{name:'Finca Mónica Crianza', tag:'Rioja, Spain'}, zhHant:{name:'Finca Mónica Crianza', tag:'Rioja, Spain'},
+      en:{name:'Finca Mónica Crianza', tag:'Rioja, Spain'},
+      it:{name:'Finca Mónica Crianza', tag:'Rioja, Spagna'},
+      fr:{name:'Finca Mónica Crianza', tag:'Rioja, Espagne'},
+      es:{name:'Finca Mónica Crianza', tag:'Rioja, España'},
+    }},
+  { id:'wineFinDelMundoMalbec', category:'drinks', sub:'redWine', sizes:[{key:'bottle',price:45}], allergens:['SU'],
+    i18n:{
+      zh:{name:'Fin del Mundo Reserva Malbec 珍藏马尔贝克', tag:'Patagonia, Argentina'}, zhHant:{name:'Fin del Mundo Reserva Malbec 珍藏馬爾貝克', tag:'Patagonia, Argentina'},
+      en:{name:'Fin del Mundo Reserva Malbec', tag:'Patagonia, Argentina'},
+      it:{name:'Fin del Mundo Reserva Malbec', tag:'Patagonia, Argentina'},
+      fr:{name:'Fin del Mundo Reserva Malbec', tag:'Patagonie, Argentine'},
+      es:{name:'Fin del Mundo Reserva Malbec', tag:'Patagonia, Argentina'},
+    }},
+  { id:'wineSuraniPrimitivo', category:'drinks', sub:'redWine', sizes:[{key:'bottle',price:49}], allergens:['SU'],
+    i18n:{
+      zh:{name:'Surani Primitivo di Manduria', tag:'Puglia, Italy'}, zhHant:{name:'Surani Primitivo di Manduria', tag:'Puglia, Italy'},
+      en:{name:'Surani Primitivo di Manduria', tag:'Puglia, Italy'},
+      it:{name:'Surani Primitivo di Manduria', tag:'Puglia, Italia'},
+      fr:{name:'Surani Primitivo di Manduria', tag:'Pouilles, Italie'},
+      es:{name:'Surani Primitivo di Manduria', tag:'Apulia, Italia'},
+    }},
+  { id:'wineLouisJadotPinotNoir', category:'drinks', sub:'redWine', sizes:[{key:'bottle',price:69}], allergens:['SU'],
+    i18n:{
+      zh:{name:"Louis Jadot Bourgogne Pinot Noir 'Couvent des Jacobins' 勃艮第黑皮诺", tag:'Burgundy, France'}, zhHant:{name:"Louis Jadot Bourgogne Pinot Noir 'Couvent des Jacobins' 勃艮第黑皮諾", tag:'Burgundy, France'},
+      en:{name:"Louis Jadot Bourgogne Pinot Noir 'Couvent des Jacobins'", tag:'Burgundy, France'},
+      it:{name:"Louis Jadot Bourgogne Pinot Noir 'Couvent des Jacobins'", tag:'Borgogna, Francia'},
+      fr:{name:"Louis Jadot Bourgogne Pinot Noir 'Couvent des Jacobins'", tag:'Bourgogne, France'},
+      es:{name:"Louis Jadot Bourgogne Pinot Noir 'Couvent des Jacobins'", tag:'Borgoña, Francia'},
+    }},
+  { id:'wineHautsLynchMoussas', category:'drinks', sub:'redWine', sizes:[{key:'bottle',price:89}], allergens:['SU'],
+    i18n:{
+      zh:{name:'Les Hauts de Lynch Moussas 上梦多克', tag:'Haut-Médoc, Bordeaux, France'}, zhHant:{name:'Les Hauts de Lynch Moussas 上夢多克', tag:'Haut-Médoc, Bordeaux, France'},
+      en:{name:'Les Hauts de Lynch Moussas', tag:'Haut-Médoc, Bordeaux, France'},
+      it:{name:'Les Hauts de Lynch Moussas', tag:'Haut-Médoc, Bordeaux, Francia'},
+      fr:{name:'Les Hauts de Lynch Moussas', tag:'Haut-Médoc, Bordeaux, France'},
+      es:{name:'Les Hauts de Lynch Moussas', tag:'Haut-Médoc, Burdeos, Francia'},
+    }},
+
+  // 桃红 Rosé
+  { id:'roseColombetteGrenache', category:'drinks', sub:'rose', sizes:[{key:'glass',price:8},{key:'bottle',price:29}], allergens:['SU'],
+    i18n:{
+      zh:{name:'Domaine La Colombette Grenache Rosé 歌海娜玫瑰庄', tag:'Languedoc, France'}, zhHant:{name:'Domaine La Colombette Grenache Rosé 歌海娜玫瑰莊', tag:'Languedoc, France'},
+      en:{name:'Domaine La Colombette Grenache Rosé', tag:'Languedoc, France'},
+      it:{name:'Domaine La Colombette Grenache Rosé', tag:'Linguadoca, Francia'},
+      fr:{name:'Domaine La Colombette Grenache Rosé', tag:'Languedoc, France'},
+      es:{name:'Domaine La Colombette Grenache Rosé', tag:'Languedoc, Francia'},
+    }},
+  { id:'roseChateauBerneRomance', category:'drinks', sub:'rose', sizes:[{key:'glass',price:10.95},{key:'bottle',price:39}], allergens:['SU'],
+    i18n:{
+      zh:{name:'Château de Berne Romance Rosé 普罗旺斯玫瑰', tag:'Provence, France'}, zhHant:{name:'Château de Berne Romance Rosé 普羅旺斯玫瑰', tag:'Provence, France'},
+      en:{name:'Château de Berne Romance Rosé', tag:'Provence, France'},
+      it:{name:'Château de Berne Romance Rosé', tag:'Provenza, Francia'},
+      fr:{name:'Château de Berne Romance Rosé', tag:'Provence, France'},
+      es:{name:'Château de Berne Romance Rosé', tag:'Provenza, Francia'},
+    }},
+
+  // 起泡酒 Sparkling
+  { id:'proseccoSerenaFrizzante', category:'drinks', sub:'sparkling', sizes:[{key:'bottle',price:9.95}], allergens:['SU'],
+    i18n:{
+      zh:{name:'Serena Prosecco Frizzante 罗普罗蜜克', tag:'单人装 20cl'}, zhHant:{name:'Serena Prosecco Frizzante 羅普羅蜜克', tag:'單人裝 20cl'},
+      en:{name:'Serena Prosecco Frizzante', tag:'Single serving 20cl'},
+      it:{name:'Serena Prosecco Frizzante', tag:'Monodose 20cl'},
+      fr:{name:'Serena Prosecco Frizzante', tag:'Format individuel 20cl'},
+      es:{name:'Serena Prosecco Frizzante', tag:'Formato individual 20cl'},
+    }},
+  { id:'sparklingMontegrandeBianco', category:'drinks', sub:'sparkling', sizes:[{key:'bottle',price:29}], allergens:['SU'],
+    i18n:{
+      zh:{name:'Montegrande Bianco Frizzante 蒙特格兰德', tag:''}, zhHant:{name:'Montegrande Bianco Frizzante 蒙特格蘭德', tag:''},
+      en:{name:'Montegrande Bianco Frizzante', tag:''},
+      it:{name:'Montegrande Bianco Frizzante', tag:''},
+      fr:{name:'Montegrande Bianco Frizzante', tag:''},
+      es:{name:'Montegrande Bianco Frizzante', tag:''},
+    }},
+  { id:'champagneTheophileBrut', category:'drinks', sub:'sparkling', sizes:[{key:'bottle',price:89}], allergens:['SU'],
+    i18n:{
+      zh:{name:'Champagne Theophile Brut NV 香槟', tag:''}, zhHant:{name:'Champagne Theophile Brut NV 香檳', tag:''},
+      en:{name:'Champagne Theophile Brut NV', tag:''},
+      it:{name:'Champagne Theophile Brut NV', tag:''},
+      fr:{name:'Champagne Theophile Brut NV', tag:''},
+      es:{name:'Champagne Theophile Brut NV', tag:''},
+    }},
+
+  // 软饮 + 水 Soft Drinks + Water
+  { id:'coke', category:'drinks', sub:'softDrink', price:3.80, allergens:[],
+    i18n:{
+      zh:{name:'可乐', tag:'330ml'}, zhHant:{name:'可樂', tag:'330ml'}, en:{name:'Coke', tag:'330ml'}, it:{name:'Coca-Cola', tag:'330ml'},
+      fr:{name:'Coca-Cola', tag:'330ml'}, es:{name:'Coca-Cola', tag:'330ml'},
+    }},
+  { id:'cokeZero', category:'drinks', sub:'softDrink', price:3.80, allergens:[],
+    i18n:{
+      zh:{name:'无糖可乐', tag:'330ml'}, zhHant:{name:'無糖可樂', tag:'330ml'}, en:{name:'Coke Zero', tag:'330ml'}, it:{name:'Coca-Cola Zero', tag:'330ml'},
+      fr:{name:'Coca-Cola Zero', tag:'330ml'}, es:{name:'Coca-Cola Zero', tag:'330ml'},
+    }},
+  { id:'dietCoke', category:'drinks', sub:'softDrink', price:3.80, allergens:[],
+    i18n:{
+      zh:{name:'健怡可乐', tag:'330ml'}, zhHant:{name:'健怡可樂', tag:'330ml'}, en:{name:'Diet Coke', tag:'330ml'}, it:{name:'Coca-Cola Light', tag:'330ml'},
+      fr:{name:'Coca-Cola Light', tag:'330ml'}, es:{name:'Coca-Cola Light', tag:'330ml'},
+    }},
+  { id:'sevenUp', category:'drinks', sub:'softDrink', price:3.80, allergens:[],
+    i18n:{
+      zh:{name:'七喜', tag:'300ml'}, zhHant:{name:'七喜', tag:'300ml'}, en:{name:'7up', tag:'300ml'}, it:{name:'7up', tag:'300ml'},
+      fr:{name:'7up', tag:'300ml'}, es:{name:'7up', tag:'300ml'},
+    }},
+  { id:'sevenUpFree', category:'drinks', sub:'softDrink', price:3.80, allergens:[],
+    i18n:{
+      zh:{name:'无糖七喜', tag:'300ml'}, zhHant:{name:'無糖七喜', tag:'300ml'}, en:{name:'7up Free', tag:'300ml'}, it:{name:'7up Free', tag:'300ml'},
+      fr:{name:'7up Free', tag:'300ml'}, es:{name:'7up Free', tag:'300ml'},
+    }},
+  { id:'fanta', category:'drinks', sub:'softDrink', price:3.80, allergens:[],
+    i18n:{
+      zh:{name:'芬达', tag:'300ml'}, zhHant:{name:'芬達', tag:'300ml'}, en:{name:'Fanta', tag:'300ml'}, it:{name:'Fanta', tag:'300ml'},
+      fr:{name:'Fanta', tag:'300ml'}, es:{name:'Fanta', tag:'300ml'},
+    }},
+  { id:'jiaduobao', category:'drinks', sub:'softDrink', price:3.80, allergens:[],
+    i18n:{
+      zh:{name:'加多宝', tag:''}, zhHant:{name:'加多寶', tag:''}, en:{name:'Jiaduobao', tag:''}, it:{name:'Jiaduobao', tag:''},
+      fr:{name:'Jiaduobao', tag:''}, es:{name:'Jiaduobao', tag:''},
+    }},
+  { id:'aloeJuiceRegular', category:'drinks', sub:'softDrink', price:3.80, allergens:[],
+    i18n:{
+      zh:{name:'芦荟汁', tag:''}, zhHant:{name:'蘆薈汁', tag:''}, en:{name:'Aloe Juice', tag:'Regular'}, it:{name:"Succo d'Aloe", tag:'Normale'},
+      fr:{name:"Jus d'Aloès", tag:'Normal'}, es:{name:'Zumo de Aloe', tag:'Normal'},
+    }},
+  { id:'aloeJuiceLarge', category:'drinks', sub:'softDrink', price:9.00, allergens:[],
+    i18n:{
+      zh:{name:'芦荟汁(大)', tag:''}, zhHant:{name:'蘆薈汁(大)', tag:''}, en:{name:'Aloe Juice', tag:'Large'}, it:{name:"Succo d'Aloe", tag:'Grande'},
+      fr:{name:"Jus d'Aloès", tag:'Grand'}, es:{name:'Zumo de Aloe', tag:'Grande'},
+    }},
+  { id:'soyDrink', category:'drinks', sub:'softDrink', price:4.60, allergens:['S'],
+    i18n:{
+      zh:{name:'维他豆奶(小)', tag:''}, zhHant:{name:'維他豆奶(小)', tag:''}, en:{name:'Soy Drink', tag:''}, it:{name:'Bevanda di Soia', tag:''},
+      fr:{name:'Boisson au Soja', tag:''}, es:{name:'Bebida de Soja', tag:''},
+    }},
+  { id:'coconutJuice', category:'drinks', sub:'softDrink', price:4.60, allergens:[],
+    i18n:{
+      zh:{name:'椰树牌椰汁', tag:''}, zhHant:{name:'椰樹牌椰汁', tag:''}, en:{name:'Coconut Juice', tag:''}, it:{name:'Succo di Cocco', tag:''},
+      fr:{name:'Jus de Coco', tag:''}, es:{name:'Zumo de Coco', tag:''},
+    }},
+  { id:'stillWaterSmall', category:'drinks', sub:'softDrink', price:3.80, allergens:[],
+    i18n:{
+      zh:{name:'小纯净水', tag:'330ml'}, zhHant:{name:'小純淨水', tag:'330ml'}, en:{name:'Still Water', tag:'Small, 330ml'}, it:{name:'Acqua Naturale', tag:'Piccola, 330ml'},
+      fr:{name:'Eau Plate', tag:'Petite, 330ml'}, es:{name:'Agua sin Gas', tag:'Pequeña, 330ml'},
+    }},
+  { id:'sparklingWaterSmall', category:'drinks', sub:'softDrink', price:3.80, allergens:[],
+    i18n:{
+      zh:{name:'小气泡水', tag:'330ml'}, zhHant:{name:'小氣泡水', tag:'330ml'}, en:{name:'Sparkling Water', tag:'Small, 330ml'}, it:{name:'Acqua Frizzante', tag:'Piccola, 330ml'},
+      fr:{name:'Eau Gazeuse', tag:'Petite, 330ml'}, es:{name:'Agua con Gas', tag:'Pequeña, 330ml'},
+    }},
+  { id:'stillWaterLarge', category:'drinks', sub:'softDrink', price:6.00, allergens:[],
+    i18n:{
+      zh:{name:'大纯净水', tag:'750ml'}, zhHant:{name:'大純淨水', tag:'750ml'}, en:{name:'Still Water', tag:'Large, 750ml'}, it:{name:'Acqua Naturale', tag:'Grande, 750ml'},
+      fr:{name:'Eau Plate', tag:'Grande, 750ml'}, es:{name:'Agua sin Gas', tag:'Grande, 750ml'},
+    }},
+  { id:'sparklingWaterLarge', category:'drinks', sub:'softDrink', price:6.00, allergens:[],
+    i18n:{
+      zh:{name:'大气泡水', tag:'750ml'}, zhHant:{name:'大氣泡水', tag:'750ml'}, en:{name:'Sparkling Water', tag:'Large, 750ml'}, it:{name:'Acqua Frizzante', tag:'Grande, 750ml'},
+      fr:{name:'Eau Gazeuse', tag:'Grande, 750ml'}, es:{name:'Agua con Gas', tag:'Grande, 750ml'},
+    }},
+
+  // 果汁 Juices
+  { id:'appleJuice', category:'drinks', sub:'juice', sizes:[{key:'glass',price:2.80},{key:'bottle',price:8.80}], allergens:[],
+    i18n:{
+      zh:{name:'苹果汁', tag:''}, zhHant:{name:'蘋果汁', tag:''}, en:{name:'Apple Juice', tag:''}, it:{name:'Succo di Mela', tag:''},
+      fr:{name:'Jus de Pomme', tag:''}, es:{name:'Zumo de Manzana', tag:''},
+    }},
+  { id:'orangeJuice', category:'drinks', sub:'juice', sizes:[{key:'glass',price:2.80},{key:'bottle',price:8.80}], allergens:[],
+    i18n:{
+      zh:{name:'橙汁', tag:''}, zhHant:{name:'橙汁', tag:''}, en:{name:'Orange Juice', tag:''}, it:{name:"Succo d'Arancia", tag:''},
+      fr:{name:"Jus d'Orange", tag:''}, es:{name:'Zumo de Naranja', tag:''},
+    }},
+  { id:'cranberryJuice', category:'drinks', sub:'juice', sizes:[{key:'glass',price:2.80},{key:'bottle',price:8.80}], allergens:[],
+    i18n:{
+      zh:{name:'蔓越莓汁', tag:''}, zhHant:{name:'蔓越莓汁', tag:''}, en:{name:'Cranberry Juice', tag:''}, it:{name:'Succo di Mirtillo Rosso', tag:''},
+      fr:{name:'Jus de Canneberge', tag:''}, es:{name:'Zumo de Arándano Rojo', tag:''},
+    }},
+
+  // 啤酒 Beer
+  { id:'tsingtaoBeer', category:'drinks', sub:'beer', price:5.95, allergens:['GW','GB'],
+    i18n:{
+      zh:{name:'青岛啤酒', tag:'330ml'}, zhHant:{name:'青島啤酒', tag:'330ml'}, en:{name:'Tsingtao Beer', tag:'330ml'}, it:{name:'Birra Tsingtao', tag:'330ml'},
+      fr:{name:'Bière Tsingtao', tag:'330ml'}, es:{name:'Cerveza Tsingtao', tag:'330ml'},
+    }},
+  { id:'asahiBeer', category:'drinks', sub:'beer', price:5.95, allergens:['GW','GB'],
+    i18n:{
+      zh:{name:'朝日啤酒', tag:'330ml'}, zhHant:{name:'朝日啤酒', tag:'330ml'}, en:{name:'Asahi Beer', tag:'330ml'}, it:{name:'Birra Asahi', tag:'330ml'},
+      fr:{name:'Bière Asahi', tag:'330ml'}, es:{name:'Cerveza Asahi', tag:'330ml'},
+    }},
+  { id:'heinekenBeer', category:'drinks', sub:'beer', price:5.95, allergens:['GW','GB'],
+    i18n:{
+      zh:{name:'喜力啤酒', tag:'330ml'}, zhHant:{name:'喜力啤酒', tag:'330ml'}, en:{name:'Heineken', tag:'330ml'}, it:{name:'Heineken', tag:'330ml'},
+      fr:{name:'Heineken', tag:'330ml'}, es:{name:'Heineken', tag:'330ml'},
+    }},
+  { id:'heinekenZero', category:'drinks', sub:'beer', price:5.50, allergens:['GW','GB'],
+    i18n:{
+      zh:{name:'喜力0.0', tag:'330ml'}, zhHant:{name:'喜力0.0', tag:'330ml'}, en:{name:'Heineken 0.0%', tag:'330ml'}, it:{name:'Heineken 0.0%', tag:'330ml'},
+      fr:{name:'Heineken 0.0%', tag:'330ml'}, es:{name:'Heineken 0.0%', tag:'330ml'},
+    }},
+  { id:'guinnessBeer', category:'drinks', sub:'beer', price:7.95, allergens:['GB'],
+    i18n:{
+      zh:{name:'健力士啤酒', tag:'500ml'}, zhHant:{name:'健力士啤酒', tag:'500ml'}, en:{name:'Guinness', tag:'500ml'}, it:{name:'Guinness', tag:'500ml'},
+      fr:{name:'Guinness', tag:'500ml'}, es:{name:'Guinness', tag:'500ml'},
+    }},
+  { id:'guinnessZero', category:'drinks', sub:'beer', price:7.50, allergens:['GB'],
+    i18n:{
+      zh:{name:'健力士0.0', tag:'500ml'}, zhHant:{name:'健力士0.0', tag:'500ml'}, en:{name:'Guinness 0.0%', tag:'500ml'}, it:{name:'Guinness 0.0%', tag:'500ml'},
+      fr:{name:'Guinness 0.0%', tag:'500ml'}, es:{name:'Guinness 0.0%', tag:'500ml'},
+    }},
+];
+
+// 用常识从中文配料/菜名里判断：这道菜是否可调辣度、是否可勾选“不要肉”
+const SPICY_RE = /辣|剁椒/;
+const MEAT_RE = /鸡肉|鸡柳|猪肉|牛肉|鸭肉|火腿|猪排|牛舌|牛肚|猪腰|猪大肠|猪蹄|五花肉|西冷牛肉|爱尔兰牛柳|小牛肉|培根|午餐肉/;
+// 这些菜本身就是“以某种肉为主角”（菜名/身份就是那块肉），去掉肉等于没有这道菜了，
+// 所以即使配料里含肉也不提供“不要肉”——常见于名字里直接点名一种肉的招牌菜/汤/干货
+const MEAT_OPTION_EXCLUDE = new Set([
+  'crispyWonton', 'mouthWateringChicken', 'chongqingSpicyChicken', 'fuqiFeipian', 'spicyBeefJerky',
+  'porkDumplings', 'chickenDumplings', 'siuMai', 'nourishingChickenSoup', 'pekingDuck',
+  'kungPaoChicken', 'sweetSourChickenPineapple', 'goldenCrispyChickenSalad', 'sweetSpicyChicken',
+  'blackPepperBeef', 'blackPepperChicken', 'sirloinBeefCubes', 'braisedIrishSteak', 'sweetSourPorkChop',
+  'stirFriedYellowBeef', 'kidneyFlowers', 'twiceCookedPork', 'beefSpicyBroth', 'porkSpicyBroth',
+  'tiHuaTang', 'dryFriedPorkIntestine', 'farmhousePork', 'chickenCurry', 'beefCurry',
+]);
+function detectSpicy(d){ return SPICY_RE.test(d.i18n.zh.name + d.i18n.zh.tag); }
+function detectOptions(d){
+  // 饺子/烧卖不需要忌口选项，改用蒸/煎的做法选择（见 dishBodyHTML 里的 cook-method-row）
+  if(d.category === 'dumplings') return [];
+  const opts = [];
+  // 葱/洋葱/姜/香菜是通用的忌口选项，除了甜品（和不会展示的饮品），其余菜品统一提供
+  if(d.category !== 'dessert' && d.category !== 'drinks'){
+    opts.push('scallion', 'onion', 'ginger', 'cilantro');
+  }
+  if(MEAT_RE.test(d.i18n.zh.tag) && !MEAT_OPTION_EXCLUDE.has(d.id)){
+    opts.push('meat');
+  }
+  return opts;
+}
+
+const MENU = DISH_DATA.map(d => ({
+  id: d.id, category: d.category, sub: d.sub, price: d.price, sizes: d.sizes, unit: d.unit,
+  allergens: d.allergens, img: d.img || `https://picsum.photos/seed/${d.id}-dish/640/480`,
+  spicy: detectSpicy(d), options: detectOptions(d),
+}));
+LANG_ORDER.forEach(lang => {
+  I18N[lang].dishes = {};
+  DISH_DATA.forEach(d => { I18N[lang].dishes[d.id] = d.i18n[lang]; });
+});
+const ZH_NAME_TO_ID = {};
+DISH_DATA.forEach(d => { ZH_NAME_TO_ID[d.i18n.zh.name] = d.id; });
+const MENU_BY_ID = {};
+MENU.forEach(d => { MENU_BY_ID[d.id] = d; });
+const CHEF_ITEMS = MENU.filter(d => d.category === 'chefSpecial');
+
+const params = new URLSearchParams(location.search);
+const urlTable = params.get('table');
+
+let state = {
+  table: urlTable || null,
+  lockedByUrl: !!urlTable,
+  screen: 'welcome',
+  lang: 'zh',
+  welcomeVisible: false,
+  langMenuOpen: false,
+  langSwitcherOpen: false,
+  items: {},   // { dishId: { qty, spice, size, excludes } }
+  activeCategory: 'all',
+  lastOrder: null,
+  submitting: false,
+  callingWaiter: false,
+  myOrderItems: null,
+  myOrderLoading: false,
+  pandaMenuOpen: false,
+  allergenInfoOpen: false,
+  cartPopupOpen: false,
+  orderNickname: '',
+  orderPartySize: 2,
+  upsellOpen: false,
+  upsellShown: false,     // whether the drinks/dessert upsell has already been resolved for this checkout attempt
+  upsellItems: [],        // 4 randomly-picked dish ids currently shown in the upsell modal
+  upsellSelected: {},     // { dishId: true }
+};
+
+let screenHistory = [];   // 记录来源页面，供“返回”按钮回退用
+let welcomeTimer = null;
+
+// 本桌订单的实时镜像：一旦选定桌号就一直监听，不管顾客在看菜单/下单确认页/我的订单页。
+// 员工在接单看板上单品删除或整单删除，都是直接改/删 Firestore 里的 order 文档，这个监听
+// 会立刻收到推送——用来把"下单确认页"和"我的订单页"的展示实时同步过来，而不是等顾客
+// 手动刷新或重新进入页面才发现菜品已经被后台删掉了。
+let liveTableOrdersUnsub = null;
+let liveTableOrders = [];
+let liveTableOrdersLoaded = false;
+
+function watchTableOrders(table){
+  if(liveTableOrdersUnsub){ liveTableOrdersUnsub(); liveTableOrdersUnsub = null; }
+  liveTableOrders = [];
+  liveTableOrdersLoaded = false;
+  if(!table) return;
+  liveTableOrdersUnsub = ordersRef.where('table', '==', String(table)).onSnapshot(snap => {
+    liveTableOrders = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+    liveTableOrdersLoaded = true;
+    onTableOrdersChanged();
+  }, err => {});
+}
+
+function onTableOrdersChanged(){
+  const foodOrders = liveTableOrders.filter(o => !o.call);
+
+  if(state.myOrderItems !== null){
+    state.myOrderItems = mergeItems(foodOrders);
+  }
+
+  if(state.lastOrder){
+    const doc = liveTableOrders.find(o => o.id === state.lastOrder.docId);
+    state.lastOrder.summaryItems = mergeItems(foodOrders);
+    state.lastOrder.removed = !doc;
+    if(doc && doc.status) state.lastOrder.status = doc.status;
+  }
+
+  if(state.screen === 'myOrder' || state.screen === 'confirm') render();
+}
+
+function applyLanguage(code){
+  state.lang = code;
+  document.documentElement.lang = code;
+  document.title = t('appTitle');
+}
+
+function selectLanguage(code){
+  applyLanguage(code);
+  state.langMenuOpen = false;
+  state.welcomeVisible = false;
+  stopWelcomeCycle();
+  screenHistory = [];
+  state.screen = state.table ? 'menu' : 'pick';
+  render();
+}
+
+function setLanguage(code){
+  applyLanguage(code);
+  state.langSwitcherOpen = false;
+  state.pandaMenuOpen = false;
+  render();
+}
+
+function toggleWelcomeLangMenu(){
+  state.langMenuOpen = !state.langMenuOpen;
+  render();
+}
+
+function toggleLangSwitcher(){
+  state.pandaMenuOpen = false;
+  state.langSwitcherOpen = !state.langSwitcherOpen;
+  render();
+}
+
+function closeLangSwitcher(){
+  state.langSwitcherOpen = false;
+  render();
+}
+
+function stopWelcomeCycle(){
+  if(welcomeTimer){ clearInterval(welcomeTimer); welcomeTimer = null; }
+}
+
+function startWelcomeCycle(){
+  if(welcomeTimer) return;
+  let idx = 0;
+  welcomeTimer = setInterval(()=>{
+    const el = document.getElementById('welcome-word');
+    if(!el) return;
+    el.classList.add('swap');
+    setTimeout(()=>{
+      idx = (idx + 1) % LANG_ORDER.length;
+      el.textContent = LANG_META[LANG_ORDER[idx]].greeting;
+      el.classList.remove('swap');
+    }, 400);
+  }, 1800);
+}
+
+const WELCOME_INTRO = [
+  { id:'welcome-leaf',     delay:100 },
+  { id:'welcome-word',     delay:500 },
+  { id:'welcome-divider',  delay:1150 },
+  { id:'welcome-wordmark', delay:1350 },
+  { id:'welcome-kicker',   delay:1600 },
+  { id:'welcome-btn-wrap', delay:1850 },
+];
+
+function mountWelcomeScreen(){
+  if(!state.welcomeVisible){
+    WELCOME_INTRO.forEach((item, i)=>{
+      setTimeout(()=>{
+        const el = document.getElementById(item.id);
+        if(el) el.classList.add('in');
+        if(i === WELCOME_INTRO.length - 1) state.welcomeVisible = true;
+      }, item.delay);
+    });
+    setTimeout(startWelcomeCycle, 1500);
+  }else{
+    startWelcomeCycle();
+  }
+}
+
+function langPanelHTML(handlerName){
+  return `
+    <div class="lang-panel">
+      ${LANG_ORDER.map(code => `
+        <button class="${state.lang===code?'active':''}" onclick="${handlerName}('${code}')">
+          <span class="lang-native">${LANG_META[code].native}</span>
+          <span class="lang-check">✓</span>
+        </button>`).join('')}
+    </div>`;
+}
+
+function welcomeHTML(){
+  const v = state.welcomeVisible ? 'in' : '';
+  return `
+    <div class="welcome-screen">
+      <div class="welcome-inner">
+        <div class="welcome-leaf ${v}" id="welcome-leaf">
+          <img src="../image/LOGO/logo.png" alt="Ginkgo Restaurant"/>
+        </div>
+        <p class="welcome-word ${v}" id="welcome-word">${LANG_META[LANG_ORDER[0]].greeting}</p>
+        <div class="welcome-divider ${v}" id="welcome-divider"></div>
+        <div class="welcome-wordmark ${v}" id="welcome-wordmark"><h1>Ginkgo<br/>Restaurant</h1></div>
+        <div class="welcome-btn-wrap ${v}" id="welcome-btn-wrap">
+          ${state.langMenuOpen ? `<button class="panda-overlay" onclick="toggleWelcomeLangMenu()" aria-label="${t('closeMenu')}"></button>` : ''}
+          <button class="lang-select-btn" onclick="toggleWelcomeLangMenu()">
+            <span>Start to Order</span>
+          </button>
+          ${state.langMenuOpen ? langPanelHTML('selectLanguage') : ''}
+        </div>
+      </div>
+    </div>`;
+}
+
+function goBack(){
+  const prev = screenHistory.pop();
+  if(!prev) return;
+  state.screen = prev;
+  render();
+}
+
+function backRowHTML(){
+  if(screenHistory.length === 0) return '';
+  return `<div class="back-row"><button class="back-btn" onclick="goBack()" aria-label="${t('back')}">← ${t('back')}</button></div>`;
+}
+
+function getItem(id){
+  return state.items[id] || { qty:0, spice:'中辣', size:null, excludes:{}, cookMethod:'steamed' };
+}
+
+function changeQty(id, delta){
+  const cur = getItem(id);
+  const qty = Math.max(0, Math.min(20, cur.qty + delta));
+  state.items[id] = { qty, spice: cur.spice, size: cur.size, excludes: cur.excludes, cookMethod: cur.cookMethod };
+  if(delta > 0 && qty > cur.qty) celebrateAddToCart();
+  updateItemUI(id);
+}
+
+function setSpice(id, level){
+  const cur = getItem(id);
+  if(cur.qty <= 0) return;
+  state.items[id] = { qty: cur.qty, spice: level, size: cur.size, excludes: cur.excludes, cookMethod: cur.cookMethod };
+  updateItemUI(id);
+}
+
+function setSize(id, key){
+  const cur = getItem(id);
+  state.items[id] = { qty: cur.qty, spice: cur.spice, size: key, excludes: cur.excludes, cookMethod: cur.cookMethod };
+  updateItemUI(id);
+}
+
+function toggleExclude(id, key){
+  const cur = getItem(id);
+  if(cur.qty <= 0) return;
+  const excludes = Object.assign({}, cur.excludes, { [key]: !cur.excludes[key] });
+  state.items[id] = { qty: cur.qty, spice: cur.spice, size: cur.size, excludes, cookMethod: cur.cookMethod };
+  updateItemUI(id);
+}
+
+function setCookMethod(id, method){
+  const cur = getItem(id);
+  if(cur.qty <= 0) return;
+  state.items[id] = { qty: cur.qty, spice: cur.spice, size: cur.size, excludes: cur.excludes, cookMethod: method };
+  updateItemUI(id);
+}
+
+// Patches just the affected dish card (+ cart badge/panel) instead of the
+// full render(), so tapping qty/spice/size/exclude on the menu doesn't
+// rebuild every dish photo on screen and flash the page.
+function updateItemUI(id){
+  if(state.screen !== 'menu'){ render(); return; }
+
+  const body = document.querySelector(`.dish-card[data-id="${id}"] .dish-body`);
+  if(body) body.innerHTML = dishBodyHTML(MENU_BY_ID[id]);
+
+  if(state.cartPopupOpen){
+    const body = document.getElementById('cart-side-body');
+    if(body) body.innerHTML = cartSideBodyHTML();
+  }
+
+  const count = totalCount();
+  const fab = document.querySelector('.cart-side-fab');
+  if(fab){
+    const badge = fab.querySelector('.cart-side-fab-badge');
+    if(badge){
+      badge.textContent = count;
+      badge.classList.remove('bump');
+      void badge.offsetWidth;
+      badge.classList.add('bump');
+    }
+  }
+  const orderBtn = document.querySelector('.order-now-btn');
+  if(orderBtn) orderBtn.disabled = count === 0;
+}
+
+function setCategory(cat){
+  state.activeCategory = cat;
+  render();
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const behavior = reduceMotion ? 'auto' : 'smooth';
+  const dishList = document.querySelector('.dish-list');
+  const firstEl = dishList && dishList.firstElementChild;
+  if(firstEl) firstEl.scrollIntoView({ behavior, block: 'start' });
+  else window.scrollTo({ top: 0, behavior });
+}
+
+function toggleAllergenInfo(){
+  state.allergenInfoOpen = !state.allergenInfoOpen;
+  render();
+}
+
+// Cart popup lives in its own root (see renderCartPopup) so opening/closing
+// it doesn't rebuild the whole menu screen and flash every dish photo behind it.
+function toggleCartPopup(){
+  state.cartPopupOpen = !state.cartPopupOpen;
+  renderCartPopup();
+}
+
+function renderCartPopup(){
+  document.getElementById('cart-popup-root').innerHTML =
+    (state.screen === 'menu' && state.cartPopupOpen) ? cartPopupHTML() : '';
+}
+
+let allergenPopupTimer = null;
+
+function closeAllergenPopup(){
+  clearTimeout(allergenPopupTimer);
+  allergenPopupTimer = null;
+  document.getElementById('allergen-popup-root').innerHTML = '';
+}
+
+function showAllergenPopup(event, code){
+  event.stopPropagation();
+  clearTimeout(allergenPopupTimer);
+  const rect = event.currentTarget.getBoundingClientRect();
+  const left = rect.left + rect.width / 2;
+  const top = rect.top;
+  document.getElementById('allergen-popup-root').innerHTML = `
+    <div class="allergen-popup" style="left:${left}px;top:${top}px;">
+      <span class="allergen-popup-code">${code}</span>
+      <span>${tAllergen(code)}</span>
+    </div>`;
+  allergenPopupTimer = setTimeout(closeAllergenPopup, 750);
+}
+
+function goToMyOrder(){
+  state.pandaMenuOpen = false;
+  if(state.screen !== 'myOrder') screenHistory.push(state.screen);
+  state.screen = 'myOrder';
+  // liveTableOrders 从选桌那一刻就在实时监听了，通常这里已经有数据，不用再等一次网络请求
+  state.myOrderLoading = !liveTableOrdersLoaded;
+  state.myOrderItems = liveTableOrdersLoaded ? mergeItems(liveTableOrders.filter(o => !o.call)) : null;
+  render();
+}
+
+function celebrateAddToCart(){
+  const existing = document.querySelector('.hotpot-toast');
+  if(existing) existing.remove();
+
+  const toast = document.createElement('div');
+  toast.className = 'hotpot-toast';
+  toast.innerHTML = `
+    <div class="hotpot-pot">
+      <svg viewBox="0 0 120 90" width="112" height="84">
+        <path d="M10 32 Q10 80 60 80 Q110 80 110 32 L100 32 Q100 70 60 70 Q20 70 20 32 Z" fill="#8A2A12"/>
+        <ellipse cx="60" cy="32" rx="50" ry="13" fill="#E3421F"/>
+        <ellipse cx="60" cy="32" rx="50" ry="13" fill="none" stroke="#7A2A14" stroke-width="2.5"/>
+        <ellipse cx="60" cy="32" rx="42" ry="9" fill="#B22F14"/>
+        <rect x="-2" y="27" width="16" height="8" rx="4" fill="#8A2A12"/>
+        <rect x="106" y="27" width="16" height="8" rx="4" fill="#8A2A12"/>
+      </svg>
+      <span class="hotpot-steam s1">~</span>
+      <span class="hotpot-steam s2">~</span>
+      <span class="hotpot-dumpling">🥟</span>
+      <span class="hotpot-splash">💦</span>
+    </div>
+    <p class="hotpot-caption">${t('addedToCart')}</p>
+  `;
+  document.body.appendChild(toast);
+  toast.addEventListener('animationend', (ev)=>{
+    if(ev.target === toast) toast.remove();
+  });
+}
+
+function celebrateCallWaiter(){
+  const existing = document.querySelector('.hotpot-toast');
+  if(existing) existing.remove();
+
+  const toast = document.createElement('div');
+  toast.className = 'hotpot-toast';
+  toast.innerHTML = `
+    <span class="call-toast-bell">🔔</span>
+    <p class="hotpot-caption">${t('waiterCalled')}</p>
+  `;
+  document.body.appendChild(toast);
+  toast.addEventListener('animationend', (ev)=>{
+    if(ev.target === toast) toast.remove();
+  });
+}
+
+async function callWaiter(){
+  if(state.callingWaiter || !state.table) return;
+  state.callingWaiter = true;
+  render();
+  try{
+    await withTimeout(ordersRef.add({
+      table: state.table, items: [], createdAt: Date.now(),
+      nickname: state.orderNickname || '', partySize: state.orderPartySize || 1,
+      status: 'pending', call: true,
+    }), 12000);
+    celebrateCallWaiter();
+  }catch(e){ alert(t('orderFailed')); }
+  state.callingWaiter = false;
+  render();
+}
+
+function goToCart(){
+  state.pandaMenuOpen = false;
+  if(state.screen !== 'cart') screenHistory.push(state.screen);
+  state.screen = 'cart';
+  render();
+}
+
+function goToOrderReview(){
+  if(totalCount() === 0) return;
+  state.pandaMenuOpen = false;
+  if(state.screen !== 'orderReview') screenHistory.push(state.screen);
+  state.screen = 'orderReview';
+  state.upsellShown = false;
+  state.upsellOpen = false;
+  render();
+}
+
+function setPartySize(delta){
+  state.orderPartySize = Math.max(1, Math.min(50, state.orderPartySize + delta));
+  render();
+}
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function handlePlaceOrderClick(){
+  if(totalCount() === 0 || state.submitting) return;
+  if(!state.upsellShown){
+    openUpsell();
+  }else{
+    submitOrder();
+  }
+}
+
+function openUpsell(){
+  const casualDrinkSubs = new Set(['softDrink','juice','beer']);
+  const pool = MENU.filter(d => ((d.category === 'drinks' && casualDrinkSubs.has(d.sub)) || d.category === 'dessert') && !isSoldOut(d.id));
+  state.upsellItems = shuffle(pool.map(d => d.id)).slice(0, 4);
+  state.upsellSelected = {};
+  state.upsellOpen = true;
+  render();
+}
+
+// Patches just the tapped tile's selected state instead of a full render(),
+// so tapping a photo to select it doesn't rebuild (and flash) every photo
+// in the upsell grid.
+function toggleUpsellItem(id){
+  state.upsellSelected[id] = !state.upsellSelected[id];
+  const tile = document.querySelector(`.upsell-tile[data-id="${id}"]`);
+  if(tile) tile.classList.toggle('selected', state.upsellSelected[id]);
+}
+
+function confirmUpsellAdd(){
+  Object.keys(state.upsellSelected).forEach(id => {
+    if(!state.upsellSelected[id]) return;
+    const cur = getItem(id);
+    state.items[id] = { qty: cur.qty + 1, spice: cur.spice, size: cur.size, excludes: cur.excludes };
+  });
+  state.upsellOpen = false;
+  state.upsellShown = true;   // resolved: pressing 立刻下单 again on the mirrored review page submits for real, no re-prompt
+  render();
+}
+
+function skipUpsell(){
+  state.upsellOpen = false;
+  state.upsellShown = true;   // resolved: submit immediately with no drinks/dessert added
+  render();
+  submitOrder();
+}
+
+// On the menu screen the button is docked inline in the header
+// (#menu-panda-slot), so it scrolls away instead of floating forever.
+// Everywhere else it falls back to the fixed #panda-nav root. Either way,
+// toggling the dropdown only repaints that one slot, not the whole screen
+// behind it (so the menu's dish cards never flash/re-mount).
+function renderPandaNav(){
+  const inlineSlot = document.getElementById('menu-panda-slot');
+  document.getElementById('panda-nav').innerHTML = inlineSlot ? '' : (state.screen === 'welcome' ? '' : pandaNavHTML());
+  if(inlineSlot) inlineSlot.innerHTML = pandaNavHTML();
+}
+
+function togglePandaMenu(){
+  state.pandaMenuOpen = !state.pandaMenuOpen;
+  renderPandaNav();
+}
+
+function closePandaMenu(){
+  if(!state.pandaMenuOpen) return;
+  state.pandaMenuOpen = false;
+  renderPandaNav();
+}
+
+function selectTable(n){
+  screenHistory.push(state.screen);
+  state.table = String(n);
+  state.screen = 'menu';
+  watchTableOrders(state.table);
+  render();
+}
+
+function changeTable(){
+  if(state.lockedByUrl) return;
+  screenHistory = [];
+  state.screen = 'pick';
+  render();
+}
+
+function totalCount(){
+  return Object.values(state.items).reduce((s,v)=>s+v.qty,0);
+}
+
+function resetToMenu(){
+  state.items = {};
+  state.lastOrder = null;
+  state.orderNickname = '';
+  state.orderPartySize = 2;
+  state.upsellShown = false;
+  state.upsellOpen = false;
+  state.upsellItems = [];
+  state.upsellSelected = {};
+  screenHistory = [];
+  state.screen = 'menu';
+  render();
+}
+
+async function fetchTableOrders(table){
+  try{
+    const snap = await withTimeout(ordersRef.where('table', '==', String(table)).get(), 8000);
+    return snap.docs.map(d => d.data());
+  }catch(e){ return []; }
+}
+
+// 同一桌可能有多笔未处理订单（加菜），按“菜名+辣度+份量”合并数量，方便顾客看到本桌目前的点单全貌
+function mergeItems(ordersList){
+  const merged = new Map();
+  ordersList.forEach(o => {
+    o.items.forEach(it => {
+      const key = it.name + '__' + it.spice + '__' + (it.size || '') + '__' + (it.cookMethod || '');
+      if(!merged.has(key)) merged.set(key, { name: it.name, spice: it.spice, size: it.size || null, cookMethod: it.cookMethod || null, price: it.price, qty: 0 });
+      merged.get(key).qty += it.qty;
+    });
+  });
+  return Array.from(merged.values());
+}
+
+async function submitOrder(){
+  if(state.submitting || totalCount() === 0) return;
+  state.submitting = true; render();
+
+  const items = MENU
+    .map(d => {
+      const it = getItem(d.id);
+      if(it.qty <= 0) return null;
+      const entry = { name: zhDishName(d.id), qty: it.qty, price: dishUnitPrice(d, it) };
+      if(d.spicy) entry.spice = it.spice;
+      if(d.sizes) entry.size = it.size || d.sizes[0].key;
+      if(d.category === 'dumplings') entry.cookMethod = it.cookMethod || 'steamed';
+      const excludeKeys = Object.keys(it.excludes || {}).filter(k => it.excludes[k]);
+      if(excludeKeys.length) entry.excludes = excludeKeys;
+      return entry;
+    })
+    .filter(Boolean);
+
+  const order = {
+    table: state.table, items, createdAt: Date.now(),
+    nickname: state.orderNickname || '', partySize: state.orderPartySize || 1,
+  };
+
+  try{
+    const priorOrders = await fetchTableOrders(state.table);
+    const isAddOn = priorOrders.length > 0;
+
+    const docRef = await withTimeout(ordersRef.add({
+      table: order.table,
+      items: order.items,
+      createdAt: order.createdAt,
+      nickname: order.nickname,
+      partySize: order.partySize,
+      status: 'pending',
+    }), 12000);
+
+    const tableOrders = await fetchTableOrders(state.table);
+    const summaryItems = mergeItems(tableOrders.length > 0 ? tableOrders : [...priorOrders, order]);
+
+    state.lastOrder = {
+      table: order.table, items: order.items, summaryItems, isAddOn,
+      nickname: order.nickname, partySize: order.partySize,
+      docId: docRef.id, status: 'pending', removed: false,
+    };
+    screenHistory.push('menu');
+    state.screen = 'confirm';
+  }catch(e){
+    alert(t('orderFailed'));
+  }
+  state.submitting = false;
+  render();
+}
+
+function flameIcons(n){
+  let out = '';
+  for(let i=0;i<3;i++){
+    out += `<svg class="flame ${i<n?'lit':''}" viewBox="0 0 24 24" width="11" height="11">
+      <path d="M12 2c1 3-3 4-3 7a3 3 0 006 0c0-1-.5-2-1-3 2 1 3 3 3 5a5 5 0 01-10 0c0-4 3-5 5-9z"/>
+    </svg>`;
+  }
+  return out;
+}
+
+const PICKABLE_TABLES = [...Array.from({length:30},(_,i)=>i+1), 888];
+
+function tablePickHTML(){
+  return `
+    <div class="pick-screen">
+      <p class="eyebrow">${t('pickEyebrow')}</p>
+      <h1>${t('pickTitle')}</h1>
+      <p class="pick-hint">${t('pickHint')}</p>
+      <div class="table-grid">
+        ${PICKABLE_TABLES.map(n=>`<button onclick="selectTable(${n})">${t('tablePrefix')}${n}</button>`).join('')}
+      </div>
+    </div>`;
+}
+
+function sizeRowHTML(d, it){
+  return `<div class="size-row">
+    ${d.sizes.map(s=>`
+      <button class="size-pill ${((it.size||d.sizes[0].key)===s.key)?'active':''}" onclick="setSize('${d.id}','${s.key}')">
+        <span class="size-label">${tSize(s.key)}</span><span class="size-price">${formatPrice(s.price)}</span>
+      </button>`).join('')}
+  </div>`;
+}
+
+function optionsRowHTML(d, it){
+  return `<div class="option-row">
+    ${d.options.map(key=>`
+      <button class="option-chip ${it.excludes[key]?'active':''}" onclick="toggleExclude('${d.id}','${key}')">
+        <span class="option-check">${it.excludes[key]?'✓':''}</span><span>${tOption(key)}</span>
+      </button>`).join('')}
+  </div>`;
+}
+
+function allergenChipsHTML(codes){
+  if(!codes || codes.length===0) return '';
+  return `
+    <div class="allergen-row">${codes.map(c=>`<button class="allergen-chip" onclick="showAllergenPopup(event,'${c}')">${c}</button>`).join('')}</div>
+    <p class="allergen-tap-hint">${t('allergenTapHint')}</p>`;
+}
+
+document.addEventListener('click', closeAllergenPopup);
+
+function allergenModalHTML(){
+  if(!state.allergenInfoOpen) return '';
+  return `
+    <button class="lang-switcher-overlay" onclick="toggleAllergenInfo()" aria-label="${t('closeMenu')}"></button>
+    <div class="lang-switcher-panel allergen-modal">
+      <p class="lang-switcher-title">${t('allergensModalTitle')}</p>
+      <div class="allergen-grid">
+        ${ALLERGEN_CODE_ORDER.map(c=>`<div class="allergen-grid-item"><span class="allergen-chip">${c}</span><span>${tAllergen(c)}</span></div>`).join('')}
+      </div>
+    </div>`;
+}
+
+let chefCarouselTimer = null;
+let chefCarouselIndex = 0;
+
+function stopChefCarousel(){
+  if(chefCarouselTimer){ clearInterval(chefCarouselTimer); chefCarouselTimer = null; }
+}
+
+function startChefCarousel(){
+  if(chefCarouselTimer || CHEF_ITEMS.length < 2) return;
+  chefCarouselTimer = setInterval(()=>{
+    chefCarouselIndex = (chefCarouselIndex + 1) % CHEF_ITEMS.length;
+    const d = CHEF_ITEMS[chefCarouselIndex];
+    const name = tDish(d.id,'name');
+    const img = document.getElementById('chef-carousel-photo');
+    const cap = document.getElementById('chef-carousel-caption');
+    if(!img || !cap) return;
+    img.style.opacity = 0;
+    cap.style.opacity = 0;
+    setTimeout(()=>{
+      img.src = d.img;
+      img.alt = name;
+      cap.textContent = name;
+      img.style.opacity = 1;
+      cap.style.opacity = 1;
+    }, 300);
+  }, 3000);
+}
+
+function chefCarouselHTML(){
+  if(CHEF_ITEMS.length===0) return '';
+  const d = CHEF_ITEMS[chefCarouselIndex % CHEF_ITEMS.length];
+  const name = tDish(d.id,'name');
+  return `
+    <div class="chef-carousel">
+      <button class="chef-slide" onclick="setCategory('chefSpecial')">
+        <img id="chef-carousel-photo" class="chef-slide-photo" src="${d.img}" alt="${name}" decoding="async" onerror="this.style.display='none'">
+        <span class="chef-slide-tag">${tCat('chefSpecial')}</span>
+        <span id="chef-carousel-caption" class="chef-slide-caption">${name}</span>
+      </button>
+    </div>`;
+}
+
+function dishBodyHTML(d){
+  const it = getItem(d.id);
+  const name = tDish(d.id,'name');
+  const tag = tDish(d.id,'tag');
+  return `
+          <div class="dish-title-row">
+            <h3 class="dish-name">${name}</h3>
+            <span class="dish-price">${dishPriceLabel(d, it)}</span>
+          </div>
+          ${tag ? `<p class="tag">${tag}</p>` : ''}
+          ${allergenChipsHTML(d.allergens)}
+          ${d.sizes ? sizeRowHTML(d, it) : ''}
+          <div class="dish-actions">
+            <div class="stepper">
+              <button onclick="changeQty('${d.id}',-1)" ${it.qty<=0?'disabled':''} aria-label="${t('decreaseQty')}">−</button>
+              <span class="qty">${it.qty}</span>
+              <button class="stepper-add" onclick="changeQty('${d.id}',1)" aria-label="${t('increaseQty')}">+</button>
+            </div>
+          </div>
+          ${it.qty>0 && d.spicy ? `
+            <div class="spice-row">
+              ${SPICE_LEVELS.map((lvl,i)=>`
+                <button class="spice-pill ${it.spice===lvl?'active':''}" onclick="setSpice('${d.id}','${lvl}')">
+                  <span class="flames">${flameIcons(i+1)}</span><span class="spice-label">${tSpice(i)}</span>
+                </button>`).join('')}
+            </div>` : ''}
+          ${it.qty>0 && d.category==='dumplings' ? `
+            <div class="spice-row">
+              ${['steamed','panFried'].map(m=>`
+                <button class="spice-pill ${(it.cookMethod||'steamed')===m?'active':''}" onclick="setCookMethod('${d.id}','${m}')">
+                  <span class="spice-label">${tCookMethod(m)}</span>
+                </button>`).join('')}
+            </div>` : ''}
+          ${it.qty>0 && d.options.length>0 ? optionsRowHTML(d, it) : ''}`;
+}
+
+// Photo wrapper is rendered once per card and never touched again by
+// updateItemUI — only .dish-body gets patched — so tapping qty/spice/
+// size/exclude never re-creates the <img> and flashes the photo.
+function soldOutBodyHTML(d){
+  const name = tDish(d.id,'name');
+  const tag = tDish(d.id,'tag');
+  return `
+          <div class="dish-title-row">
+            <h3 class="dish-name">${name}</h3>
+          </div>
+          ${tag ? `<p class="tag">${tag}</p>` : ''}
+          <p class="sold-out-msg">${t('soldOutMsg')}</p>`;
+}
+
+function dishCardHTML(d){
+  const name = tDish(d.id,'name');
+  const soldOut = isSoldOut(d.id);
+  return `
+      <div class="dish-card${soldOut ? ' sold-out' : ''}" data-id="${d.id}">
+        <div class="dish-photo-wrap">
+          <img class="dish-photo" src="${d.img}" alt="${name}" loading="lazy" decoding="async" onerror="this.style.display='none'">
+        </div>
+        <div class="dish-body">${soldOut ? soldOutBodyHTML(d) : dishBodyHTML(d)}</div>
+      </div>`;
+}
+
+function menuHTML(){
+  const activeCat = state.activeCategory || 'all';
+  const filteredMenu = activeCat === 'all' ? MENU : MENU.filter(d=>d.category===activeCat);
+
+  let lastSub = null;
+  const dishesHTML = filteredMenu.map(d=>{
+    const groupHeaderHTML = (d.sub && d.sub !== lastSub) ? `<div class="dish-group-header">${tSubGroup(d.sub)}</div>` : '';
+    lastSub = d.sub || lastSub;
+    return groupHeaderHTML + dishCardHTML(d);
+  }).join('');
+
+  const categoryNavHTML = CATEGORIES.map(cat=>`
+    <button class="cat-btn ${activeCat===cat?'active':''}" onclick="setCategory('${cat}')">${tCat(cat)}</button>
+  `).join('');
+
+  const count = totalCount();
+
+  return `
+    ${backRowHTML()}
+    <header class="bar">
+      <div class="bar-row">
+        <div class="table-badge">
+          <span class="eyebrow">${t('tableEyebrow')}</span>
+          <div class="table-badge-row">
+            <span class="num">${state.table}</span>
+            ${!state.lockedByUrl ? `<button class="change-table" onclick="changeTable()">${t('changeTable')}</button>` : ''}
+          </div>
+        </div>
+        <div id="menu-panda-slot" class="menu-panda-slot"></div>
+      </div>
+      <div class="masthead-rule"></div>
+    </header>
+    ${chefCarouselHTML()}
+    <div class="menu-title-row">
+      <p class="menu-title">${t('menuTitle')}</p>
+      <button class="allergen-info-btn" onclick="toggleAllergenInfo()">ⓘ ${t('allergensBtn')}</button>
+    </div>
+    <div class="menu-body">
+      <nav class="category-nav">${categoryNavHTML}</nav>
+      <div class="dish-panel">
+        <div class="dish-list">${dishesHTML}</div>
+      </div>
+    </div>
+    ${allergenModalHTML()}
+    <button class="cart-side-fab" onclick="toggleCartPopup()" aria-label="${t('cart')}">
+      <span class="cart-side-fab-icon-wrap">
+        <img class="cart-side-fab-icon" src="../image/LOGO/CART.png" alt=""/>
+        <span class="cart-side-fab-badge">${count}</span>
+      </span>
+      <span class="cart-side-fab-label${(state.lang === 'zh' || state.lang === 'zhHant') ? '' : ' latin'}">${t('cart')}</span>
+    </button>
+    <div class="bottom-bar">
+      <div class="action-pill-wrap">
+        <div class="action-pill">
+          <button class="cart-btn" onclick="callWaiter()" ${state.callingWaiter?'disabled':''}>
+            <span class="cart-btn-title">${state.callingWaiter ? t('calling') : t('callWaiter')}</span>
+            <span class="cart-btn-sub">${t('callWaiterSub')}</span>
+          </button>
+          <button class="order-now-btn" onclick="goToOrderReview()" ${count===0?'disabled':''}>
+            <span class="order-now-title">${t('orderNow')}</span>
+            <span class="order-now-sub">${t('orderNowSub')}</span>
+          </button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function orderLineHTML({name, qty, spice, price, extra}){
+  const lineTotal = price != null ? formatPrice(price * qty) : '';
+  const bottomBits = (spice ? `<span class="spice-tag">${spice}</span>` : '') + (extra || '');
+  return `<li class="order-line">
+    <div class="order-line-top">
+      <span class="order-line-name">${name} × ${qty}</span>
+      ${lineTotal ? `<span class="order-line-price">${lineTotal}</span>` : ''}
+    </div>
+    ${bottomBits ? `<div class="order-line-bottom">${bottomBits}</div>` : ''}
+  </li>`;
+}
+function totalRowHTML(total){
+  return `<li class="order-total-line"><span>${t('totalLabel')}</span><span>${formatPrice(total)}</span></li>`;
+}
+function editableOrderSummaryHTML(items, total){
+  return `<ul class="order-summary">
+    ${items.map(it=>`
+      <li class="order-line">
+        <div class="order-line-top">
+          <span class="order-line-name">${it.name}</span>
+          <span class="order-line-price">${formatPrice(it.price*it.qty)}</span>
+        </div>
+        <div class="order-line-bottom">
+          ${it.spicy ? `<span class="spice-tag">${displaySpice(it.spice)}</span>` : ''}
+          ${it.sizeLabel ? `<span class="spice-tag">${it.sizeLabel}</span>` : ''}
+          ${it.cookMethodLabel ? `<span class="spice-tag">${it.cookMethodLabel}</span>` : ''}
+          ${it.excludeTags}
+          <span class="stepper">
+            <button onclick="changeQty('${it.id}',-1)" aria-label="${t('decreaseQty')}">−</button>
+            <span class="qty">${it.qty}</span>
+            <button onclick="changeQty('${it.id}',1)" aria-label="${t('increaseQty')}">+</button>
+          </span>
+        </div>
+      </li>`).join('')}
+    ${totalRowHTML(total)}
+  </ul>`;
+}
+function excludesTagsHTML(excludes){
+  if(!excludes || excludes.length === 0) return '';
+  return excludes.map(k => `<span class="spice-tag">${tOption(k)}</span>`).join('');
+}
+
+function myOrderHTML(){
+  const items = state.myOrderItems || [];
+  const total = items.reduce((s,it)=> s + (it.price||0)*it.qty, 0);
+  return `
+    ${backRowHTML()}
+    <div class="confirm-screen">
+      <p class="eyebrow">${t('tableEyebrow')} ${state.table}</p>
+      <h2 style="margin-top:6px;">${t('myOrder')}</h2>
+      ${state.myOrderLoading
+        ? `<p class="hint">${t('loading')}</p>`
+        : items.length === 0
+          ? `<p class="hint">${t('noOrderYet')}</p>`
+          : `<ul class="order-summary">
+              ${items.map(it=>{
+                const dish = MENU_BY_ID[ZH_NAME_TO_ID[it.name]];
+                return orderLineHTML({
+                  name: displayDishName(it.name),
+                  qty: it.qty,
+                  spice: dish && dish.spicy ? displaySpice(it.spice) : '',
+                  price: it.price,
+                  extra: (it.size ? `<span class="spice-tag">${tSize(it.size)}</span>` : '') + (it.cookMethod ? `<span class="spice-tag">${tCookMethod(it.cookMethod)}</span>` : '') + excludesTagsHTML(it.excludes),
+                });
+              }).join('')}
+              ${totalRowHTML(total)}
+            </ul>
+            <p class="hint">${t('removeHint')}</p>`
+      }
+      <button class="ghost-btn" onclick="goBack()">${t('backToMenu')}</button>
+    </div>`;
+}
+
+function cartItemsForCheckout(){
+  return MENU
+    .map(d => {
+      const it = getItem(d.id);
+      if(it.qty <= 0) return null;
+      return {
+        id: d.id, name: tDish(d.id,'name'), qty: it.qty, spice: it.spice, spicy: d.spicy,
+        price: dishUnitPrice(d, it),
+        sizeLabel: d.sizes ? tSize(it.size || d.sizes[0].key) : null,
+        cookMethodLabel: d.category==='dumplings' ? tCookMethod(it.cookMethod || 'steamed') : null,
+        excludeTags: excludesTagsHTML(Object.keys(it.excludes||{}).filter(k=>it.excludes[k])),
+      };
+    })
+    .filter(Boolean);
+}
+
+function cartSideBodyHTML(){
+  const items = cartItemsForCheckout();
+  const total = items.reduce((s,it)=>s+it.price*it.qty,0);
+  return items.length === 0
+    ? `<p class="hint" style="margin:0;">${t('emptyCart')}</p>`
+    : editableOrderSummaryHTML(items, total);
+}
+
+function cartPopupHTML(){
+  if(!state.cartPopupOpen) return '';
+  return `
+    <button class="cart-side-overlay" onclick="toggleCartPopup()" aria-label="${t('closeMenu')}"></button>
+    <div class="cart-side-panel">
+      <div class="cart-side-head">
+        <p class="cart-side-title">${t('cart')}</p>
+        <button class="cart-side-close" onclick="toggleCartPopup()" aria-label="${t('closeMenu')}">✕</button>
+      </div>
+      <div id="cart-side-body">${cartSideBodyHTML()}</div>
+    </div>`;
+}
+
+function cartHTML(){
+  const items = cartItemsForCheckout();
+  const count = totalCount();
+  const total = items.reduce((s,it)=>s+it.price*it.qty,0);
+
+  return `
+    ${backRowHTML()}
+    <div class="confirm-screen">
+      <p class="eyebrow">${t('tableEyebrow')} ${state.table}</p>
+      <h2 style="margin-top:6px;">${t('cart')}</h2>
+      ${items.length === 0
+        ? `<p class="hint">${t('emptyCart')}</p>`
+        : editableOrderSummaryHTML(items, total)
+      }
+      <button class="ghost-btn" onclick="goBack()">${t('backToMenu')}</button>
+    </div>
+    ${count > 0 ? `
+    <div class="bottom-bar">
+      <div class="bottom-bar-inner">
+        <button class="submit-btn" onclick="goToOrderReview()">
+          ${t('orderNow')}
+        </button>
+      </div>
+    </div>` : ''}`;
+}
+
+function orderReviewHTML(){
+  const items = cartItemsForCheckout();
+  const total = items.reduce((s,it)=>s+it.price*it.qty,0);
+  const count = totalCount();
+
+  return `
+    ${backRowHTML()}
+    <div class="confirm-screen">
+      <p class="eyebrow">${t('tableEyebrow')} ${state.table}</p>
+      <h2 style="margin-top:6px;">${t('orderReviewTitle')}</h2>
+      ${items.length === 0
+        ? `<p class="hint">${t('emptyCart')}</p>`
+        : editableOrderSummaryHTML(items, total)
+      }
+
+      <div class="review-field">
+        <input type="text" class="review-input" placeholder="${t('nicknamePlaceholder')}" value="${(state.orderNickname||'').replace(/"/g,'&quot;')}" oninput="state.orderNickname=this.value" maxlength="30">
+      </div>
+      <div class="review-field review-field-stepper">
+        <span class="review-field-label">${t('partySizeLabel')}</span>
+        <span class="stepper">
+          <button onclick="setPartySize(-1)" aria-label="${t('decreaseQty')}">−</button>
+          <span class="qty">${state.orderPartySize}</span>
+          <button onclick="setPartySize(1)" aria-label="${t('increaseQty')}">+</button>
+        </span>
+      </div>
+    </div>
+    <div class="bottom-bar">
+      <div class="bottom-bar-inner">
+        <button class="submit-btn" onclick="handlePlaceOrderClick()" ${state.submitting||count===0?'disabled':''}>
+          ${state.submitting?t('ordering'):t('orderNow')}
+        </button>
+      </div>
+    </div>
+    ${upsellModalHTML()}`;
+}
+
+function upsellModalHTML(){
+  if(!state.upsellOpen) return '';
+  const items = state.upsellItems.map(id => MENU_BY_ID[id]).filter(Boolean);
+  return `
+    <button class="lang-switcher-overlay" aria-label="${t('upsellTitle')}"></button>
+    <div class="upsell-modal">
+      <p class="upsell-title">${t('upsellTitle')}</p>
+      <div class="upsell-grid">
+        ${items.map(d=>{
+          const selected = !!state.upsellSelected[d.id];
+          return `
+          <button class="upsell-tile ${selected?'selected':''}" data-id="${d.id}" onclick="toggleUpsellItem('${d.id}')">
+            <span class="upsell-photo-wrap">
+              <img class="upsell-photo" src="${d.img}" alt="${tDish(d.id,'name')}" loading="lazy">
+              <span class="upsell-check">✓</span>
+            </span>
+            <span class="upsell-name">${tDish(d.id,'name')}</span>
+            <span class="upsell-price">${formatPrice(dishUnitPrice(d, {}))}</span>
+          </button>`;
+        }).join('')}
+      </div>
+      <div class="upsell-actions">
+        <button class="upsell-add-btn" onclick="confirmUpsellAdd()">${t('addToOrderBtn')}</button>
+        <button class="upsell-later-btn" onclick="skipUpsell()">${t('laterBtn')}</button>
+      </div>
+    </div>`;
+}
+
+function pandaNavHTML(){
+  if(!state.table) return '';
+  return `
+    ${state.pandaMenuOpen ? `<button class="panda-overlay" onclick="closePandaMenu()" aria-label="${t('closeMenu')}"></button>` : ''}
+    <button class="my-order-btn" onclick="togglePandaMenu()" aria-label="${t('myPot')}" aria-expanded="${state.pandaMenuOpen}">
+      <span class="panda-avatar"><img src="../image/LOGO/logo.png" alt=""/></span>
+      <span class="my-order-label">${t('myPot')}</span>
+    </button>
+    ${state.pandaMenuOpen ? `
+      <div class="panda-dropdown">
+        <button onclick="goToCart()">${t('cart')}</button>
+        <button onclick="goToMyOrder()">${t('orderedItems')}</button>
+        <button onclick="toggleLangSwitcher()">🌐 ${LANG_META[state.lang].native}</button>
+      </div>` : ''}`;
+}
+
+function chefCookingHTML(){
+  return `
+    <div class="chef-cooking" aria-hidden="true">
+      <span class="chef-emoji">👨‍🍳</span>
+      <span class="chef-wok">🥘</span>
+      <span class="chef-ladle g3">🥄</span>
+      <span class="chef-ladle g2">🥄</span>
+      <span class="chef-ladle g1">🥄</span>
+    </div>`;
+}
+
+function confirmHTML(order){
+  const total = order.summaryItems.reduce((s,it)=> s + (it.price||0)*it.qty, 0);
+  const isConfirmed = order.status === 'confirmed';
+  return `
+    <div class="confirm-screen">
+      ${backRowHTML()}
+      <div class="stamp-ring"><span>${order.isAddOn ? t('addOnSuccess') : t('orderPlaced')}</span></div>
+      <h2>${t('tableEyebrow')} ${order.table}</h2>
+      ${order.removed ? `<p class="order-removed-notice">${t('orderRemovedNotice')}</p>` : (isConfirmed ? `
+        ${chefCookingHTML()}
+        <p class="kitchen-sent-title">${t('kitchenSentTitle')}</p>
+        <p class="hint">${t('kitchenSentHint')}</p>
+      ` : `<p class="hint">${t('waitConfirm')}</p>`)}
+      <button class="ghost-btn" onclick="resetToMenu()">${t('continueOrdering')}</button>
+
+      ${order.summaryItems.length === 0 ? '' : `
+      <div class="my-order-card">
+        <p class="my-order-title">${t('myOrder')}</p>
+        <ul class="order-summary">
+          ${order.summaryItems.map(it=>{
+            const dish = MENU_BY_ID[ZH_NAME_TO_ID[it.name]];
+            return orderLineHTML({
+              name: displayDishName(it.name),
+              qty: it.qty,
+              spice: dish && dish.spicy ? displaySpice(it.spice) : '',
+              price: it.price,
+              extra: (it.size ? `<span class="spice-tag">${tSize(it.size)}</span>` : '') + (it.cookMethod ? `<span class="spice-tag">${tCookMethod(it.cookMethod)}</span>` : '') + excludesTagsHTML(it.excludes),
+            });
+          }).join('')}
+          ${totalRowHTML(total)}
+        </ul>
+        <p class="hint my-order-note">${t('removeHint')}</p>
+        <button class="text-link-btn" onclick="resetToMenu()">${t('continueOrdering')} →</button>
+      </div>`}
+    </div>`;
+}
+
+function render(){
+  const app = document.getElementById('app');
+  let screenHtml;
+  if(state.screen === 'welcome'){ screenHtml = welcomeHTML(); }
+  else if(state.screen === 'pick'){ screenHtml = tablePickHTML(); }
+  else if(state.screen === 'confirm'){ screenHtml = confirmHTML(state.lastOrder); }
+  else if(state.screen === 'myOrder'){ screenHtml = myOrderHTML(); }
+  else if(state.screen === 'cart'){ screenHtml = cartHTML(); }
+  else if(state.screen === 'orderReview'){ screenHtml = orderReviewHTML(); }
+  else{ screenHtml = menuHTML(); }
+
+  const overlayHtml = state.langSwitcherOpen ? `
+    <button class="lang-switcher-overlay" onclick="closeLangSwitcher()" aria-label="${t('closeMenu')}"></button>
+    <div class="lang-switcher-panel">
+      <p class="lang-switcher-title">${t('languageLabel')}</p>
+      ${langPanelHTML('setLanguage')}
+    </div>` : '';
+
+  app.innerHTML = screenHtml + overlayHtml;
+  document.body.classList.toggle('lang-zh-custom', state.lang === 'zh' && (state.screen === 'welcome' || state.screen === 'menu'));
+  document.body.classList.toggle('lang-zh-hant', state.lang === 'zhHant');
+  renderPandaNav();
+  renderCartPopup();
+
+  if(state.screen === 'welcome'){ mountWelcomeScreen(); }
+  else{ stopWelcomeCycle(); }
+  if(state.screen === 'menu'){ startChefCarousel(); }
+  else{ stopChefCarousel(); }
+}
+
+if(state.table) watchTableOrders(state.table);
+render();
+</script>
+</body>
+</html>

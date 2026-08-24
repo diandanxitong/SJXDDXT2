@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>今日盘点</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Archivo+Black&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#121012;
+    --card:#1C191A;
+    --line:#332E2C;
+    --text:#F5F1EC;
+    --text-muted:#8E8883;
+    --warn:#E8A23D;
+    --urgent:#E3421F;
+    --ok:#5FBE8A;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    background:var(--bg);color:var(--text);
+    font-family:'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif;
+    min-height:100vh;padding:22px 26px 60px;
+  }
+  .top-nav{margin-bottom:16px;}
+  .control-btn{
+    display:inline-flex;align-items:center;gap:6px;text-decoration:none;
+    background:var(--card);border:1px solid var(--line);color:var(--text-muted);
+    font-size:13px;font-weight:700;padding:8px 14px;border-radius:20px;
+    font-family:inherit;cursor:pointer;
+  }
+  .control-btn:hover{color:var(--text);border-color:var(--text-muted);}
+
+  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:14px;}
+  header h1{font-family:'Archivo Black',sans-serif;font-size:22px;letter-spacing:.02em;}
+  .report-btn{
+    font-family:inherit;font-size:15px;font-weight:900;cursor:pointer;
+    padding:13px 22px;border-radius:12px;white-space:nowrap;
+    background:rgba(95,190,138,.16);border:1.5px solid var(--ok);color:var(--ok);
+  }
+  .report-btn:hover{background:rgba(95,190,138,.26);}
+
+  .revenue-banner{
+    background:linear-gradient(160deg,var(--card) 0%,var(--bg) 100%);
+    border:1px solid var(--line);border-radius:16px;
+    padding:20px 24px;margin-bottom:24px;
+    display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px;
+  }
+  .revenue-label{font-size:14px;font-weight:700;color:var(--text-muted);}
+  .revenue-amount{font-family:'Archivo Black',sans-serif;font-size:34px;color:var(--ok);letter-spacing:.01em;}
+  .revenue-sub{font-size:12.5px;color:var(--text-muted);width:100%;}
+
+  .table-group{padding-bottom:18px;margin-bottom:18px;border-bottom:1px dashed var(--line);}
+  .table-group:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+  .table-group-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
+  .table-group-num{font-family:'Archivo Black',sans-serif;font-size:17px;letter-spacing:.01em;}
+  .table-group-meta{font-size:12.5px;color:var(--text-muted);}
+  .table-group-meta b{color:var(--ok);font-size:14px;}
+  .record-list{list-style:none;display:flex;flex-direction:column;gap:8px;}
+  .record-row{
+    background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:12px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  }
+  .record-seq{font-family:'Archivo Black',sans-serif;font-size:13px;color:var(--warn);white-space:nowrap;}
+  .record-time{font-size:12px;color:var(--text-muted);white-space:nowrap;}
+  .record-items{font-size:12px;color:var(--text-muted);flex:1;min-width:120px;}
+  .record-revenue{font-family:'Archivo Black',sans-serif;font-size:15px;color:var(--ok);white-space:nowrap;margin-left:auto;}
+  .empty-hint{color:var(--text-muted);font-size:14px;padding:20px 2px;}
+
+  .modal-overlay{
+    position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.65);
+    display:flex;align-items:center;justify-content:center;padding:20px;
+  }
+  .modal-box{
+    background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:24px 22px 22px;max-width:440px;width:100%;
+  }
+  .report-total-row{
+    display:flex;justify-content:space-between;align-items:baseline;
+    padding-bottom:16px;margin-bottom:16px;border-bottom:1px dashed var(--line);
+  }
+  .report-total-label{font-size:14px;font-weight:700;color:var(--text-muted);}
+  .report-total-amount{font-family:'Archivo Black',sans-serif;font-size:26px;color:var(--ok);}
+  .report-cat-scroll{max-height:56vh;overflow-y:auto;margin:0 -4px 16px;padding:0 4px;}
+  .report-cat-section{margin-bottom:14px;}
+  .report-cat-section:last-child{margin-bottom:0;}
+  .report-cat-title{font-size:13px;font-weight:900;color:var(--warn);margin-bottom:8px;}
+  .report-dish-list{list-style:none;display:flex;flex-direction:column;gap:6px;}
+  .report-dish-list li{
+    display:flex;align-items:center;gap:10px;
+    background:rgba(255,255,255,.04);border-radius:8px;padding:8px 12px;
+  }
+  .rank-badge{
+    font-family:'Archivo Black',sans-serif;font-size:12px;
+    width:22px;height:22px;border-radius:50%;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    background:var(--bg);color:var(--text-muted);
+  }
+  .report-dish-list li:nth-child(1) .rank-badge{background:var(--warn);color:#1a1408;}
+  .report-dish-list li:nth-child(2) .rank-badge{background:#B8B0A6;color:#1a1408;}
+  .report-dish-list li:nth-child(3) .rank-badge{background:#B0784A;color:#1a1408;}
+  .report-dish-name{flex:1;font-size:14px;font-weight:700;}
+  .report-dish-qty{font-size:13px;color:var(--text-muted);white-space:nowrap;}
+  .modal-close-btn{
+    width:100%;padding:12px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;
+    background:none;border:1px solid var(--line);color:var(--text-muted);
+  }
+  .modal-close-btn:hover{border-color:var(--text-muted);color:var(--text);}
+</style>
+</head>
+<body>
+<nav class="top-nav">
+  <a class="control-btn" href="sjxddxtygd.html">← 接单看板</a>
+</nav>
+<header>
+  <h1>今日盘点</h1>
+  <button class="report-btn" onclick="openReport()">📊 生成报告</button>
+</header>
+<div class="revenue-banner">
+  <span class="revenue-label">当天所有桌总营业额</span>
+  <span class="revenue-amount" id="totalRevenue">€0.00</span>
+  <span class="revenue-sub" id="recordCountHint"></span>
+</div>
+<div id="app"></div>
+<div id="modal-root"></div>
+
+<script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: 'AIzaSyBUFdqFcmnmGyuS1-ZWq7bEv0fUxTNNAFU',
+  authDomain: 'ddxt-bc353.firebaseapp.com',
+  projectId: 'ddxt-bc353',
+  storageBucket: 'ddxt-bc353.firebasestorage.app',
+  messagingSenderId: '624541373179',
+  appId: '1:624541373179:web:72e5f44322ad337406165e',
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+db.settings({ experimentalAutoDetectLongPolling: true });
+const dailyOrdersRef = db.collection('dailyOrders');
+
+function todayKey(d){
+  d = d || new Date();
+  const pad = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+function formatPrice(v){ return '€' + v.toFixed(2); }
+function formatTime(ms){
+  const d = new Date(ms);
+  const pad = n => String(n).padStart(2,'0');
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+const CATEGORY_ORDER = ['appetizers','dumplings','soup','chefSpecial','vegetables','riceNoodles','dessert','drinks'];
+const CATEGORY_LABELS = { appetizers:'前菜', dumplings:'饺子', soup:'汤', chefSpecial:'厨师推荐', vegetables:'蔬菜', riceNoodles:'饭/面类', dessert:'甜品', drinks:'酒水' };
+// 菜名 -> 分类，跟"沽清菜品"页(gqcp.html)里的 DISH_LIST 保持一致，用来把流水记录里
+// 只有名字的菜品归类，好在报告里按分类分别排名
+const NAME_TO_CATEGORY = {
+  '辣袋':'appetizers',
+  '蔬菜春卷':'appetizers',
+  '芋头吐司卷':'appetizers',
+  '鲜虾多士':'appetizers',
+  '脆香云吞':'appetizers',
+  '脆皮海鲜卷':'appetizers',
+  '川味口水鸡':'appetizers',
+  '芥酥芥末虾':'appetizers',
+  '重庆辣子鸡':'appetizers',
+  '夫妻肺片':'appetizers',
+  '手拍黄瓜':'appetizers',
+  '麻辣牛肉干':'appetizers',
+  '猪肉饺子 (6只)':'dumplings',
+  '鸡肉饺子 (6只)':'dumplings',
+  '蔬菜饺子 (6只)':'dumplings',
+  '干蒸烧卖 (6只)':'dumplings',
+  '酸辣汤(素)':'soup',
+  '酸辣汤(鸡肉)':'soup',
+  '酸辣汤(海鲜)':'soup',
+  '玉米汤(素)':'soup',
+  '玉米汤(鸡肉)':'soup',
+  '滋补鸡汤':'soup',
+  '北京烤鸭':'chefSpecial',
+  '宫保鸡丁':'chefSpecial',
+  '宫保虾球':'chefSpecial',
+  '宫保豆腐':'chefSpecial',
+  '菠萝咕噜鸡':'chefSpecial',
+  '菠萝咕噜虾':'chefSpecial',
+  '香酥鸡排沙拉':'chefSpecial',
+  '甜辣虾球':'chefSpecial',
+  '甜辣鸡肉':'chefSpecial',
+  '黑椒牛柳':'chefSpecial',
+  '黑椒鸡肉':'chefSpecial',
+  '招牌西冷牛肉粒':'chefSpecial',
+  '招牌麻辣虾':'chefSpecial',
+  '姜醋汁焗爱尔兰牛柳':'chefSpecial',
+  '糖醋猪排':'chefSpecial',
+  '麻婆豆腐':'chefSpecial',
+  '小炒黄牛肉':'chefSpecial',
+  '四川毛血旺':'chefSpecial',
+  '火爆腰花':'chefSpecial',
+  '青椒回锅肉':'chefSpecial',
+  '清蒸鲈鱼':'chefSpecial',
+  '剁椒蒸鲈鱼':'chefSpecial',
+  '水煮鲈鱼':'chefSpecial',
+  '水煮牛肉':'chefSpecial',
+  '水煮猪肉':'chefSpecial',
+  '老妈蹄花汤':'chefSpecial',
+  '干煸肥肠':'chefSpecial',
+  '农家小炒肉':'chefSpecial',
+  '干锅花菜':'chefSpecial',
+  '咖喱鸡肉':'chefSpecial',
+  '咖喱牛肉':'chefSpecial',
+  '长豆角炒茄子':'vegetables',
+  '鱼香茄条':'vegetables',
+  '干煸四季豆':'vegetables',
+  '蒜蓉西兰花':'vegetables',
+  '清炒时蔬':'vegetables',
+  '鸡蛋炒饭':'riceNoodles',
+  '海鲜炒饭':'riceNoodles',
+  '鸡肉炒饭':'riceNoodles',
+  '火腿炒饭':'riceNoodles',
+  '蔬菜炒饭':'riceNoodles',
+  '牛肉炒面':'riceNoodles',
+  '海鲜炒面':'riceNoodles',
+  '鸡肉炒面':'riceNoodles',
+  '蔬菜炒面':'riceNoodles',
+  '炒乌冬面(海鲜)':'riceNoodles',
+  '炒乌冬面(蔬菜)':'riceNoodles',
+  '牛肉炒河粉':'riceNoodles',
+  '白米饭':'riceNoodles',
+  '柠檬芝士蛋糕':'dessert',
+  '巧克力香草冰淇淋':'dessert',
+  '杨枝甘露':'dessert',
+  'Murari Pinot Grigio 卡斯特拉尼灰皮诺':'drinks',
+  'Bouchard Aine & Fils Sauvignon Blanc 长相思':'drinks',
+  'Peter & Peter Riesling':'drinks',
+  'Nau Mai Sauvignon Blanc':'drinks',
+  'Casal de Ventozela Alvarinho 阿瓦里诺':'drinks',
+  'Domäne Wachau Grüner Veltliner Federspiel':'drinks',
+  'Louis Jadot Bourgogne Chardonnay \'Couvent des Jacobins\' 勃艮第霞多丽':'drinks',
+  'Marquis de Goulaine Sancerre \'Les Lorys\' 桑塞尔':'drinks',
+  'Orquestra Tempranillo 丹魄乐团':'drinks',
+  'Reserve de L\'Aube Syrah Merlot 奥布西拉梅洛珍藏':'drinks',
+  'Château Les Grand Vallons 波尔多-城堡':'drinks',
+  'Finca Mónica Crianza':'drinks',
+  'Fin del Mundo Reserva Malbec 珍藏马尔贝克':'drinks',
+  'Surani Primitivo di Manduria':'drinks',
+  'Louis Jadot Bourgogne Pinot Noir \'Couvent des Jacobins\' 勃艮第黑皮诺':'drinks',
+  'Les Hauts de Lynch Moussas 上梦多克':'drinks',
+  'Domaine La Colombette Grenache Rosé 歌海娜玫瑰庄':'drinks',
+  'Château de Berne Romance Rosé 普罗旺斯玫瑰':'drinks',
+  'Serena Prosecco Frizzante 罗普罗蜜克':'drinks',
+  'Montegrande Bianco Frizzante 蒙特格兰德':'drinks',
+  'Champagne Theophile Brut NV 香槟':'drinks',
+  '可乐':'drinks',
+  '无糖可乐':'drinks',
+  '健怡可乐':'drinks',
+  '七喜':'drinks',
+  '无糖七喜':'drinks',
+  '芬达':'drinks',
+  '加多宝':'drinks',
+  '芦荟汁':'drinks',
+  '芦荟汁(大)':'drinks',
+  '维他豆奶(小)':'drinks',
+  '椰树牌椰汁':'drinks',
+  '小纯净水':'drinks',
+  '小气泡水':'drinks',
+  '大纯净水':'drinks',
+  '大气泡水':'drinks',
+  '苹果汁':'drinks',
+  '橙汁':'drinks',
+  '蔓越莓汁':'drinks',
+  '青岛啤酒':'drinks',
+  '朝日啤酒':'drinks',
+  '喜力啤酒':'drinks',
+  '喜力0.0':'drinks',
+  '健力士啤酒':'drinks',
+  '健力士0.0':'drinks',
+};
+
+let records = [];
+let loaded = false;
+let reportOpen = false;
+
+dailyOrdersRef.where('date', '==', todayKey()).onSnapshot(snap => {
+  records = snap.docs.map(d => d.data()).sort((a,b) => a.seq - b.seq);
+  loaded = true;
+  render();
+}, err => {});
+
+function totalRevenue(){
+  return records.reduce((s, r) => s + (r.revenue || 0), 0);
+}
+
+// 汇总当天所有流水记录里的菜品数量，按分类分别排名——报告里"前菜第一名是XX"
+// 说的就是这里：每个分类各自取点选频次前 N，而不是混在一起排一个总榜
+function topDishesByCategory(perCategoryLimit){
+  const counts = new Map();
+  records.forEach(r => {
+    (r.items || []).forEach(it => {
+      counts.set(it.name, (counts.get(it.name) || 0) + it.qty);
+    });
+  });
+  const byCat = new Map();
+  counts.forEach((qty, name) => {
+    const cat = NAME_TO_CATEGORY[name] || 'drinks';
+    if(!byCat.has(cat)) byCat.set(cat, []);
+    byCat.get(cat).push([name, qty]);
+  });
+  return CATEGORY_ORDER
+    .filter(cat => byCat.has(cat))
+    .map(cat => ({
+      cat,
+      label: CATEGORY_LABELS[cat],
+      dishes: byCat.get(cat).sort((a, b) => b[1] - a[1]).slice(0, perCategoryLimit),
+    }));
+}
+
+function openReport(){
+  reportOpen = true;
+  renderModal();
+}
+function closeReport(){
+  reportOpen = false;
+  renderModal();
+}
+
+function recordRowHTML(r){
+  const itemSummary = (r.items || []).map(it => `${it.name}×${it.qty}`).join('、');
+  return `
+    <li class="record-row">
+      <span class="record-seq">#${String(r.seq).padStart(3,'0')}</span>
+      <span class="record-time">${formatTime(r.archivedAt)}</span>
+      <span class="record-items">${itemSummary}</span>
+      <span class="record-revenue">${formatPrice(r.revenue || 0)}</span>
+    </li>`;
+}
+
+// 按桌号分组：桌1只展示桌1的记录，桌与桌之间用分割线隔开（见 .table-group 的 border-bottom）
+function groupByTable(list){
+  const map = new Map();
+  list.forEach(r => {
+    if(!map.has(r.table)) map.set(r.table, []);
+    map.get(r.table).push(r);
+  });
+  const groups = Array.from(map.entries()).map(([table, recs]) => ({
+    table,
+    records: recs.slice().sort((a, b) => a.seq - b.seq),
+    revenue: recs.reduce((s, r) => s + (r.revenue || 0), 0),
+  }));
+  groups.sort((a, b) => {
+    const na = parseFloat(a.table), nb = parseFloat(b.table);
+    if(!isNaN(na) && !isNaN(nb) && na !== nb) return na - nb;
+    return String(a.table).localeCompare(String(b.table));
+  });
+  return groups;
+}
+
+function tableGroupHTML(g){
+  return `
+    <section class="table-group">
+      <div class="table-group-head">
+        <span class="table-group-num">桌 ${g.table}</span>
+        <span class="table-group-meta">共 ${g.records.length} 笔 · 今日小计 <b>${formatPrice(g.revenue)}</b></span>
+      </div>
+      <ul class="record-list">${g.records.map(recordRowHTML).join('')}</ul>
+    </section>`;
+}
+
+function renderModal(){
+  const root = document.getElementById('modal-root');
+  if(!reportOpen){ root.innerHTML = ''; return; }
+  const categories = topDishesByCategory(3);
+  const rankMedals = ['🥇','🥈','🥉'];
+  root.innerHTML = `
+    <div class="modal-overlay" onclick="if(event.target===this) closeReport()">
+      <div class="modal-box">
+        <div class="report-total-row">
+          <span class="report-total-label">今日总营业额</span>
+          <span class="report-total-amount">${formatPrice(totalRevenue())}</span>
+        </div>
+        <div class="report-cat-scroll">
+          ${categories.length === 0
+            ? `<p style="color:var(--text-muted);font-size:13px;">暂无数据</p>`
+            : categories.map(c => `
+              <div class="report-cat-section">
+                <p class="report-cat-title">${c.label}</p>
+                <ul class="report-dish-list">
+                  ${c.dishes.map(([name, qty], i) => `
+                    <li>
+                      <span class="rank-badge">${rankMedals[i] || (i+1)}</span>
+                      <span class="report-dish-name">${name}</span>
+                      <span class="report-dish-qty">${qty} 份</span>
+                    </li>`).join('')}
+                </ul>
+              </div>`).join('')}
+        </div>
+        <button class="modal-close-btn" onclick="closeReport()">关闭</button>
+      </div>
+    </div>`;
+}
+
+function render(){
+  document.getElementById('totalRevenue').textContent = formatPrice(totalRevenue());
+
+  const app = document.getElementById('app');
+  if(!loaded){
+    document.getElementById('recordCountHint').textContent = '';
+    app.innerHTML = '';
+  }else if(records.length === 0){
+    document.getElementById('recordCountHint').textContent = '';
+    app.innerHTML = `<p class="empty-hint">今天还没有桌子结账离开，盘点记录会在员工点"顾客已离开，移除看板"后自动生成。</p>`;
+  }else{
+    const groups = groupByTable(records);
+    document.getElementById('recordCountHint').textContent = `今日共 ${groups.length} 桌 · ${records.length} 笔结账`;
+    app.innerHTML = groups.map(tableGroupHTML).join('');
+  }
+
+  renderModal();
+}
+
+render();
+</script>
+</body>
+</html>

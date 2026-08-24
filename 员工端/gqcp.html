@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>沽清菜品</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Archivo+Black&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#121012;
+    --card:#1C191A;
+    --line:#332E2C;
+    --text:#F5F1EC;
+    --text-muted:#8E8883;
+    --warn:#E8A23D;
+    --urgent:#E3421F;
+    --ok:#5FBE8A;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    background:var(--bg);color:var(--text);
+    font-family:'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif;
+    min-height:100vh;padding:22px 26px 60px;
+  }
+  .top-nav{margin-bottom:16px;}
+  .control-btn{
+    display:inline-flex;align-items:center;gap:6px;text-decoration:none;
+    background:var(--card);border:1px solid var(--line);color:var(--text-muted);
+    font-size:13px;font-weight:700;padding:8px 14px;border-radius:20px;
+    font-family:inherit;cursor:pointer;
+  }
+  .control-btn:hover{color:var(--text);border-color:var(--text-muted);}
+
+  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:14px;}
+  .title-block{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+  header h1{font-family:'Archivo Black',sans-serif;font-size:22px;letter-spacing:.02em;}
+  .status-pill{
+    background:var(--card);border:1px solid var(--line);border-radius:20px;
+    padding:6px 16px;font-size:13px;color:var(--text-muted);
+  }
+  .status-pill b{color:var(--warn);font-size:15px;}
+
+  .header-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  .sel-count{font-size:13px;color:var(--text-muted);white-space:nowrap;}
+  .sel-count b{color:var(--text);}
+  .action-btn{
+    font-family:inherit;font-size:15px;font-weight:900;cursor:pointer;
+    padding:13px 22px;border-radius:12px;white-space:nowrap;
+  }
+  .action-btn:disabled{opacity:.4;cursor:default;}
+  .sold-out-btn{background:rgba(227,66,31,.16);border:1.5px solid var(--urgent);color:var(--urgent);}
+  .sold-out-btn:not(:disabled):hover{background:rgba(227,66,31,.26);}
+  .restore-btn{background:rgba(95,190,138,.14);border:1.5px solid var(--ok);color:var(--ok);}
+  .restore-btn:not(:disabled):hover{background:rgba(95,190,138,.24);}
+
+  .search-bar{position:relative;margin-bottom:18px;max-width:420px;}
+  .search-bar input{
+    width:100%;background:var(--card);border:1px solid var(--line);border-radius:20px;
+    color:var(--text);font-family:inherit;font-size:14px;padding:10px 38px 10px 16px;
+  }
+  .search-bar input::placeholder{color:var(--text-muted);}
+  .search-bar input:focus{outline:none;border-color:var(--warn);}
+  .search-clear-btn{
+    position:absolute;right:6px;top:50%;transform:translateY(-50%);
+    width:26px;height:26px;border-radius:50%;border:none;background:none;
+    color:var(--text-muted);font-size:16px;cursor:pointer;display:none;
+    align-items:center;justify-content:center;
+  }
+  .search-clear-btn.visible{display:flex;}
+  .search-clear-btn:hover{color:var(--text);}
+  .no-results{color:var(--text-muted);font-size:14px;padding:10px 2px;}
+
+  .filter-row{margin-bottom:18px;}
+  .view-toggle-btn{
+    display:inline-flex;align-items:center;gap:6px;
+    background:var(--card);border:1px solid var(--line);color:var(--text-muted);
+    font-size:13px;font-weight:700;padding:8px 14px;border-radius:20px;
+    font-family:inherit;cursor:pointer;
+  }
+  .view-toggle-btn:hover{color:var(--text);border-color:var(--text-muted);}
+  .view-toggle-btn.active{background:rgba(227,66,31,.16);border-color:var(--urgent);color:var(--urgent);}
+
+  .cat-section{margin-bottom:22px;}
+  .cat-section h2{font-size:14px;font-weight:900;color:var(--warn);letter-spacing:.03em;margin-bottom:10px;padding-left:2px;}
+  .dish-list{list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px;}
+  .dish-row{
+    background:var(--card);border:1px solid var(--line);border-radius:10px;
+  }
+  .dish-row.checked{border-color:var(--warn);background:rgba(232,162,61,.1);}
+  .dish-row label{
+    display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;
+  }
+  .dish-row input[type="checkbox"]{width:18px;height:18px;flex-shrink:0;accent-color:var(--warn);cursor:pointer;}
+  .dish-row-name{font-size:14px;font-weight:700;flex:1;line-height:1.35;}
+  .sold-out-badge{
+    font-size:11px;font-weight:700;color:var(--urgent);border:1px solid rgba(227,66,31,.5);
+    border-radius:20px;padding:2px 9px;white-space:nowrap;
+  }
+
+  .modal-overlay{
+    position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.65);
+    display:flex;align-items:center;justify-content:center;padding:20px;
+  }
+  .modal-box{
+    background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:24px 22px 22px;max-width:420px;width:100%;
+  }
+  .modal-dish-list{
+    list-style:none;max-height:220px;overflow-y:auto;
+    display:flex;flex-direction:column;gap:6px;margin-bottom:16px;
+  }
+  .modal-dish-list li{
+    font-size:14px;font-weight:700;background:rgba(255,255,255,.04);
+    border-radius:8px;padding:8px 12px;
+  }
+  .modal-warning{
+    font-size:13px;font-weight:700;color:var(--urgent);line-height:1.5;
+    background:rgba(227,66,31,.12);border:1px solid rgba(227,66,31,.4);
+    border-radius:10px;padding:10px 12px;margin-bottom:18px;
+  }
+  .modal-actions{display:flex;gap:10px;}
+  .modal-cancel-btn, .modal-confirm-btn{
+    flex:1;padding:12px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;
+  }
+  .modal-cancel-btn{background:none;border:1px solid var(--line);color:var(--text-muted);}
+  .modal-cancel-btn:hover{border-color:var(--text-muted);color:var(--text);}
+  .modal-confirm-btn.urgent{background:rgba(227,66,31,.18);border:1px solid var(--urgent);color:var(--urgent);}
+  .modal-confirm-btn.urgent:hover{background:rgba(227,66,31,.28);}
+  .modal-confirm-btn.ok{background:rgba(95,190,138,.18);border:1px solid var(--ok);color:var(--ok);}
+  .modal-confirm-btn.ok:hover{background:rgba(95,190,138,.28);}
+</style>
+</head>
+<body>
+<nav class="top-nav">
+  <a class="control-btn" href="sjxddxtygd.html">← 接单看板</a>
+</nav>
+<header>
+  <div class="title-block">
+    <h1>沽清菜品</h1>
+    <span class="status-pill">已沽清 <b id="soldOutCount">0</b> 项</span>
+  </div>
+  <div class="header-actions">
+    <span class="sel-count">已选 <b id="selCount">0</b> 项</span>
+    <button class="action-btn sold-out-btn" id="soldOutBtn" onclick="openSoldOutModal()" disabled>暂停售卖</button>
+    <button class="action-btn restore-btn" id="restoreBtn" onclick="openRestoreModal()" disabled>恢复售卖</button>
+  </div>
+</header>
+<div class="search-bar">
+  <input type="text" id="searchInput" placeholder="搜索菜品或酒水名称…" oninput="onSearchInput(this.value)" autocomplete="off">
+  <button class="search-clear-btn" id="searchClearBtn" onclick="clearSearch()">✕</button>
+</div>
+<div class="filter-row">
+  <button class="view-toggle-btn" id="viewToggleBtn" onclick="toggleSoldOutOnlyView()">显示已沽清菜品</button>
+</div>
+<div id="app"></div>
+<div id="modal-root"></div>
+
+<script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: 'AIzaSyBUFdqFcmnmGyuS1-ZWq7bEv0fUxTNNAFU',
+  authDomain: 'ddxt-bc353.firebaseapp.com',
+  projectId: 'ddxt-bc353',
+  storageBucket: 'ddxt-bc353.firebasestorage.app',
+  messagingSenderId: '624541373179',
+  appId: '1:624541373179:web:72e5f44322ad337406165e',
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+db.settings({ experimentalAutoDetectLongPolling: true });
+const menuStatusRef = db.collection('menuStatus').doc('soldOut');
+
+// 菜品清单：id / 分类 / 中文名，跟顾客端 customer.html 里的 DISH_DATA 保持一致
+const DISH_LIST = [
+  {id:'spicyBag',category:'appetizers',name:'辣袋'},
+  {id:'veggieSpringRoll',category:'appetizers',name:'蔬菜春卷'},
+  {id:'taroToastRoll',category:'appetizers',name:'芋头吐司卷'},
+  {id:'prawnToast',category:'appetizers',name:'鲜虾多士'},
+  {id:'crispyWonton',category:'appetizers',name:'脆香云吞'},
+  {id:'crispySeafoodRoll',category:'appetizers',name:'脆皮海鲜卷'},
+  {id:'mouthWateringChicken',category:'appetizers',name:'川味口水鸡'},
+  {id:'mustardPrawns',category:'appetizers',name:'芥酥芥末虾'},
+  {id:'chongqingSpicyChicken',category:'appetizers',name:'重庆辣子鸡'},
+  {id:'fuqiFeipian',category:'appetizers',name:'夫妻肺片'},
+  {id:'cucumberSalad',category:'appetizers',name:'手拍黄瓜'},
+  {id:'spicyBeefJerky',category:'appetizers',name:'麻辣牛肉干'},
+  {id:'porkDumplings',category:'dumplings',name:'猪肉饺子 (6只)'},
+  {id:'chickenDumplings',category:'dumplings',name:'鸡肉饺子 (6只)'},
+  {id:'vegDumplings',category:'dumplings',name:'蔬菜饺子 (6只)'},
+  {id:'siuMai',category:'dumplings',name:'干蒸烧卖 (6只)'},
+  {id:'hotSourSoupVeg',category:'soup',name:'酸辣汤(素)'},
+  {id:'hotSourSoupChicken',category:'soup',name:'酸辣汤(鸡肉)'},
+  {id:'hotSourSoupSeafood',category:'soup',name:'酸辣汤(海鲜)'},
+  {id:'cornSoupVeg',category:'soup',name:'玉米汤(素)'},
+  {id:'cornSoupChicken',category:'soup',name:'玉米汤(鸡肉)'},
+  {id:'nourishingChickenSoup',category:'soup',name:'滋补鸡汤'},
+  {id:'pekingDuck',category:'chefSpecial',name:'北京烤鸭'},
+  {id:'kungPaoChicken',category:'chefSpecial',name:'宫保鸡丁'},
+  {id:'kungPaoPrawns',category:'chefSpecial',name:'宫保虾球'},
+  {id:'kungPaoTofu',category:'chefSpecial',name:'宫保豆腐'},
+  {id:'sweetSourChickenPineapple',category:'chefSpecial',name:'菠萝咕噜鸡'},
+  {id:'sweetSourPrawnsPineapple',category:'chefSpecial',name:'菠萝咕噜虾'},
+  {id:'goldenCrispyChickenSalad',category:'chefSpecial',name:'香酥鸡排沙拉'},
+  {id:'sweetSpicyPrawnBalls',category:'chefSpecial',name:'甜辣虾球'},
+  {id:'sweetSpicyChicken',category:'chefSpecial',name:'甜辣鸡肉'},
+  {id:'blackPepperBeef',category:'chefSpecial',name:'黑椒牛柳'},
+  {id:'blackPepperChicken',category:'chefSpecial',name:'黑椒鸡肉'},
+  {id:'sirloinBeefCubes',category:'chefSpecial',name:'招牌西冷牛肉粒'},
+  {id:'signatureSpicyShrimp',category:'chefSpecial',name:'招牌麻辣虾'},
+  {id:'braisedIrishSteak',category:'chefSpecial',name:'姜醋汁焗爱尔兰牛柳'},
+  {id:'sweetSourPorkChop',category:'chefSpecial',name:'糖醋猪排'},
+  {id:'mapoTofu',category:'chefSpecial',name:'麻婆豆腐'},
+  {id:'stirFriedYellowBeef',category:'chefSpecial',name:'小炒黄牛肉'},
+  {id:'maoXueWang',category:'chefSpecial',name:'四川毛血旺'},
+  {id:'kidneyFlowers',category:'chefSpecial',name:'火爆腰花'},
+  {id:'twiceCookedPork',category:'chefSpecial',name:'青椒回锅肉'},
+  {id:'steamedSeaBass',category:'chefSpecial',name:'清蒸鲈鱼'},
+  {id:'steamedSeaBassChilli',category:'chefSpecial',name:'剁椒蒸鲈鱼'},
+  {id:'seaBassSpicyBroth',category:'chefSpecial',name:'水煮鲈鱼'},
+  {id:'beefSpicyBroth',category:'chefSpecial',name:'水煮牛肉'},
+  {id:'porkSpicyBroth',category:'chefSpecial',name:'水煮猪肉'},
+  {id:'tiHuaTang',category:'chefSpecial',name:'老妈蹄花汤'},
+  {id:'dryFriedPorkIntestine',category:'chefSpecial',name:'干煸肥肠'},
+  {id:'farmhousePork',category:'chefSpecial',name:'农家小炒肉'},
+  {id:'griddleCauliflower',category:'chefSpecial',name:'干锅花菜'},
+  {id:'chickenCurry',category:'chefSpecial',name:'咖喱鸡肉'},
+  {id:'beefCurry',category:'chefSpecial',name:'咖喱牛肉'},
+  {id:'eggplantGreenBeans',category:'vegetables',name:'长豆角炒茄子'},
+  {id:'yuXiangEggplant',category:'vegetables',name:'鱼香茄条'},
+  {id:'dryFriedGreenBeans',category:'vegetables',name:'干煸四季豆'},
+  {id:'garlicBroccoli',category:'vegetables',name:'蒜蓉西兰花'},
+  {id:'seasonalVeg',category:'vegetables',name:'清炒时蔬'},
+  {id:'eggFriedRice',category:'riceNoodles',name:'鸡蛋炒饭'},
+  {id:'seafoodFriedRice',category:'riceNoodles',name:'海鲜炒饭'},
+  {id:'chickenFriedRice',category:'riceNoodles',name:'鸡肉炒饭'},
+  {id:'hamFriedRice',category:'riceNoodles',name:'火腿炒饭'},
+  {id:'vegFriedRice',category:'riceNoodles',name:'蔬菜炒饭'},
+  {id:'beefFriedNoodles',category:'riceNoodles',name:'牛肉炒面'},
+  {id:'seafoodFriedNoodles',category:'riceNoodles',name:'海鲜炒面'},
+  {id:'chickenFriedNoodles',category:'riceNoodles',name:'鸡肉炒面'},
+  {id:'vegFriedNoodles',category:'riceNoodles',name:'蔬菜炒面'},
+  {id:'udonSeafood',category:'riceNoodles',name:'炒乌冬面(海鲜)'},
+  {id:'udonVeg',category:'riceNoodles',name:'炒乌冬面(蔬菜)'},
+  {id:'beefChowFun',category:'riceNoodles',name:'牛肉炒河粉'},
+  {id:'steamedRice',category:'riceNoodles',name:'白米饭'},
+  {id:'lemonCheesecake',category:'dessert',name:'柠檬芝士蛋糕'},
+  {id:'chocoVanillaIceCream',category:'dessert',name:'巧克力香草冰淇淋'},
+  {id:'mangoPomeloSago',category:'dessert',name:'杨枝甘露'},
+  {id:'wineMurariPinotGrigio',category:'drinks',name:'Murari Pinot Grigio 卡斯特拉尼灰皮诺'},
+  {id:'wineBouchardSauvignonBlanc',category:'drinks',name:'Bouchard Aine & Fils Sauvignon Blanc 长相思'},
+  {id:'winePeterRiesling',category:'drinks',name:'Peter & Peter Riesling'},
+  {id:'wineNauMaiSauvignonBlanc',category:'drinks',name:'Nau Mai Sauvignon Blanc'},
+  {id:'wineCasalVentozelaAlvarinho',category:'drinks',name:'Casal de Ventozela Alvarinho 阿瓦里诺'},
+  {id:'wineDomaneWachauGruner',category:'drinks',name:'Domäne Wachau Grüner Veltliner Federspiel'},
+  {id:'wineLouisJadotChardonnay',category:'drinks',name:'Louis Jadot Bourgogne Chardonnay \'Couvent des Jacobins\' 勃艮第霞多丽'},
+  {id:'wineMarquisGoulaineSancerre',category:'drinks',name:'Marquis de Goulaine Sancerre \'Les Lorys\' 桑塞尔'},
+  {id:'wineOrquestraTempranillo',category:'drinks',name:'Orquestra Tempranillo 丹魄乐团'},
+  {id:'wineReserveAubeSyrahMerlot',category:'drinks',name:'Reserve de L\'Aube Syrah Merlot 奥布西拉梅洛珍藏'},
+  {id:'wineChateauGrandVallons',category:'drinks',name:'Château Les Grand Vallons 波尔多-城堡'},
+  {id:'wineFincaMonicaCrianza',category:'drinks',name:'Finca Mónica Crianza'},
+  {id:'wineFinDelMundoMalbec',category:'drinks',name:'Fin del Mundo Reserva Malbec 珍藏马尔贝克'},
+  {id:'wineSuraniPrimitivo',category:'drinks',name:'Surani Primitivo di Manduria'},
+  {id:'wineLouisJadotPinotNoir',category:'drinks',name:'Louis Jadot Bourgogne Pinot Noir \'Couvent des Jacobins\' 勃艮第黑皮诺'},
+  {id:'wineHautsLynchMoussas',category:'drinks',name:'Les Hauts de Lynch Moussas 上梦多克'},
+  {id:'roseColombetteGrenache',category:'drinks',name:'Domaine La Colombette Grenache Rosé 歌海娜玫瑰庄'},
+  {id:'roseChateauBerneRomance',category:'drinks',name:'Château de Berne Romance Rosé 普罗旺斯玫瑰'},
+  {id:'proseccoSerenaFrizzante',category:'drinks',name:'Serena Prosecco Frizzante 罗普罗蜜克'},
+  {id:'sparklingMontegrandeBianco',category:'drinks',name:'Montegrande Bianco Frizzante 蒙特格兰德'},
+  {id:'champagneTheophileBrut',category:'drinks',name:'Champagne Theophile Brut NV 香槟'},
+  {id:'coke',category:'drinks',name:'可乐'},
+  {id:'cokeZero',category:'drinks',name:'无糖可乐'},
+  {id:'dietCoke',category:'drinks',name:'健怡可乐'},
+  {id:'sevenUp',category:'drinks',name:'七喜'},
+  {id:'sevenUpFree',category:'drinks',name:'无糖七喜'},
+  {id:'fanta',category:'drinks',name:'芬达'},
+  {id:'jiaduobao',category:'drinks',name:'加多宝'},
+  {id:'aloeJuiceRegular',category:'drinks',name:'芦荟汁'},
+  {id:'aloeJuiceLarge',category:'drinks',name:'芦荟汁(大)'},
+  {id:'soyDrink',category:'drinks',name:'维他豆奶(小)'},
+  {id:'coconutJuice',category:'drinks',name:'椰树牌椰汁'},
+  {id:'stillWaterSmall',category:'drinks',name:'小纯净水'},
+  {id:'sparklingWaterSmall',category:'drinks',name:'小气泡水'},
+  {id:'stillWaterLarge',category:'drinks',name:'大纯净水'},
+  {id:'sparklingWaterLarge',category:'drinks',name:'大气泡水'},
+  {id:'appleJuice',category:'drinks',name:'苹果汁'},
+  {id:'orangeJuice',category:'drinks',name:'橙汁'},
+  {id:'cranberryJuice',category:'drinks',name:'蔓越莓汁'},
+  {id:'tsingtaoBeer',category:'drinks',name:'青岛啤酒'},
+  {id:'asahiBeer',category:'drinks',name:'朝日啤酒'},
+  {id:'heinekenBeer',category:'drinks',name:'喜力啤酒'},
+  {id:'heinekenZero',category:'drinks',name:'喜力0.0'},
+  {id:'guinnessBeer',category:'drinks',name:'健力士啤酒'},
+  {id:'guinnessZero',category:'drinks',name:'健力士0.0'},
+];
+
+const CATEGORY_ORDER = ['appetizers','dumplings','soup','chefSpecial','vegetables','riceNoodles','dessert','drinks'];
+const CATEGORY_LABELS = { appetizers:'前菜', dumplings:'饺子', soup:'汤', chefSpecial:'厨师推荐', vegetables:'蔬菜', riceNoodles:'饭/面类', dessert:'甜品', drinks:'酒水' };
+
+let soldOutIds = new Set();
+let selected = new Set();
+let modal = null;   // null | 'soldOut' | 'restore'
+let loaded = false;
+let searchQuery = '';
+let showSoldOutOnly = false;
+
+function toggleSoldOutOnlyView(){
+  showSoldOutOnly = !showSoldOutOnly;
+  const btn = document.getElementById('viewToggleBtn');
+  btn.textContent = showSoldOutOnly ? '展示所有菜品' : '显示已沽清菜品';
+  btn.classList.toggle('active', showSoldOutOnly);
+  renderList();
+}
+
+function onSearchInput(value){
+  searchQuery = value;
+  document.getElementById('searchClearBtn').classList.toggle('visible', searchQuery.length > 0);
+  renderList();   // search box lives outside #app, so it doesn't need (and shouldn't trigger) a full render()
+}
+
+function clearSearch(){
+  searchQuery = '';
+  const input = document.getElementById('searchInput');
+  if(input) input.value = '';
+  document.getElementById('searchClearBtn').classList.remove('visible');
+  renderList();
+}
+
+function matchesFilters(d){
+  if(showSoldOutOnly && !soldOutIds.has(d.id)) return false;
+  if(!searchQuery.trim()) return true;
+  return d.name.toLowerCase().includes(searchQuery.trim().toLowerCase());
+}
+
+menuStatusRef.onSnapshot(snap => {
+  const data = snap.data();
+  soldOutIds = new Set((data && data.ids) || []);
+  loaded = true;
+  render();
+}, err => {});
+
+function toggleSelect(id){
+  if(selected.has(id)) selected.delete(id); else selected.add(id);
+  render();
+}
+
+function openSoldOutModal(){
+  if(selected.size === 0) return;
+  modal = 'soldOut';
+  render();
+}
+
+function openRestoreModal(){
+  if(selected.size === 0) return;
+  modal = 'restore';
+  render();
+}
+
+function closeModal(){
+  modal = null;
+  render();
+}
+
+// 沽清：把已选菜品并入现有沽清集合再整体写回（不影响其他已沽清的菜）
+async function confirmSoldOut(){
+  const ids = new Set(soldOutIds);
+  selected.forEach(id => ids.add(id));
+  try{ await menuStatusRef.set({ ids: Array.from(ids) }); }catch(e){}
+  selected.clear();
+  modal = null;
+  render();
+}
+
+// 恢复售卖：把已选菜品从沽清集合里移除
+async function confirmRestore(){
+  const ids = new Set(soldOutIds);
+  selected.forEach(id => ids.delete(id));
+  try{ await menuStatusRef.set({ ids: Array.from(ids) }); }catch(e){}
+  selected.clear();
+  modal = null;
+  render();
+}
+
+function dishRowHTML(d){
+  const checked = selected.has(d.id);
+  const soldOut = soldOutIds.has(d.id);
+  return `
+    <li class="dish-row ${checked ? 'checked' : ''}">
+      <label>
+        <input type="checkbox" ${checked ? 'checked' : ''} onchange="toggleSelect('${d.id}')">
+        <span class="dish-row-name">${d.name}</span>
+        ${soldOut ? '<span class="sold-out-badge">已沽清</span>' : ''}
+      </label>
+    </li>`;
+}
+
+function selectedNamesHTML(){
+  return DISH_LIST.filter(d => selected.has(d.id)).map(d => `<li>${d.name}</li>`).join('');
+}
+
+function renderModal(){
+  const root = document.getElementById('modal-root');
+  if(!modal){ root.innerHTML = ''; return; }
+  if(modal === 'soldOut'){
+    root.innerHTML = `
+      <div class="modal-overlay">
+        <div class="modal-box">
+          <ul class="modal-dish-list">${selectedNamesHTML()}</ul>
+          <p class="modal-warning">注意：确认沽清后此菜品将不可点单，请务必与后厨确认！</p>
+          <div class="modal-actions">
+            <button class="modal-cancel-btn" onclick="closeModal()">取消</button>
+            <button class="modal-confirm-btn urgent" onclick="confirmSoldOut()">我已确认无误</button>
+          </div>
+        </div>
+      </div>`;
+  }else{
+    root.innerHTML = `
+      <div class="modal-overlay">
+        <div class="modal-box">
+          <ul class="modal-dish-list">${selectedNamesHTML()}</ul>
+          <p class="modal-warning">注意：确认恢复售卖后此菜品将立即恢复可点单，请确认无误！</p>
+          <div class="modal-actions">
+            <button class="modal-cancel-btn" onclick="closeModal()">取消</button>
+            <button class="modal-confirm-btn ok" onclick="confirmRestore()">我已确认无误</button>
+          </div>
+        </div>
+      </div>`;
+  }
+}
+
+function renderList(){
+  const app = document.getElementById('app');
+  if(!loaded){
+    app.innerHTML = '';
+    return;
+  }
+  const sections = CATEGORY_ORDER.map(cat => {
+    const items = DISH_LIST.filter(d => d.category === cat && matchesFilters(d));
+    if(items.length === 0) return '';
+    return `<section class="cat-section"><h2>${CATEGORY_LABELS[cat]}</h2><ul class="dish-list">${items.map(dishRowHTML).join('')}</ul></section>`;
+  }).join('');
+  app.innerHTML = sections || `<p class="no-results">${showSoldOutOnly ? '目前没有已沽清的菜品' : '没有找到匹配的菜品'}</p>`;
+}
+
+function render(){
+  document.getElementById('selCount').textContent = selected.size;
+  document.getElementById('soldOutCount').textContent = soldOutIds.size;
+  document.getElementById('soldOutBtn').disabled = selected.size === 0;
+  document.getElementById('restoreBtn').disabled = selected.size === 0;
+
+  renderList();
+  renderModal();
+}
+
+render();
+</script>
+</body>
+</html>

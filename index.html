@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>扫码点单系统 - 入口</title>
+<style>
+  :root{
+    --bg:#1B1613;--card:#2A2119;--card-line:#3D332B;
+    --ember:#E3421F;--text:#F3ECE1;--text-muted:#AFA396;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    background:var(--bg);color:var(--text);min-height:100vh;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'PingFang SC','Microsoft YaHei',sans-serif;
+  }
+  .wrap{width:100%;max-width:420px;padding:24px;}
+  h1{font-size:22px;margin-bottom:24px;text-align:center;}
+  a.entry{
+    display:block;background:var(--card);border:1px solid var(--card-line);
+    border-radius:14px;padding:20px;margin-bottom:14px;color:var(--text);
+    text-decoration:none;
+  }
+  a.entry:hover{border-color:var(--ember);}
+  a.entry .title{font-size:17px;font-weight:700;}
+  a.entry .desc{font-size:13px;color:var(--text-muted);margin-top:6px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>点单系统 · 总控台</h1>
+  <a class="entry" href="客户端/customer.html">
+    <div class="title">员工代客点单</div>
+    <div class="desc">客人不方便扫码时，在此选桌号代为点菜下单</div>
+  </a>
+  <a class="entry" href="员工端/sjxddxtygd.html">
+    <div class="title">员工接单看板</div>
+    <div class="desc">实时查看各桌订单，处理后移出看板</div>
+  </a>
+</div>
+</body>
+</html>

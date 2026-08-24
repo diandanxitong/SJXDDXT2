@@ -1,0 +1,140 @@
+// 扫码点单系统 - Firestore 安全规则
+//
+// 这个 App 没有登录功能（扫码即用），所以规则没法按“谁在写”来限制，
+// 只能按“写的内容长什么样”来限制——这是唯一能做的第一道防线。
+// 部署方式：Firebase 控制台 → Firestore Database → 规则 → 粘贴本文件全部内容 → 发布
+//
+// 已知局限：Firestore 规则语法不支持遍历数组，没法逐项校验 items 里
+// 每一道菜的 name/qty/spice。这里只能做“整体形状”和“数量上限”的校验，
+// 挡不住"字段类型对但内容瞎填"的脏数据。如果以后需要更强的校验，
+// 可以加一个 Cloud Functions onCreate 触发器做二次清洗，这次先不做。
+//
+// 强烈建议同时开启 Firebase App Check（reCAPTCHA v3），能挡掉绝大多数
+// 用脚本直接打 Firestore API 的滥用请求，是比规则更有效的防线。
+// 另外建议保持 Spark（免费）方案不升级到 Blaze，这样即使被刷，
+// 顶多是当天配额用完导致暂时下不了单，不会产生任何费用。
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /orders/{orderId} {
+
+      // 顾客端和员工看板都需要读取全部订单，且没有登录态，只能开放读
+      allow read: if true;
+
+      // 建单：严格校验字段形状、类型、长度范围，拒绝多余字段和离谱数值
+      // nickname / partySize 是下单确认页新加的字段（昵称 + 就餐人数）
+      // status 是订单状态机的起点，新建订单必须是 'pending'
+      // call 是"呼叫服务员"标记（可选字段）：这类订单没有菜品，items 允许为空
+      allow create: if request.resource.data.keys().hasOnly(['table', 'items', 'createdAt', 'nickname', 'partySize', 'status', 'call'])
+                    && request.resource.data.table is string
+                    && request.resource.data.table.size() > 0
+                    && request.resource.data.table.size() <= 20
+                    && request.resource.data.items is list
+                    && request.resource.data.items.size() <= 30
+                    && (request.resource.data.items.size() > 0 || request.resource.data.get('call', false) == true)
+                    && (!('call' in request.resource.data) || request.resource.data.call is bool)
+                    && request.resource.data.createdAt is number
+                    // createdAt 必须落在服务器时间前后 10 分钟内，防止伪造过期/未来时间戳
+                    && math.abs(request.time.toMillis() - request.resource.data.createdAt) < 10 * 60 * 1000
+                    && request.resource.data.nickname is string
+                    && request.resource.data.nickname.size() <= 30
+                    && request.resource.data.partySize is number
+                    && request.resource.data.partySize > 0
+                    && request.resource.data.partySize <= 50
+                    && request.resource.data.status == 'pending';
+
+      // 订单一旦建立，只允许两种修改：
+      // 1. 员工端把 status 从 pending 推进到 confirmed（顾客端据此从"等待确认"切换到
+      //    "已送入厨房"动画）
+      // 2. 员工端在接单看板上单品删除：只准动 items 这一个字段，且新数组只能比原数组
+      //    短（纯删除），挡不住“删哪一条”这种语义校验，但至少不能借这个口子塞数据、
+      //    改价格或凭空让菜品变多
+      allow update: if (
+                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+                      && resource.data.status == 'pending'
+                      && request.resource.data.status == 'confirmed'
+                    ) || (
+                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['items'])
+                      && request.resource.data.items is list
+                      && request.resource.data.items.size() < resource.data.items.size()
+                    );
+
+      // 员工端"已处理，移出看板"需要删除订单；没有登录态，只能开放删
+      allow delete: if true;
+    }
+
+    // 沽清菜品：员工在"沽清菜品"页勾选后写入这一个文档，顾客端和看板都实时监听
+    // 没有登录态，只能靠形状校验兜底：只准写 soldOut 这一个文档，且只能是一个 id 数组
+    match /menuStatus/{docId} {
+      allow read: if true;
+      allow write: if docId == 'soldOut'
+                    && request.resource.data.keys().hasOnly(['ids'])
+                    && request.resource.data.ids is list
+                    && request.resource.data.ids.size() <= 200;
+    }
+
+    // 今日盘点：每次员工点"顾客已离开，移除看板"，写入这一个自增计数器，
+    // 用来给当天的结账流水编号（#001、#002……每天从 1 重新开始）
+    match /counters/{docId} {
+      allow read: if true;
+      allow write: if docId == 'dailyOrderSeq'
+                    && request.resource.data.keys().hasOnly(['date', 'seq'])
+                    && request.resource.data.date is string
+                    && request.resource.data.date.size() == 10
+                    && request.resource.data.seq is number
+                    && request.resource.data.seq > 0;
+    }
+
+    // 今日盘点：每次结账生成一条不可变的当日流水记录（桌号/菜品/营业额），
+    // 用于"今日盘点"页面的列表和"生成报告"汇总——只允许创建，不允许改/删，保证账目可信
+    match /dailyOrders/{recordId} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['seq', 'date', 'table', 'items', 'revenue', 'archivedAt'])
+                    && request.resource.data.seq is number
+                    && request.resource.data.seq > 0
+                    && request.resource.data.date is string
+                    && request.resource.data.date.size() == 10
+                    && request.resource.data.table is string
+                    && request.resource.data.table.size() > 0
+                    && request.resource.data.table.size() <= 20
+                    && request.resource.data.items is list
+                    && request.resource.data.items.size() > 0
+                    && request.resource.data.items.size() <= 100
+                    && request.resource.data.revenue is number
+                    && request.resource.data.revenue >= 0
+                    && request.resource.data.revenue < 100000
+                    && request.resource.data.archivedAt is number
+                    && math.abs(request.time.toMillis() - request.resource.data.archivedAt) < 10 * 60 * 1000;
+    }
+
+    // 员工操作日志：单品删除/整单删除都要求先填操作人姓名，这里记一条审计记录，
+    // 供"员工操作日志"页面查看——这个 collection 本身没有登录态保护（这套系统压根没有
+    // 账号体系），页面上的用户名/密码只是前端一道软性关卡，不是真正的访问控制。
+    // 允许 delete 是为了配合日志页右上角的"清除记录"按钮（同样没有真正的权限控制，
+    // 只要知道路径谁都能删——这点和这套系统其它 collection 的信任模型是一致的）。
+    match /staffActionLogs/{logId} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['action', 'operator', 'table', 'detail', 'createdAt'])
+                    && request.resource.data.action in ['deleteItem', 'deleteOrder']
+                    && request.resource.data.operator is string
+                    && request.resource.data.operator.size() > 0
+                    && request.resource.data.operator.size() <= 30
+                    && request.resource.data.table is string
+                    && request.resource.data.table.size() > 0
+                    && request.resource.data.table.size() <= 20
+                    && request.resource.data.detail is string
+                    && request.resource.data.detail.size() <= 500
+                    && request.resource.data.createdAt is number
+                    && math.abs(request.time.toMillis() - request.resource.data.createdAt) < 10 * 60 * 1000;
+      allow delete: if true;
+    }
+
+    // 兜底：其他任何 collection 一律拒绝，避免规则之外的路径被意外读写
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

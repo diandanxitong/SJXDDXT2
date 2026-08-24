@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>接单看板</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Archivo+Black&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#121012;
+    --card:#1C191A;
+    --line:#332E2C;
+    --text:#F5F1EC;
+    --text-muted:#8E8883;
+    --normal:#3E5C4C;
+    --warn:#E8A23D;
+    --urgent:#E3421F;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    background:var(--bg);color:var(--text);
+    font-family:'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif;
+    min-height:100vh;padding:22px 26px 40px;
+  }
+  .warn-banner{
+    background:var(--urgent);color:#fff;text-align:center;
+    font-weight:900;font-size:15px;letter-spacing:.02em;
+    padding:12px 16px;margin:-22px -26px 20px;
+  }
+  @media (prefers-reduced-motion:no-preference){
+    .warn-banner{animation:warn-pulse 1.4s ease-in-out infinite;}
+  }
+  @keyframes warn-pulse{0%,100%{opacity:1}50%{opacity:.7}}
+  .top-nav{margin-bottom:16px;}
+  .control-btn{
+    display:inline-flex;align-items:center;gap:6px;text-decoration:none;
+    background:var(--card);border:1px solid var(--line);color:var(--text-muted);
+    font-size:13px;font-weight:700;padding:8px 14px;border-radius:20px;
+    font-family:inherit;cursor:pointer;
+  }
+  .control-btn:hover{color:var(--text);border-color:var(--text-muted);}
+  .control-btn:disabled{color:#5FBE8A;border-color:#5FBE8A;cursor:default;opacity:.9;}
+  .sold-out-entry-btn{
+    background:rgba(232,162,61,.16);border-color:var(--warn);color:var(--warn);font-weight:900;
+  }
+  .sold-out-entry-btn:hover{background:rgba(232,162,61,.26);color:var(--warn);border-color:var(--warn);}
+  .daily-report-entry-btn{
+    background:rgba(95,190,138,.16);border-color:#5FBE8A;color:#5FBE8A;font-weight:900;
+  }
+  .daily-report-entry-btn:hover{background:rgba(95,190,138,.26);color:#5FBE8A;border-color:#5FBE8A;}
+  .admin-log-entry-btn{font-weight:900;}
+
+  header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:10px;}
+  header h1{font-family:'Archivo Black',sans-serif;font-size:22px;letter-spacing:.02em;}
+  .live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#5FBE8A;margin-right:8px;}
+  @media (prefers-reduced-motion:no-preference){
+    .live-dot{animation:pulse 1.8s ease-in-out infinite;}
+  }
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .status{color:var(--text-muted);font-size:13px;}
+  .count-pill{
+    background:var(--card);border:1px solid var(--line);border-radius:20px;
+    padding:6px 16px;font-size:13px;color:var(--text-muted);
+  }
+  .count-pill b{color:var(--text);font-size:15px;}
+
+  .empty{
+    margin-top:22vh;text-align:center;color:var(--text-muted);
+  }
+  .empty p{font-size:15px;}
+
+  .grid{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;
+  }
+  .order-card{
+    background:var(--card);border-radius:16px;border:1px solid var(--line);
+    border-left:5px solid var(--normal);padding:18px 18px 16px;
+    display:flex;flex-direction:column;gap:12px;
+  }
+  .order-card.warn{border-left-color:var(--warn);}
+  .order-card.urgent{border-left-color:var(--urgent);}
+
+  .card-body-wrap{position:relative;display:flex;flex-direction:column;}
+  .card-body{display:flex;flex-direction:column;gap:12px;}
+  .card-body.blurred{filter:blur(6px);pointer-events:none;user-select:none;}
+  .call-overlay{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;}
+  .call-overlay-abs{position:absolute;inset:0;background:rgba(18,16,18,.45);border-radius:12px;z-index:5;}
+  .call-overlay-inline{padding:26px 0 6px;}
+  .call-bell{font-size:42px;line-height:1;animation:bell-ring 1s ease-in-out infinite;}
+  @keyframes bell-ring{
+    0%,100%{transform:rotate(0);}
+    20%{transform:rotate(-14deg);}
+    40%{transform:rotate(11deg);}
+    60%{transform:rotate(-8deg);}
+    80%{transform:rotate(5deg);}
+  }
+  .call-caption{font-weight:700;font-size:15px;color:var(--text);}
+  .call-dismiss-btn{
+    padding:9px 18px;border-radius:20px;border:1px solid var(--urgent);
+    background:rgba(227,66,31,.18);color:var(--urgent);font-weight:700;cursor:pointer;font-size:13px;
+  }
+  .call-dismiss-btn:hover{background:rgba(227,66,31,.28);}
+
+  .confirm-overlay{
+    position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.6);
+    display:flex;align-items:center;justify-content:center;padding:20px;
+  }
+  .confirm-box{
+    background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:26px 22px 22px;max-width:320px;width:100%;text-align:center;
+  }
+  .confirm-question{font-size:17px;font-weight:900;margin-bottom:20px;}
+  .confirm-actions{display:flex;gap:10px;}
+  .confirm-cancel-btn, .confirm-yes-btn{
+    flex:1;padding:12px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;
+  }
+  .confirm-cancel-btn{background:none;border:1px solid var(--line);color:var(--text-muted);}
+  .confirm-cancel-btn:hover{border-color:var(--text-muted);color:var(--text);}
+  .confirm-yes-btn{background:rgba(227,66,31,.18);border:1px solid var(--urgent);color:var(--urgent);}
+  .confirm-yes-btn:hover{background:rgba(227,66,31,.28);}
+  .confirm-yes-btn:disabled{opacity:.4;cursor:default;}
+  .delete-modal-detail{
+    font-size:13px;color:var(--text-muted);margin-bottom:14px;line-height:1.5;
+    background:rgba(255,255,255,.04);border-radius:8px;padding:10px 12px;text-align:left;
+  }
+  .operator-input{
+    width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;
+    color:var(--text);font-family:inherit;font-size:14px;padding:11px 14px;margin-bottom:6px;
+    text-align:left;
+  }
+  .operator-input:focus{outline:none;border-color:var(--urgent);}
+  .operator-hint{font-size:11.5px;color:var(--text-muted);text-align:left;margin-bottom:16px;}
+
+  .card-top{display:flex;justify-content:space-between;align-items:flex-start;}
+  .table-num{font-family:'Archivo Black',sans-serif;font-size:30px;line-height:1;}
+  .elapsed{
+    font-size:12px;padding:4px 10px;border-radius:20px;
+    background:rgba(255,255,255,.06);color:var(--text-muted);white-space:nowrap;
+  }
+  .order-card.warn .elapsed{color:var(--warn);}
+  .order-card.urgent .elapsed{color:var(--urgent);}
+
+  .customer-block{display:flex;flex-direction:column;gap:8px;}
+  .customer-name{
+    font-size:13px;font-weight:700;color:var(--text-muted);
+    padding-top:6px;border-top:1px dashed var(--line);
+  }
+  .customer-block:first-of-type .customer-name{border-top:none;padding-top:0;}
+
+  .item-list{list-style:none;display:flex;flex-direction:column;gap:8px;}
+  .item-list li{
+    display:flex;justify-content:space-between;align-items:center;gap:10px;
+    font-size:16px;padding:9px 12px;background:rgba(255,255,255,.04);border-radius:10px;
+  }
+  .item-main{display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex:1;min-width:0;}
+  .item-list .qty{
+    font-family:'Archivo Black',sans-serif;color:var(--warn);margin-right:8px;
+  }
+  .spice-tag{font-size:11.5px;color:var(--text-muted);border:1px solid var(--line);border-radius:20px;padding:2px 9px;}
+  .exclude-tag{font-size:11.5px;color:var(--urgent);border:1px solid rgba(227,66,31,.5);border-radius:20px;padding:2px 9px;font-weight:700;}
+  .new-tag{font-size:11.5px;color:var(--urgent);border:1px solid var(--urgent);border-radius:20px;padding:2px 9px;font-weight:700;}
+  .item-list li.is-new{background:rgba(227,66,31,.14);}
+  .item-del-btn{
+    flex-shrink:0;width:26px;height:26px;border-radius:8px;
+    border:1.5px solid var(--urgent);background:rgba(227,66,31,.12);color:var(--urgent);
+    font-size:14px;font-weight:900;cursor:pointer;line-height:1;font-family:inherit;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .item-del-btn:hover{background:rgba(227,66,31,.24);}
+  .order-del-btn{
+    width:100%;margin-top:8px;padding:11px;border-radius:10px;
+    font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit;
+    background:none;border:1px solid rgba(227,66,31,.5);color:var(--urgent);
+  }
+  .order-del-btn:hover{background:rgba(227,66,31,.12);}
+
+  .confirmed-badge{
+    font-size:11px;font-weight:700;color:#5FBE8A;border:1px solid rgba(95,190,138,.5);
+    border-radius:20px;padding:3px 10px;white-space:nowrap;
+  }
+
+  .done-btn, .confirm-btn{
+    margin-top:2px;padding:11px;border-radius:10px;font-size:14px;cursor:pointer;font-weight:700;
+  }
+  .done-btn{background:none;border:1px solid var(--line);color:var(--text-muted);}
+  .done-btn:hover{border-color:#5FBE8A;color:#5FBE8A;}
+  .done-btn:active{background:rgba(95,190,138,.12);}
+  .confirm-btn{background:rgba(232,162,61,.14);border:1px solid var(--warn);color:var(--warn);}
+  .confirm-btn:hover{background:rgba(232,162,61,.22);}
+  .confirm-btn:active{background:rgba(232,162,61,.3);}
+</style>
+</head>
+<body>
+<div class="warn-banner">顾客未离开时禁止点击移除看板！！！！！！</div>
+<nav class="top-nav">
+  <a class="control-btn" href="../index.html">← 控制系统</a>
+</nav>
+<header>
+  <h1><span class="live-dot"></span>接单看板</h1>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <a class="control-btn sold-out-entry-btn" href="gqcp.html">🚫 沽清菜品</a>
+    <a class="control-btn daily-report-entry-btn" href="jrpd.html">📊 今日盘点</a>
+    <a class="control-btn admin-log-entry-btn" href="ygczrz.html">🗒 员工操作日志</a>
+    <button class="control-btn" id="sound-toggle" onclick="unlockAudio()">🔊 开启提示音</button>
+    <span class="status" id="status">加载中…</span>
+    <span class="count-pill">待处理 <b id="count">0</b> 桌</span>
+  </div>
+</header>
+<div id="app"></div>
+<div id="confirm-modal"></div>
+<div id="delete-modal"></div>
+
+<script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: 'AIzaSyBUFdqFcmnmGyuS1-ZWq7bEv0fUxTNNAFU',
+  authDomain: 'ddxt-bc353.firebaseapp.com',
+  projectId: 'ddxt-bc353',
+  storageBucket: 'ddxt-bc353.firebasestorage.app',
+  messagingSenderId: '624541373179',
+  appId: '1:624541373179:web:72e5f44322ad337406165e',
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+db.settings({ experimentalAutoDetectLongPolling: true });
+const ordersRef = db.collection('orders');
+
+let orders = [];   // { key, table, items, createdAt, nickname, partySize, status }
+let loaded = false;
+
+// 提示音：顾客呼叫 / 顾客下单。浏览器要求先有一次用户交互才允许播放音频，
+// 所以需要员工手动点一下"开启提示音"，这里顺带做一次静音播放来解锁。
+//
+// 之前 playSound 是每次 cloneNode() 出一个新 <audio> 再播放——iPad Safari 上
+// clone 出来的元素没有经过用户手势解锁，播放会被静默拒绝（桌面 Chrome 对这条
+// 策略比较宽松所以不会发现问题）。这里改成在解锁时就一次性 clone 出一小池
+// 元素并逐个解锁，播放时轮流复用池子里的元素，而不是现造一个新的。
+const SOUND_POOL_SIZE = 4;
+const callSound = new Audio('提示音/顾客呼叫.mp3');
+const orderSound = new Audio('提示音/顾客下单.mp3');
+let audioUnlocked = false;
+let callPool = [];
+let orderPool = [];
+let poolCursor = { call: 0, order: 0 };
+
+function unlockAudio(){
+  if(audioUnlocked) return;
+  audioUnlocked = true;
+  callPool = Array.from({length: SOUND_POOL_SIZE}, () => callSound.cloneNode());
+  orderPool = Array.from({length: SOUND_POOL_SIZE}, () => orderSound.cloneNode());
+  [callSound, orderSound, ...callPool, ...orderPool].forEach(a => {
+    a.muted = true;
+    a.play().then(()=>{ a.pause(); a.currentTime = 0; a.muted = false; }).catch(()=>{ a.muted = false; });
+  });
+  const btn = document.getElementById('sound-toggle');
+  if(btn){ btn.textContent = '🔔 提示音已开启'; btn.disabled = true; }
+}
+
+function playSound(kind){
+  const pool = kind === 'call' ? callPool : orderPool;
+  if(pool.length === 0) return;
+  const a = pool[poolCursor[kind] % pool.length];
+  poolCursor[kind]++;
+  try{
+    a.currentTime = 0;
+    a.play().catch(()=>{});
+  }catch(e){}
+}
+
+const SIZE_LABELS_ZH = { half:'半份', whole:'整份', large:'大份', small:'小份' };
+const OPTION_LABELS_ZH = { onion:'不要洋葱', scallion:'不要葱', ginger:'不要姜', cilantro:'不要香菜', meat:'不要肉' };
+const COOK_METHOD_LABELS_ZH = { steamed:'蒸', panFried:'煎' };
+
+function elapsedInfo(ts){
+  const diffMs = Date.now() - ts;
+  const mins = Math.floor(diffMs / 60000);
+  let label, level;
+  if(mins < 1){ label = '刚刚下单'; } else { label = mins + ' 分钟前'; }
+  if(mins < 3){ level = 'normal'; }
+  else if(mins < 6){ level = 'warn'; }
+  else { level = 'urgent'; }
+  return { label, level };
+}
+
+let firstSnapshot = true;   // 首次快照会把已有订单全部标记为 "added"，不能当成新单播放提示音
+
+ordersRef.onSnapshot(snap => {
+  if(!firstSnapshot){
+    let hasNewCall = false, hasNewOrder = false;
+    snap.docChanges().forEach(change => {
+      if(change.type !== 'added') return;
+      if(change.doc.data().call) hasNewCall = true; else hasNewOrder = true;
+    });
+    if(hasNewCall) playSound('call');
+    if(hasNewOrder) playSound('order');
+  }
+  firstSnapshot = false;
+
+  const results = snap.docs.map(d => ({
+    key: d.id, table: d.data().table, items: d.data().items, createdAt: d.data().createdAt,
+    nickname: d.data().nickname || '', partySize: d.data().partySize || null,
+    status: d.data().status || 'pending', call: !!d.data().call,
+  }));
+  results.sort((a,b) => a.createdAt - b.createdAt);
+  orders = results;
+  loaded = true;
+  document.getElementById('status').textContent = '实时更新：' + new Date().toLocaleTimeString('zh-CN',{hour12:false});
+  render();
+}, err => {
+  document.getElementById('status').textContent = '连接异常，正在重试…';
+});
+
+// 第一步：确认订单，推送给顾客端“已送入厨房”动画，但仍留在看板上等待上菜
+async function confirmToKitchen(keys){
+  orders = orders.map(o => keys.includes(o.key) ? Object.assign({}, o, { status: 'confirmed' }) : o);
+  render();
+  try{
+    const batch = db.batch();
+    keys.forEach(key => batch.update(ordersRef.doc(key), { status: 'confirmed' }));
+    await batch.commit();
+  }catch(e){ /* onSnapshot 会在下一次推送时自动纠正 */ }
+}
+
+// 第二步：菜已上齐，彻底移出看板
+async function archiveOrder(keys){
+  orders = orders.filter(o => !keys.includes(o.key));
+  render();
+  try{
+    const batch = db.batch();
+    keys.forEach(key => batch.delete(ordersRef.doc(key)));
+    await batch.commit();
+  }catch(e){ /* onSnapshot 会在下一次推送时自动纠正 */ }
+}
+
+// “顾客已离开，移除看板”会误删还在用餐的桌，先弹窗二次确认
+let confirmKeys = null;
+let confirmTable = null;
+
+function confirmLeave(keys, table){
+  confirmKeys = keys;
+  confirmTable = table;
+  renderConfirmModal();
+}
+
+function cancelLeave(){
+  confirmKeys = null;
+  confirmTable = null;
+  renderConfirmModal();
+}
+
+function confirmLeaveYes(){
+  const keys = confirmKeys;
+  const table = confirmTable;
+  confirmKeys = null;
+  confirmTable = null;
+  renderConfirmModal();
+  // 先把这一桌的流水记进“今日盘点”，再删单——记账失败也不能卡住移除看板，
+  // 所以这里不等它，且内部自己吞掉错误
+  recordDailyCheckout(keys, table);
+  archiveOrder(keys);
+}
+
+function todayKey(d){
+  d = d || new Date();
+  const pad = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+
+// “今日盘点”流水：#001、#002……每天从 1 开始，靠 Firestore 事务原子地读计数器+1，
+// 避免多个员工同时结账时编号冲突或重复
+async function recordDailyCheckout(keys, table){
+  const batchOrders = orders.filter(o => keys.includes(o.key));
+  const items = [];
+  batchOrders.forEach(o => (o.items || []).forEach(it => {
+    items.push({ name: it.name, qty: it.qty, price: it.price || 0 });
+  }));
+  if(items.length === 0) return;
+  const revenue = items.reduce((s, it) => s + it.price * it.qty, 0);
+  const date = todayKey();
+  try{
+    await db.runTransaction(async tx => {
+      const counterRef = db.collection('counters').doc('dailyOrderSeq');
+      const snap = await tx.get(counterRef);
+      const prev = snap.exists ? snap.data() : null;
+      const seq = (prev && prev.date === date) ? prev.seq + 1 : 1;
+      tx.set(counterRef, { date, seq });
+      const recordRef = db.collection('dailyOrders').doc();
+      tx.set(recordRef, { seq, date, table, items, revenue, archivedAt: Date.now() });
+    });
+  }catch(e){ /* 记账失败就不记了，不阻塞移除看板；今日盘点里会少这一笔，需要人工核对 */ }
+}
+
+function renderConfirmModal(){
+  const el = document.getElementById('confirm-modal');
+  if(!confirmKeys){ el.innerHTML = ''; return; }
+  el.innerHTML = `
+    <div class="confirm-overlay">
+      <div class="confirm-box">
+        <p class="confirm-question">确认顾客已离开？</p>
+        <div class="confirm-actions">
+          <button class="confirm-cancel-btn" onclick="cancelLeave()">取消移除看板</button>
+          <button class="confirm-yes-btn" onclick="confirmLeaveYes()">确认已离开</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+// 单品删除 / 整单删除：都要求先填操作人姓名才能确认，且都会记一条日志到
+// staffActionLogs，供"员工操作日志"页面查看
+let deleteModalCtx = null;   // null | { type: 'item'|'order', target, operatorName }
+
+function requestDeleteItem(idx){
+  const target = itemDeleteTargets[idx];
+  if(!target) return;
+  deleteModalCtx = { type: 'item', target, operatorName: '' };
+  renderDeleteModal();
+}
+
+function requestDeleteOrder(idx){
+  const target = orderDeleteTargets[idx];
+  if(!target) return;
+  deleteModalCtx = { type: 'order', target, operatorName: '' };
+  renderDeleteModal();
+}
+
+function cancelDelete(){
+  deleteModalCtx = null;
+  renderDeleteModal();
+}
+
+// 操作人姓名只准填汉字和英文字母——不要数字、符号、空格，边打字边过滤掉
+function sanitizeOperatorName(v){
+  return (v || '').replace(/[^a-zA-Z一-龥]/g, '');
+}
+
+function updateDeleteOperatorName(v){
+  if(!deleteModalCtx) return;
+  const clean = sanitizeOperatorName(v);
+  deleteModalCtx.operatorName = clean;
+  const input = document.getElementById('operator-name-input');
+  if(input && input.value !== clean) input.value = clean;
+  const btn = document.getElementById('delete-confirm-btn');
+  if(btn) btn.disabled = clean.trim().length === 0;
+}
+
+function confirmDelete(){
+  if(!deleteModalCtx) return;
+  const name = deleteModalCtx.operatorName.trim();
+  if(!name) return;
+  const { type, target } = deleteModalCtx;
+  deleteModalCtx = null;
+  renderDeleteModal();
+  if(type === 'item') performDeleteItem(target, name);
+  else performDeleteOrder(target, name);
+}
+
+function renderDeleteModal(){
+  const el = document.getElementById('delete-modal');
+  if(!deleteModalCtx){ el.innerHTML = ''; return; }
+  const { type, target, operatorName } = deleteModalCtx;
+  const question = type === 'item' ? '确认删除这道菜？' : '确认整单删除？';
+  const detail = type === 'item'
+    ? `桌 ${target.table} · ${target.name} × ${target.qty}`
+    : `桌 ${target.table} · 共 ${target.items.length} 项：${target.items.map(it => `${it.name}×${it.qty}`).join('、')}`;
+  el.innerHTML = `
+    <div class="confirm-overlay">
+      <div class="confirm-box">
+        <p class="confirm-question">${question}</p>
+        <p class="delete-modal-detail">${detail}</p>
+        <input type="text" class="operator-input" id="operator-name-input" placeholder="请输入操作人员姓名，不填不能删除"
+               value="${operatorName}" oninput="updateDeleteOperatorName(this.value)"
+               onkeydown="if(event.key==='Enter' && this.value.trim()) confirmDelete()" autocomplete="off">
+        <p class="operator-hint">仅支持汉字和英文字母</p>
+        <div class="confirm-actions">
+          <button class="confirm-cancel-btn" onclick="cancelDelete()">取消</button>
+          <button class="confirm-yes-btn" id="delete-confirm-btn" onclick="confirmDelete()" ${operatorName.trim() ? '' : 'disabled'}>确认删除</button>
+        </div>
+      </div>
+    </div>`;
+  const input = document.getElementById('operator-name-input');
+  if(input) input.focus();
+}
+
+async function logStaffAction(entry){
+  try{
+    await db.collection('staffActionLogs').add({
+      action: entry.action, operator: entry.operator, table: entry.table,
+      detail: entry.detail, createdAt: Date.now(),
+    });
+  }catch(e){ /* 日志写入失败不影响已经执行完的删除操作 */ }
+}
+
+// 删掉某一道合并显示的菜：这道菜可能来自同一顾客的好几次加菜（好几个 order 文档各贡献
+// 一条 items 记录），所以要在这些文档里逐个找到匹配的那一条删掉，文档删空了就整份删除
+async function performDeleteItem(target, operatorName){
+  const { table, keys, name, spice, size, cookMethod, qty } = target;
+  const matches = it => it.name === name && (it.spice || '') === (spice || '')
+    && (it.size || '') === (size || '') && (it.cookMethod || '') === (cookMethod || '');
+  const toDelete = [];
+  const toUpdate = [];
+  keys.forEach(key => {
+    const order = orders.find(o => o.key === key);
+    if(!order) return;
+    const items = order.items || [];
+    const idx = items.findIndex(matches);
+    if(idx === -1) return;
+    const newItems = items.slice(0, idx).concat(items.slice(idx + 1));
+    if(newItems.length === 0) toDelete.push(key);
+    else toUpdate.push({ key, items: newItems });
+  });
+  orders = orders
+    .filter(o => !toDelete.includes(o.key))
+    .map(o => {
+      const u = toUpdate.find(x => x.key === o.key);
+      return u ? Object.assign({}, o, { items: u.items }) : o;
+    });
+  render();
+  try{
+    const batch = db.batch();
+    toDelete.forEach(key => batch.delete(ordersRef.doc(key)));
+    toUpdate.forEach(({ key, items }) => batch.update(ordersRef.doc(key), { items }));
+    await batch.commit();
+  }catch(e){ /* onSnapshot 会在下一次推送时自动纠正 */ }
+  logStaffAction({ action: 'deleteItem', operator: operatorName, table, detail: `${name} × ${qty}` });
+}
+
+async function performDeleteOrder(target, operatorName){
+  const { table, keys, items } = target;
+  orders = orders.filter(o => !keys.includes(o.key));
+  render();
+  try{
+    const batch = db.batch();
+    keys.forEach(key => batch.delete(ordersRef.doc(key)));
+    await batch.commit();
+  }catch(e){ /* onSnapshot 会在下一次推送时自动纠正 */ }
+  const detail = items.map(it => `${it.name}×${it.qty}`).join('、');
+  logStaffAction({ action: 'deleteOrder', operator: operatorName, table, detail });
+}
+
+// 同一桌可能分多次下单（加菜），这里按桌号把订单合并成一张看板卡片
+function groupByTable(list){
+  const map = new Map();
+  for(const o of list){
+    if(!map.has(o.table)) map.set(o.table, []);
+    map.get(o.table).push(o);
+  }
+  const groups = [];
+  for(const [table, batch] of map){
+    batch.sort((a,b) => a.createdAt - b.createdAt);
+    groups.push({ table, batch, createdAt: batch[0].createdAt, keys: batch.map(o => o.key) });
+  }
+  groups.sort((a,b) => a.createdAt - b.createdAt);
+  return groups;
+}
+
+// 同一桌可能坐了好几位各自扫码点单的顾客，按昵称把订单分开显示，方便分别记录
+function groupByNickname(batch){
+  const map = new Map();
+  batch.forEach(o => {
+    const name = (o.nickname || '').trim() || '匿名顾客';
+    if(!map.has(name)) map.set(name, []);
+    map.get(name).push(o);
+  });
+  const groups = [];
+  for(const [nickname, docs] of map){
+    docs.sort((a,b) => a.createdAt - b.createdAt);
+    const partySize = docs.slice().reverse().find(d => d.partySize)?.partySize || null;
+    groups.push({ nickname, partySize, items: mergeItems(docs), keys: docs.map(d => d.key) });
+  }
+  return groups;
+}
+
+// 按“菜名+辣度+份量”合并数量；只有第一批之后才出现的菜品标记为“新加”
+function mergeItems(batch){
+  const merged = new Map();
+  batch.forEach((o, batchIndex) => {
+    o.items.forEach(it => {
+      const itemKey = it.name + '__' + it.spice + '__' + (it.size || '') + '__' + (it.cookMethod || '');
+      if(!merged.has(itemKey)){
+        merged.set(itemKey, { name: it.name, spice: it.spice, size: it.size || null, cookMethod: it.cookMethod || null, excludes: it.excludes || [], qty: 0, isNew: batchIndex > 0 });
+      }
+      merged.get(itemKey).qty += it.qty;
+    });
+  });
+  return Array.from(merged.values());
+}
+
+// 每次 render() 会先清空这个登记表，itemLineHTML/orderDelBtnHTML 往里塞“删除这一项需要
+// 操作哪些 order 文档”，删除按钮的 onclick 只带一个数组下标，避免把菜名（有些酒款名字
+// 带英文单引号）直接拼进 onclick 属性里，那样字符串会被提前截断
+let itemDeleteTargets = [];
+let orderDeleteTargets = [];
+
+function itemLineHTML(it, table, orderKeys){
+  const tags = [];
+  if(it.spice) tags.push(`<span class="spice-tag">${it.spice}</span>`);
+  if(it.size) tags.push(`<span class="spice-tag">${SIZE_LABELS_ZH[it.size] || it.size}</span>`);
+  if(it.cookMethod) tags.push(`<span class="spice-tag">${COOK_METHOD_LABELS_ZH[it.cookMethod] || it.cookMethod}</span>`);
+  it.excludes.forEach(k => tags.push(`<span class="exclude-tag">${OPTION_LABELS_ZH[k] || k}</span>`));
+  if(it.isNew) tags.push('<span class="new-tag">新加</span>');
+  const idx = itemDeleteTargets.length;
+  itemDeleteTargets.push({
+    table, keys: orderKeys,
+    name: it.name, spice: it.spice, size: it.size, cookMethod: it.cookMethod, qty: it.qty,
+  });
+  return `<li class="${it.isNew?'is-new':''}">
+      <span class="item-main"><span><span class="qty">${it.qty}×</span>${it.name}</span><span style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">${tags.join('')}</span></span>
+      <button class="item-del-btn" onclick="requestDeleteItem(${idx})" aria-label="删除这道菜">✕</button>
+    </li>`;
+}
+
+function customerBlockHTML(nGroup, table){
+  return `
+    <div class="customer-block">
+      <p class="customer-name">${nGroup.nickname}${nGroup.partySize ? ` · ${nGroup.partySize}人` : ''}</p>
+      <ul class="item-list">${nGroup.items.map(it => itemLineHTML(it, table, nGroup.keys)).join('')}</ul>
+    </div>`;
+}
+
+function orderDelBtnHTML(table, realBatch){
+  const items = [];
+  realBatch.forEach(o => (o.items || []).forEach(it => items.push({ name: it.name, qty: it.qty })));
+  const idx = orderDeleteTargets.length;
+  orderDeleteTargets.push({ table, keys: realBatch.map(o => o.key), items });
+  return `<button class="order-del-btn" onclick="requestDeleteOrder(${idx})">🗑 整单删除</button>`;
+}
+
+function callOverlayHTML(callKeys, isAbs){
+  return `
+    <div class="call-overlay ${isAbs ? 'call-overlay-abs' : 'call-overlay-inline'}">
+      <span class="call-bell">🔔</span>
+      <p class="call-caption">顾客呼叫</p>
+      <button class="call-dismiss-btn" data-keys="${callKeys.join(',')}" onclick="archiveOrder(this.dataset.keys.split(','))">✓ 已处理</button>
+    </div>`;
+}
+
+function cardHTML(group){
+  const { label, level } = elapsedInfo(group.createdAt);
+  const realBatch = group.batch.filter(o => !o.call);
+  const callKeys = group.batch.filter(o => o.call).map(o => o.key);
+  const hasCall = callKeys.length > 0;
+  const nicknameGroups = groupByNickname(realBatch).filter(g => g.items.length > 0);
+  const hasRealContent = nicknameGroups.length > 0;
+  const pendingKeys = realBatch.filter(o => o.status !== 'confirmed').map(o => o.key);
+  const anyPending = pendingKeys.length > 0;
+  const actionBtn = !hasRealContent ? '' : (anyPending
+    ? `<button class="confirm-btn" data-keys="${pendingKeys.join(',')}" onclick="confirmToKitchen(this.dataset.keys.split(','))">🍳 确认，送入厨房</button>`
+    : `<button class="done-btn" data-keys="${realBatch.map(o=>o.key).join(',')}" onclick="confirmLeave(this.dataset.keys.split(','), '${group.table}')">✓ 顾客已离开，移除看板</button>`);
+  return `
+    <div class="order-card ${level}">
+      <div class="card-top">
+        <span class="table-num">桌 ${group.table}</span>
+        <span style="display:flex;gap:8px;align-items:center;">
+          ${hasRealContent && !anyPending ? '<span class="confirmed-badge">已确认</span>' : ''}
+          <span class="elapsed">${label}</span>
+        </span>
+      </div>
+      ${hasRealContent ? `
+      <div class="card-body-wrap">
+        <div class="card-body${hasCall ? ' blurred' : ''}">
+          ${nicknameGroups.map(g => customerBlockHTML(g, group.table)).join('')}
+          ${actionBtn}
+          ${orderDelBtnHTML(group.table, realBatch)}
+        </div>
+        ${hasCall ? callOverlayHTML(callKeys, true) : ''}
+      </div>` : (hasCall ? callOverlayHTML(callKeys, false) : '')}
+    </div>`;
+}
+
+function render(){
+  itemDeleteTargets = [];
+  orderDeleteTargets = [];
+  const groups = groupByTable(orders);
+  document.getElementById('count').textContent = groups.length;
+  const app = document.getElementById('app');
+  if(!loaded){ app.innerHTML = ''; return; }
+  if(groups.length === 0){
+    app.innerHTML = `<div class="empty"><p>暂无订单，等待顾客点单中…</p></div>`;
+    return;
+  }
+  app.innerHTML = `<div class="grid">${groups.map(cardHTML).join('')}</div>`;
+}
+
+render();
+setInterval(render, 1000);        // 每秒刷新一次等待时长与颜色提示（订单数据本身由 onSnapshot 实时推送）
+</script>
+</body>
+</html>

@@ -261,6 +261,9 @@
     background:var(--bg-soft);border:1px solid var(--card-line);border-radius:12px;
     padding:9px 12px;margin:0 0 14px 16px;
   }
+  .category-note .note-link{
+    color:var(--gold-ink);font-weight:800;text-decoration:underline;text-underline-offset:2px;cursor:pointer;
+  }
   .dish-list{padding:0 0 0 16px;display:flex;flex-direction:column;gap:14px;}
   .dish-group-header{
     font-size:13px;font-weight:800;letter-spacing:.04em;color:var(--gold-ink);
@@ -1191,7 +1194,23 @@ function tCat(catId){ return (I18N[state.lang] || I18N.zh).categories[catId]; }
 const CATEGORY_NOTE_KEYS = { soupBase:'soupBaseNote', lunchSet:'lunchSetNote', lunchPieces:'lunchPiecesNote' };
 function categoryNoteHTML(catId){
   const key = CATEGORY_NOTE_KEYS[catId];
-  return key ? `<p class="category-note">${t(key)}</p>` : '';
+  if(!key) return '';
+  let text = t(key);
+  // 锅底提示语开头就是"鸳鸯锅"这个分组名，把它变成可点的下划线链接，点了跳到鸳鸯锅那组菜品
+  if(catId === 'soupBase'){
+    const dualLabel = tSubGroup('potDual');
+    if(text.indexOf(dualLabel) === 0){
+      text = `<span class="note-link" onclick="scrollToSubGroup('potDual')">${dualLabel}</span>` + text.slice(dualLabel.length);
+    }
+  }
+  return `<p class="category-note">${text}</p>`;
+}
+function scrollToSubGroup(sub){
+  const label = tSubGroup(sub);
+  const header = Array.from(document.querySelectorAll('.dish-group-header')).find(h => h.textContent === label);
+  if(!header) return;
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  header.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
 }
 function tSpice(idx){ return (I18N[state.lang] || I18N.zh).spice[idx]; }
 function tDish(id, field){ return (I18N[state.lang] || I18N.zh).dishes[id][field]; }

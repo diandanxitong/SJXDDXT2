@@ -17,7 +17,7 @@
     --text-muted:#8E8883;
     --normal:#3E5C4C;
     --warn:#E8A23D;
-    --urgent:#E3421F;
+    --urgent:#D2502F;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   body{
@@ -100,9 +100,9 @@
   .call-caption{font-weight:700;font-size:15px;color:var(--text);}
   .call-dismiss-btn{
     padding:9px 18px;border-radius:20px;border:1px solid var(--urgent);
-    background:rgba(227,66,31,.18);color:var(--urgent);font-weight:700;cursor:pointer;font-size:13px;
+    background:rgba(210,80,47,.18);color:var(--urgent);font-weight:700;cursor:pointer;font-size:13px;
   }
-  .call-dismiss-btn:hover{background:rgba(227,66,31,.28);}
+  .call-dismiss-btn:hover{background:rgba(210,80,47,.28);}
 
   .confirm-overlay{
     position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.6);
@@ -119,8 +119,8 @@
   }
   .confirm-cancel-btn{background:none;border:1px solid var(--line);color:var(--text-muted);}
   .confirm-cancel-btn:hover{border-color:var(--text-muted);color:var(--text);}
-  .confirm-yes-btn{background:rgba(227,66,31,.18);border:1px solid var(--urgent);color:var(--urgent);}
-  .confirm-yes-btn:hover{background:rgba(227,66,31,.28);}
+  .confirm-yes-btn{background:rgba(210,80,47,.18);border:1px solid var(--urgent);color:var(--urgent);}
+  .confirm-yes-btn:hover{background:rgba(210,80,47,.28);}
   .confirm-yes-btn:disabled{opacity:.4;cursor:default;}
   .delete-modal-detail{
     font-size:13px;color:var(--text-muted);margin-bottom:14px;line-height:1.5;
@@ -160,22 +160,22 @@
     font-family:'Archivo Black',sans-serif;color:var(--warn);margin-right:8px;
   }
   .spice-tag{font-size:11.5px;color:var(--text-muted);border:1px solid var(--line);border-radius:20px;padding:2px 9px;}
-  .exclude-tag{font-size:11.5px;color:var(--urgent);border:1px solid rgba(227,66,31,.5);border-radius:20px;padding:2px 9px;font-weight:700;}
+  .exclude-tag{font-size:11.5px;color:var(--urgent);border:1px solid rgba(210,80,47,.5);border-radius:20px;padding:2px 9px;font-weight:700;}
   .new-tag{font-size:11.5px;color:var(--urgent);border:1px solid var(--urgent);border-radius:20px;padding:2px 9px;font-weight:700;}
-  .item-list li.is-new{background:rgba(227,66,31,.14);}
+  .item-list li.is-new{background:rgba(210,80,47,.14);}
   .item-del-btn{
     flex-shrink:0;width:26px;height:26px;border-radius:8px;
-    border:1.5px solid var(--urgent);background:rgba(227,66,31,.12);color:var(--urgent);
+    border:1.5px solid var(--urgent);background:rgba(210,80,47,.12);color:var(--urgent);
     font-size:14px;font-weight:900;cursor:pointer;line-height:1;font-family:inherit;
     display:flex;align-items:center;justify-content:center;
   }
-  .item-del-btn:hover{background:rgba(227,66,31,.24);}
+  .item-del-btn:hover{background:rgba(210,80,47,.24);}
   .order-del-btn{
     width:100%;margin-top:8px;padding:11px;border-radius:10px;
     font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit;
-    background:none;border:1px solid rgba(227,66,31,.5);color:var(--urgent);
+    background:none;border:1px solid rgba(210,80,47,.5);color:var(--urgent);
   }
-  .order-del-btn:hover{background:rgba(227,66,31,.12);}
+  .order-del-btn:hover{background:rgba(210,80,47,.12);}
 
   .confirmed-badge{
     font-size:11px;font-weight:700;color:#5FBE8A;border:1px solid rgba(95,190,138,.5);
@@ -217,12 +217,12 @@
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-compat.js"></script>
 <script>
 const firebaseConfig = {
-  apiKey: 'AIzaSyBUFdqFcmnmGyuS1-ZWq7bEv0fUxTNNAFU',
-  authDomain: 'ddxt-bc353.firebaseapp.com',
-  projectId: 'ddxt-bc353',
-  storageBucket: 'ddxt-bc353.firebasestorage.app',
-  messagingSenderId: '624541373179',
-  appId: '1:624541373179:web:72e5f44322ad337406165e',
+  apiKey: 'AIzaSyBaFx1ZYKzEKfQLKbnD9YE_X_EJnFXrxOE',
+  authDomain: 'sjxddxt.firebaseapp.com',
+  projectId: 'sjxddxt',
+  storageBucket: 'sjxddxt.firebasestorage.app',
+  messagingSenderId: '56738241418',
+  appId: '1:56738241418:web:1ea87e2445e9d09e3d8673',
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();

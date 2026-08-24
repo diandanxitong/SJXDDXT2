@@ -170,6 +170,14 @@
     white-space:nowrap;font-family:inherit;
   }
   .allergen-info-btn:hover{background:rgba(232,162,61,.1);}
+  .menu-view-row{padding:0 24px 14px;display:flex;gap:8px;}
+  .menu-view-btn{
+    flex:1;min-width:0;padding:10px 8px;border-radius:12px;
+    border:1px solid var(--card-line);background:var(--bg-soft);color:var(--text-muted);
+    font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;
+  }
+  .menu-view-btn.active{border-color:var(--cinnabar);color:var(--gold-ink);background:rgba(184,64,42,.16);}
+  .menu-view-btn:hover{color:var(--text);}
   .allergen-modal{padding-bottom:8px;}
   .allergen-grid{padding:4px 18px 16px;display:grid;grid-template-columns:1fr 1fr;gap:9px 14px;}
   .allergen-grid-item{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text);}
@@ -942,6 +950,7 @@ const I18N = {
     perPieceSuffix:" /件",
     soupBaseNote:"鸳鸯锅可选特辣/中辣/微辣", lunchSetNote:"含一份火锅碗 + 一碗米饭 + 一杯饮品，锅底与火锅碗各选一种",
     lunchPiecesNote:"最低起选10件，满10件不额外收锅底费；汤底可选：番茄/经典川味麻辣/骨汤(辣/不辣)/菌汤/麻辣拌",
+    viewHotpotBtn:"点火锅", viewLunchBtn:"点午餐",
   },
   zhHant:{
     appTitle:'掃碼點單',
@@ -970,6 +979,7 @@ const I18N = {
     perPieceSuffix:' /件',
     soupBaseNote:'鴛鴦鍋可選特辣/中辣/微辣', lunchSetNote:'含一份火鍋碗 + 一碗米飯 + 一杯飲品，鍋底與火鍋碗各選一種',
     lunchPiecesNote:'最低起選10件，滿10件不額外收鍋底費；湯底可選：番茄/經典川味麻辣/骨湯(辣/不辣)/菌湯/麻辣拌',
+    viewHotpotBtn:'點火鍋', viewLunchBtn:'點午餐',
   },
   en:{
     appTitle:"Scan to Order",
@@ -998,6 +1008,7 @@ const I18N = {
     perPieceSuffix:" / piece",
     soupBaseNote:"Two-Flavour Pot: choose Extra/Medium/Mild spicy", lunchSetNote:"Includes one hotpot bowl + one bowl of rice + one drink. Choose one soup base and one hotpot bowl.",
     lunchPiecesNote:"Minimum order 10 items — no extra soup base charge at 10+. Soup base choices: Tomato / Classic Sichuan Mala / Pork Bone (Spicy or Not) / Mushroom / Mixed Mala",
+    viewHotpotBtn:"Hotpot", viewLunchBtn:"Lunch",
   },
   it:{
     appTitle:"Scansiona per Ordinare",
@@ -1026,6 +1037,7 @@ const I18N = {
     perPieceSuffix:" / pezzo",
     soupBaseNote:"Pentola a Due Sapori: piccante extra/medio/leggero a scelta", lunchSetNote:"Include una ciotola hotpot + una ciotola di riso + una bevanda. Scegli una base zuppa e una ciotola hotpot.",
     lunchPiecesNote:"Ordine minimo di 10 pezzi — nessun supplemento per la base zuppa da 10 pezzi in su. Basi zuppa: Pomodoro / Mala Classica del Sichuan / Ossa di Maiale (Piccante o No) / Funghi / Mala Mista",
+    viewHotpotBtn:"Hotpot", viewLunchBtn:"Pranzo",
   },
   fr:{
     appTitle:"Scanner pour Commander",
@@ -1054,6 +1066,7 @@ const I18N = {
     perPieceSuffix:" / pièce",
     soupBaseNote:"Marmite Deux Saveurs : extra/moyen/léger épicé au choix", lunchSetNote:"Comprend un bol hotpot + un bol de riz + une boisson. Choisissez une base de bouillon et un bol hotpot.",
     lunchPiecesNote:"Commande minimum de 10 pièces — pas de supplément de base à partir de 10 pièces. Bases au choix : Tomate / Mala Classique du Sichuan / Os de Porc (Épicé ou Non) / Champignons / Mala Mixte",
+    viewHotpotBtn:"Hotpot", viewLunchBtn:"Déjeuner",
   },
   es:{
     appTitle:"Escanea para Pedir",
@@ -1082,6 +1095,7 @@ const I18N = {
     perPieceSuffix:" / pieza",
     soupBaseNote:"Olla de Dos Sabores: extra/medio/suave picante a elegir", lunchSetNote:"Incluye un bol de hotpot + un bol de arroz + una bebida. Elige una base de sopa y un bol de hotpot.",
     lunchPiecesNote:"Pedido mínimo de 10 piezas — sin cargo extra de base a partir de 10 piezas. Bases a elegir: Tomate / Mala Clásica de Sichuan / Hueso de Cerdo (Picante o No) / Setas / Mala Mixta",
+    viewHotpotBtn:"Hotpot", viewLunchBtn:"Almuerzo",
   },
 };
 
@@ -1174,6 +1188,11 @@ function dishPriceLabel(d, item){
 }
 
 const CATEGORIES = ['all','soupBase','houseSpecial','seafood','premiumBeef','meatballs','mushrooms','vegetables','snacks','desserts','drinks','lunchSet','hotpotBowl','riceNoodles','lunchPieces'];
+// 点火锅：锅底…饮品（不含午市专属分类）；点午餐：甜品…午市点餐（甜品/饮品两边都有，因为两种场景都会点）
+const VIEW_CATEGORIES = {
+  hotpot: ['soupBase','houseSpecial','seafood','premiumBeef','meatballs','mushrooms','vegetables','snacks','desserts','drinks'],
+  lunch: ['desserts','drinks','lunchSet','hotpotBowl','riceNoodles','lunchPieces'],
+};
 const SPICE_LEVELS = ['微辣','中辣','特辣'];
 
 // Each entry: id, category, price (or sizes[]+unit), allergens[], img, and i18n{lang:{name,tag}}
@@ -1394,6 +1413,7 @@ let state = {
   langSwitcherOpen: false,
   items: {},   // { dishId: { qty, spice, size, excludes } }
   activeCategory: 'all',
+  menuView: 'hotpot',   // 'hotpot' | 'lunch' — which day-part of the menu is showing
   lastOrder: null,
   submitting: false,
   callingWaiter: false,
@@ -1655,6 +1675,15 @@ function setCategory(cat){
   const firstEl = dishList && dishList.firstElementChild;
   if(firstEl) firstEl.scrollIntoView({ behavior, block: 'start' });
   else window.scrollTo({ top: 0, behavior });
+}
+
+function setMenuView(view){
+  if(state.menuView === view) return;
+  state.menuView = view;
+  if(state.activeCategory !== 'all' && !VIEW_CATEGORIES[view].includes(state.activeCategory)){
+    state.activeCategory = 'all';
+  }
+  render();
 }
 
 function toggleAllergenInfo(){
@@ -2062,7 +2091,7 @@ function startChefCarousel(){
 }
 
 function chefCarouselHTML(){
-  if(CHEF_ITEMS.length===0) return '';
+  if(state.menuView !== 'hotpot' || CHEF_ITEMS.length===0) return '';
   const d = CHEF_ITEMS[chefCarouselIndex % CHEF_ITEMS.length];
   const name = tDish(d.id,'name');
   return `
@@ -2139,7 +2168,10 @@ function dishCardHTML(d){
 
 function menuHTML(){
   const activeCat = state.activeCategory || 'all';
-  const filteredMenu = activeCat === 'all' ? MENU : MENU.filter(d=>d.category===activeCat);
+  const viewCats = VIEW_CATEGORIES[state.menuView] || VIEW_CATEGORIES.hotpot;
+  const filteredMenu = activeCat === 'all'
+    ? MENU.filter(d=>viewCats.includes(d.category))
+    : MENU.filter(d=>d.category===activeCat);
 
   let lastSub = null;
   const dishesHTML = filteredMenu.map(d=>{
@@ -2148,9 +2180,15 @@ function menuHTML(){
     return groupHeaderHTML + dishCardHTML(d);
   }).join('');
 
-  const categoryNavHTML = CATEGORIES.map(cat=>`
+  const categoryNavHTML = ['all', ...viewCats].map(cat=>`
     <button class="cat-btn ${activeCat===cat?'active':''}" onclick="setCategory('${cat}')">${tCat(cat)}</button>
   `).join('');
+
+  const menuViewToggleHTML = `
+    <div class="menu-view-row">
+      <button class="menu-view-btn ${state.menuView==='hotpot'?'active':''}" onclick="setMenuView('hotpot')">${t('viewHotpotBtn')}</button>
+      <button class="menu-view-btn ${state.menuView==='lunch'?'active':''}" onclick="setMenuView('lunch')">${t('viewLunchBtn')}</button>
+    </div>`;
 
   const count = totalCount();
 
@@ -2174,6 +2212,7 @@ function menuHTML(){
       <p class="menu-title">${t('menuTitle')}</p>
       <button class="allergen-info-btn" onclick="toggleAllergenInfo()">ⓘ ${t('allergensBtn')}</button>
     </div>
+    ${menuViewToggleHTML}
     <div class="menu-body">
       <nav class="category-nav">${categoryNavHTML}</nav>
       <div class="dish-panel">

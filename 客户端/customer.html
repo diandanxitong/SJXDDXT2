@@ -950,7 +950,7 @@ const I18N = {
     perPieceSuffix:" /件",
     soupBaseNote:"鸳鸯锅可选特辣/中辣/微辣", lunchSetNote:"含一份火锅碗 + 一碗米饭 + 一杯饮品，锅底与火锅碗各选一种",
     lunchPiecesNote:"最低起选10件，满10件不额外收锅底费；汤底可选：番茄/经典川味麻辣/骨汤(辣/不辣)/菌汤/麻辣拌",
-    viewHotpotBtn:"点火锅", viewLunchBtn:"点午餐",
+    viewHotpotBtn:"火锅菜单", viewLunchBtn:"午餐菜单",
   },
   zhHant:{
     appTitle:'掃碼點單',
@@ -979,7 +979,7 @@ const I18N = {
     perPieceSuffix:' /件',
     soupBaseNote:'鴛鴦鍋可選特辣/中辣/微辣', lunchSetNote:'含一份火鍋碗 + 一碗米飯 + 一杯飲品，鍋底與火鍋碗各選一種',
     lunchPiecesNote:'最低起選10件，滿10件不額外收鍋底費；湯底可選：番茄/經典川味麻辣/骨湯(辣/不辣)/菌湯/麻辣拌',
-    viewHotpotBtn:'點火鍋', viewLunchBtn:'點午餐',
+    viewHotpotBtn:'火鍋菜單', viewLunchBtn:'午餐菜單',
   },
   en:{
     appTitle:"Scan to Order",
@@ -1008,7 +1008,7 @@ const I18N = {
     perPieceSuffix:" / piece",
     soupBaseNote:"Two-Flavour Pot: choose Extra/Medium/Mild spicy", lunchSetNote:"Includes one hotpot bowl + one bowl of rice + one drink. Choose one soup base and one hotpot bowl.",
     lunchPiecesNote:"Minimum order 10 items — no extra soup base charge at 10+. Soup base choices: Tomato / Classic Sichuan Mala / Pork Bone (Spicy or Not) / Mushroom / Mixed Mala",
-    viewHotpotBtn:"Hotpot", viewLunchBtn:"Lunch",
+    viewHotpotBtn:"Hotpot Menu", viewLunchBtn:"Lunch Menu",
   },
   it:{
     appTitle:"Scansiona per Ordinare",
@@ -1037,7 +1037,7 @@ const I18N = {
     perPieceSuffix:" / pezzo",
     soupBaseNote:"Pentola a Due Sapori: piccante extra/medio/leggero a scelta", lunchSetNote:"Include una ciotola hotpot + una ciotola di riso + una bevanda. Scegli una base zuppa e una ciotola hotpot.",
     lunchPiecesNote:"Ordine minimo di 10 pezzi — nessun supplemento per la base zuppa da 10 pezzi in su. Basi zuppa: Pomodoro / Mala Classica del Sichuan / Ossa di Maiale (Piccante o No) / Funghi / Mala Mista",
-    viewHotpotBtn:"Hotpot", viewLunchBtn:"Pranzo",
+    viewHotpotBtn:"Menu Hotpot", viewLunchBtn:"Menu Pranzo",
   },
   fr:{
     appTitle:"Scanner pour Commander",
@@ -1066,7 +1066,7 @@ const I18N = {
     perPieceSuffix:" / pièce",
     soupBaseNote:"Marmite Deux Saveurs : extra/moyen/léger épicé au choix", lunchSetNote:"Comprend un bol hotpot + un bol de riz + une boisson. Choisissez une base de bouillon et un bol hotpot.",
     lunchPiecesNote:"Commande minimum de 10 pièces — pas de supplément de base à partir de 10 pièces. Bases au choix : Tomate / Mala Classique du Sichuan / Os de Porc (Épicé ou Non) / Champignons / Mala Mixte",
-    viewHotpotBtn:"Hotpot", viewLunchBtn:"Déjeuner",
+    viewHotpotBtn:"Menu Hotpot", viewLunchBtn:"Menu Déjeuner",
   },
   es:{
     appTitle:"Escanea para Pedir",
@@ -1095,7 +1095,7 @@ const I18N = {
     perPieceSuffix:" / pieza",
     soupBaseNote:"Olla de Dos Sabores: extra/medio/suave picante a elegir", lunchSetNote:"Incluye un bol de hotpot + un bol de arroz + una bebida. Elige una base de sopa y un bol de hotpot.",
     lunchPiecesNote:"Pedido mínimo de 10 piezas — sin cargo extra de base a partir de 10 piezas. Bases a elegir: Tomate / Mala Clásica de Sichuan / Hueso de Cerdo (Picante o No) / Setas / Mala Mixta",
-    viewHotpotBtn:"Hotpot", viewLunchBtn:"Almuerzo",
+    viewHotpotBtn:"Menú Hotpot", viewLunchBtn:"Menú Almuerzo",
   },
 };
 
@@ -1187,10 +1187,10 @@ function dishPriceLabel(d, item){
   return label;
 }
 
-// 点火锅：锅底…饮品（不含午市专属分类）；点午餐：甜品…午市点餐（甜品/饮品两边都有，因为两种场景都会点）
+// 火锅菜单/午餐菜单各自的主打分类在前，凉菜/小吃、甜品、饮品两边都有且统一排最后
 const VIEW_CATEGORIES = {
   hotpot: ['soupBase','houseSpecial','seafood','premiumBeef','meatballs','mushrooms','vegetables','snacks','desserts','drinks'],
-  lunch: ['desserts','drinks','lunchSet','hotpotBowl','riceNoodles','lunchPieces'],
+  lunch: ['lunchSet','hotpotBowl','riceNoodles','lunchPieces','snacks','desserts','drinks'],
 };
 const SPICE_LEVELS = ['微辣','中辣','特辣'];
 

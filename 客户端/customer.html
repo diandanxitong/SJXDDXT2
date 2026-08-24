@@ -230,6 +230,31 @@
     box-shadow:inset 0 0 0 1px var(--gold-line);
   }
   .cat-btn:hover{color:var(--text);}
+  @keyframes cat-flash-warn{
+    0%,100%{color:inherit;text-shadow:none;}
+    50%{color:#ff3b30;text-shadow:0 0 10px rgba(255,59,48,.65);}
+  }
+  .cat-btn.flash-warn{animation:cat-flash-warn .28s ease-in-out 3;}
+
+  /* ---------- nag toast (missing soup base / missing rice-noodle toppings) ---------- */
+  .nag-toast{
+    position:fixed;left:50%;top:88px;z-index:90;transform:translateX(-50%);
+    max-width:82vw;text-align:center;pointer-events:none;
+    background:linear-gradient(160deg,var(--ember) 0%,var(--ember-dark) 100%);
+    color:#fff;font-size:13px;font-weight:800;line-height:1.4;
+    padding:11px 18px;border-radius:14px;border:1px solid var(--gold-line);
+    box-shadow:0 14px 32px rgba(0,0,0,.45);
+    animation:nag-toast-life 2.6s ease forwards;
+  }
+  .nag-toast.nag-toast-info{
+    background:linear-gradient(160deg,var(--jade) 0%,var(--jade-dark) 100%);
+  }
+  @keyframes nag-toast-life{
+    0%{opacity:0;transform:translateX(-50%) translateY(-10px) scale(.94);}
+    10%{opacity:1;transform:translateX(-50%) translateY(0) scale(1);}
+    85%{opacity:1;transform:translateX(-50%) translateY(0) scale(1);}
+    100%{opacity:0;transform:translateX(-50%) translateY(-8px) scale(.96);}
+  }
   .dish-panel{flex:1;min-width:0;padding-right:16px;}
   .category-note{
     font-size:11.5px;line-height:1.5;color:var(--text-muted);
@@ -951,6 +976,8 @@ const I18N = {
     soupBaseNote:"鸳鸯锅可选特辣/中辣/微辣", lunchSetNote:"含一份火锅碗 + 一碗米饭 + 一杯饮品，锅底与火锅碗各选一种",
     lunchPiecesNote:"最低起选10件，满10件不额外收锅底费；汤底可选：番茄/经典川味麻辣/骨汤(辣/不辣)/菌汤/麻辣拌",
     viewHotpotBtn:"火锅菜单", viewLunchBtn:"午餐菜单",
+    missingSoupBaseMsg:"忘记选择锅底了哦~", missingLunchPiecesMsg:"自选米线要选够配菜才能下单哦，先去挑几样吧~",
+    customNoodlesPickMsg:"已为您跳转到午市点餐，选几样配菜搭配米线吧~",
   },
   zhHant:{
     appTitle:'掃碼點單',
@@ -980,6 +1007,8 @@ const I18N = {
     soupBaseNote:'鴛鴦鍋可選特辣/中辣/微辣', lunchSetNote:'含一份火鍋碗 + 一碗米飯 + 一杯飲品，鍋底與火鍋碗各選一種',
     lunchPiecesNote:'最低起選10件，滿10件不額外收鍋底費；湯底可選：番茄/經典川味麻辣/骨湯(辣/不辣)/菌湯/麻辣拌',
     viewHotpotBtn:'火鍋菜單', viewLunchBtn:'午餐菜單',
+    missingSoupBaseMsg:'忘記選擇鍋底了哦~', missingLunchPiecesMsg:'自選米線要選夠配菜才能下單哦，先去挑幾樣吧~',
+    customNoodlesPickMsg:'已為您跳轉到午市點餐，選幾樣配菜搭配米線吧~',
   },
   en:{
     appTitle:"Scan to Order",
@@ -1009,6 +1038,8 @@ const I18N = {
     soupBaseNote:"Two-Flavour Pot: choose Extra/Medium/Mild spicy", lunchSetNote:"Includes one hotpot bowl + one bowl of rice + one drink. Choose one soup base and one hotpot bowl.",
     lunchPiecesNote:"Minimum order 10 items — no extra soup base charge at 10+. Soup base choices: Tomato / Classic Sichuan Mala / Pork Bone (Spicy or Not) / Mushroom / Mixed Mala",
     viewHotpotBtn:"Hotpot Menu", viewLunchBtn:"Lunch Menu",
+    missingSoupBaseMsg:"Don't forget to pick a soup base~", missingLunchPiecesMsg:"Add a few toppings for your custom rice noodles before ordering~",
+    customNoodlesPickMsg:"Jumped to Lunch À La Carte — pick a few toppings for your noodles~",
   },
   it:{
     appTitle:"Scansiona per Ordinare",
@@ -1038,6 +1069,8 @@ const I18N = {
     soupBaseNote:"Pentola a Due Sapori: piccante extra/medio/leggero a scelta", lunchSetNote:"Include una ciotola hotpot + una ciotola di riso + una bevanda. Scegli una base zuppa e una ciotola hotpot.",
     lunchPiecesNote:"Ordine minimo di 10 pezzi — nessun supplemento per la base zuppa da 10 pezzi in su. Basi zuppa: Pomodoro / Mala Classica del Sichuan / Ossa di Maiale (Piccante o No) / Funghi / Mala Mista",
     viewHotpotBtn:"Menu Hotpot", viewLunchBtn:"Menu Pranzo",
+    missingSoupBaseMsg:"Non dimenticare di scegliere una base zuppa~", missingLunchPiecesMsg:"Aggiungi qualche ingrediente ai tuoi noodles personalizzati prima di ordinare~",
+    customNoodlesPickMsg:"Passato a Pranzo à la Carte — scegli qualche ingrediente per i tuoi noodles~",
   },
   fr:{
     appTitle:"Scanner pour Commander",
@@ -1067,6 +1100,8 @@ const I18N = {
     soupBaseNote:"Marmite Deux Saveurs : extra/moyen/léger épicé au choix", lunchSetNote:"Comprend un bol hotpot + un bol de riz + une boisson. Choisissez une base de bouillon et un bol hotpot.",
     lunchPiecesNote:"Commande minimum de 10 pièces — pas de supplément de base à partir de 10 pièces. Bases au choix : Tomate / Mala Classique du Sichuan / Os de Porc (Épicé ou Non) / Champignons / Mala Mixte",
     viewHotpotBtn:"Menu Hotpot", viewLunchBtn:"Menu Déjeuner",
+    missingSoupBaseMsg:"N'oubliez pas de choisir une base de bouillon~", missingLunchPiecesMsg:"Ajoutez quelques garnitures à vos nouilles personnalisées avant de commander~",
+    customNoodlesPickMsg:"Direction Déjeuner à la Carte — choisissez quelques garnitures pour vos nouilles~",
   },
   es:{
     appTitle:"Escanea para Pedir",
@@ -1096,6 +1131,8 @@ const I18N = {
     soupBaseNote:"Olla de Dos Sabores: extra/medio/suave picante a elegir", lunchSetNote:"Incluye un bol de hotpot + un bol de arroz + una bebida. Elige una base de sopa y un bol de hotpot.",
     lunchPiecesNote:"Pedido mínimo de 10 piezas — sin cargo extra de base a partir de 10 piezas. Bases a elegir: Tomate / Mala Clásica de Sichuan / Hueso de Cerdo (Picante o No) / Setas / Mala Mixta",
     viewHotpotBtn:"Menú Hotpot", viewLunchBtn:"Menú Almuerzo",
+    missingSoupBaseMsg:"No olvides elegir una base de sopa~", missingLunchPiecesMsg:"Añade algunos ingredientes a tus fideos personalizados antes de pedir~",
+    customNoodlesPickMsg:"Saltamos a Almuerzo a la Carta — elige algunos ingredientes para tus fideos~",
   },
 };
 
@@ -1193,6 +1230,11 @@ const VIEW_CATEGORIES = {
   lunch: ['lunchSet','hotpotBowl','riceNoodles','lunchPieces','snacks','desserts','drinks'],
 };
 const SPICE_LEVELS = ['微辣','中辣','特辣'];
+
+// 火锅生食材类目：单点这些菜必须配一份锅底才能下单，凉菜/小吃、甜品、饮品不算
+const HOTPOT_INGREDIENT_CATS = ['houseSpecial','seafood','premiumBeef','meatballs','mushrooms','vegetables'];
+// 自选火锅米线：只是个空碗，必须去午市点餐里挑配菜才能下单
+const CUSTOM_RICE_NOODLES_ID = 'hotpotRiceNoodlesCustom';
 
 // Each entry: id, category, price (or sizes[]+unit), allergens[], img, and i18n{lang:{name,tag}}
 const DISH_DATA = [
@@ -1606,6 +1648,10 @@ function changeQty(id, delta){
   state.items[id] = { qty, spice: cur.spice, size: cur.size, excludes: cur.excludes, cookMethod: cur.cookMethod };
   if(delta > 0 && qty > cur.qty) celebrateAddToCart();
   updateItemUI(id);
+  // 自选火锅米线只是个空碗，选它的一瞬间就带客人去午市点餐挑配菜
+  if(id === CUSTOM_RICE_NOODLES_ID && delta > 0 && cur.qty === 0){
+    promptCustomRiceNoodlesPicks();
+  }
 }
 
 function setSpice(id, level){
@@ -1683,6 +1729,72 @@ function setMenuView(view){
     state.activeCategory = VIEW_CATEGORIES[view][0];
   }
   render();
+}
+
+function scrollDishListIntoView(){
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const behavior = reduceMotion ? 'auto' : 'smooth';
+  const dishList = document.querySelector('.dish-list');
+  const firstEl = dishList && dishList.firstElementChild;
+  if(firstEl) firstEl.scrollIntoView({ behavior, block: 'start' });
+  else window.scrollTo({ top: 0, behavior });
+}
+
+function flashCategoryNav(cat){
+  const btn = document.querySelector(`.cat-btn[data-cat="${cat}"]`);
+  if(!btn) return;
+  btn.scrollIntoView({ behavior:'smooth', block:'nearest', inline:'center' });
+  btn.classList.remove('flash-warn');
+  void btn.offsetWidth;   // restart the animation if it's already flashing
+  btn.classList.add('flash-warn');
+}
+
+function showNagToast(msg, kind){
+  const existing = document.querySelector('.nag-toast');
+  if(existing) existing.remove();
+  const toast = document.createElement('div');
+  toast.className = 'nag-toast' + (kind === 'info' ? ' nag-toast-info' : '');
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  toast.addEventListener('animationend', (ev)=>{ if(ev.target === toast) toast.remove(); });
+}
+
+// 下单校验没过关时统一处理：弹提示 + 跳回菜单对应分类 + 分类按钮红色频闪一下
+function jumpToCategoryWithWarning(view, category, message){
+  showNagToast(message);
+  state.pandaMenuOpen = false;
+  state.cartPopupOpen = false;
+  state.screen = 'menu';
+  state.menuView = view;
+  state.activeCategory = category;
+  render();
+  requestAnimationFrame(()=>{
+    scrollDishListIntoView();
+    flashCategoryNav(category);
+  });
+}
+
+// 选中"自选火锅米线"的一瞬间就直接带客人去午市点餐挑配菜，不必等到下单才提醒
+function promptCustomRiceNoodlesPicks(){
+  showNagToast(t('customNoodlesPickMsg'), 'info');
+  state.menuView = 'lunch';
+  state.activeCategory = 'lunchPieces';
+  render();
+  requestAnimationFrame(scrollDishListIntoView);
+}
+
+// 下单前的最终把关：火锅生食材必须配一份锅底；自选火锅米线必须配午市点餐里的配菜
+function validateCartForCheckout(){
+  const hasQty = cats => MENU.some(d => cats.includes(d.category) && getItem(d.id).qty > 0);
+  // "蘸料" 也挂在 soupBase 分类下（方便导航），但它是蘸碟不是锅底，不能当锅底数
+  const hasSoupBase = MENU.some(d => d.category === 'soupBase' && d.sub !== 'dipSauce' && getItem(d.id).qty > 0);
+  if(hasQty(HOTPOT_INGREDIENT_CATS) && !hasSoupBase){
+    return { ok:false, view:'hotpot', category:'soupBase', message:t('missingSoupBaseMsg') };
+  }
+  if(getItem(CUSTOM_RICE_NOODLES_ID).qty > 0 && !hasQty(['lunchPieces'])){
+    return { ok:false, view:'lunch', category:'lunchPieces', message:t('missingLunchPiecesMsg') };
+  }
+  return { ok:true };
 }
 
 function toggleAllergenInfo(){
@@ -1804,6 +1916,8 @@ function goToCart(){
 
 function goToOrderReview(){
   if(totalCount() === 0) return;
+  const check = validateCartForCheckout();
+  if(!check.ok){ jumpToCategoryWithWarning(check.view, check.category, check.message); return; }
   state.pandaMenuOpen = false;
   if(state.screen !== 'orderReview') screenHistory.push(state.screen);
   state.screen = 'orderReview';
@@ -1828,6 +1942,8 @@ function shuffle(arr){
 
 function handlePlaceOrderClick(){
   if(totalCount() === 0 || state.submitting) return;
+  const check = validateCartForCheckout();
+  if(!check.ok){ jumpToCategoryWithWarning(check.view, check.category, check.message); return; }
   if(!state.upsellShown){
     openUpsell();
   }else{
@@ -2178,7 +2294,7 @@ function menuHTML(){
   }).join('');
 
   const categoryNavHTML = viewCats.map(cat=>`
-    <button class="cat-btn ${activeCat===cat?'active':''}" onclick="setCategory('${cat}')">${tCat(cat)}</button>
+    <button class="cat-btn ${activeCat===cat?'active':''}" data-cat="${cat}" onclick="setCategory('${cat}')">${tCat(cat)}</button>
   `).join('');
 
   const menuViewToggleHTML = `

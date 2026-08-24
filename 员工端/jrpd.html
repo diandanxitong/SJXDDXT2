@@ -155,8 +155,8 @@ function formatTime(ms){
   return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-const CATEGORY_ORDER = ["soupBase", "mustHave", "houseSpecial", "seafood", "premiumBeef", "meatballs", "mushrooms", "vegetables", "snacks", "desserts", "drinks", "lunchSet", "hotpotBowl", "riceNoodles", "lunchPieces"];
-const CATEGORY_LABELS = {"soupBase": "锅底", "mustHave": "必点菜", "houseSpecial": "家乡特色", "seafood": "海鲜", "premiumBeef": "精品牛肉", "meatballs": "丸子", "mushrooms": "菌菇", "vegetables": "素菜", "snacks": "凉菜/小吃", "desserts": "甜品", "drinks": "饮品", "lunchSet": "午市套餐", "hotpotBowl": "冒菜", "riceNoodles": "火锅米线", "lunchPieces": "午市点餐"};
+const CATEGORY_ORDER = ["soupBase", "houseSpecial", "seafood", "premiumBeef", "meatballs", "mushrooms", "vegetables", "snacks", "desserts", "drinks", "lunchSet", "hotpotBowl", "riceNoodles", "lunchPieces"];
+const CATEGORY_LABELS = {"soupBase": "锅底", "houseSpecial": "招牌必点", "seafood": "海鲜", "premiumBeef": "精品肉类", "meatballs": "丸子", "mushrooms": "菌菇", "vegetables": "素菜", "snacks": "凉菜/小吃", "desserts": "甜品", "drinks": "饮品", "lunchSet": "午市套餐", "hotpotBowl": "冒菜", "riceNoodles": "火锅米线", "lunchPieces": "午市点餐"};
 // 菜名 -> 分类，跟"沽清菜品"页(gqcp.html)里的 DISH_LIST 保持一致，用来把流水记录里
 // 只有名字的菜品归类，好在报告里按分类分别排名
 const NAME_TO_CATEGORY = {
@@ -171,13 +171,13 @@ const NAME_TO_CATEGORY = {
   "番茄锅 + 菌汤锅":"soupBase",
   "菌汤锅 + 骨汤锅":"soupBase",
   "蘸料":"soupBase",
-  "极品鲜毛肚":"mustHave",
-  "大刀腰片":"mustHave",
-  "草原干层肚":"mustHave",
-  "鸭血":"mustHave",
-  "嫩滋猪肝":"mustHave",
-  "梅林午餐肉":"mustHave",
-  "鲜绿脑花":"mustHave",
+  "极品鲜毛肚":"houseSpecial",
+  "大刀腰片":"houseSpecial",
+  "草原干层肚":"houseSpecial",
+  "鸭血":"houseSpecial",
+  "嫩滋猪肝":"houseSpecial",
+  "梅林午餐肉":"houseSpecial",
+  "鲜绿脑花":"houseSpecial",
   "麻辣牛肉":"houseSpecial",
   "私房嫩牛肉":"houseSpecial",
   "特色小郡肝":"houseSpecial",

@@ -187,13 +187,13 @@ const DISH_LIST = [
 {"id": "potTomatoMushroom", "category": "soupBase", "name": "番茄锅 + 菌汤锅"},
 {"id": "potMushroomPork", "category": "soupBase", "name": "菌汤锅 + 骨汤锅"},
 {"id": "dipSauce", "category": "soupBase", "name": "蘸料"},
-{"id": "beefTripePremium", "category": "mustHave", "name": "极品鲜毛肚"},
-{"id": "porkKidneySliced", "category": "mustHave", "name": "大刀腰片"},
-{"id": "beefTripeLayered", "category": "mustHave", "name": "草原干层肚"},
-{"id": "duckBlood", "category": "mustHave", "name": "鸭血"},
-{"id": "porkLiverTender", "category": "mustHave", "name": "嫩滋猪肝"},
-{"id": "malingLuncheonMeat", "category": "mustHave", "name": "梅林午餐肉"},
-{"id": "pigBrain", "category": "mustHave", "name": "鲜绿脑花"},
+{"id": "beefTripePremium", "category": "houseSpecial", "name": "极品鲜毛肚"},
+{"id": "porkKidneySliced", "category": "houseSpecial", "name": "大刀腰片"},
+{"id": "beefTripeLayered", "category": "houseSpecial", "name": "草原干层肚"},
+{"id": "duckBlood", "category": "houseSpecial", "name": "鸭血"},
+{"id": "porkLiverTender", "category": "houseSpecial", "name": "嫩滋猪肝"},
+{"id": "malingLuncheonMeat", "category": "houseSpecial", "name": "梅林午餐肉"},
+{"id": "pigBrain", "category": "houseSpecial", "name": "鲜绿脑花"},
 {"id": "spicyTenderBeef", "category": "houseSpecial", "name": "麻辣牛肉"},
 {"id": "seasonedBeef", "category": "houseSpecial", "name": "私房嫩牛肉"},
 {"id": "chickenGizzard", "category": "houseSpecial", "name": "特色小郡肝"},
@@ -358,8 +358,8 @@ const DISH_LIST = [
 {"id": "lpRiceCake", "category": "lunchPieces", "name": "年糕（午市）"},
 ];
 
-const CATEGORY_ORDER = ["soupBase", "mustHave", "houseSpecial", "seafood", "premiumBeef", "meatballs", "mushrooms", "vegetables", "snacks", "desserts", "drinks", "lunchSet", "hotpotBowl", "riceNoodles", "lunchPieces"];
-const CATEGORY_LABELS = {"soupBase": "锅底", "mustHave": "必点菜", "houseSpecial": "家乡特色", "seafood": "海鲜", "premiumBeef": "精品牛肉", "meatballs": "丸子", "mushrooms": "菌菇", "vegetables": "素菜", "snacks": "凉菜/小吃", "desserts": "甜品", "drinks": "饮品", "lunchSet": "午市套餐", "hotpotBowl": "冒菜", "riceNoodles": "火锅米线", "lunchPieces": "午市点餐"};
+const CATEGORY_ORDER = ["soupBase", "houseSpecial", "seafood", "premiumBeef", "meatballs", "mushrooms", "vegetables", "snacks", "desserts", "drinks", "lunchSet", "hotpotBowl", "riceNoodles", "lunchPieces"];
+const CATEGORY_LABELS = {"soupBase": "锅底", "houseSpecial": "招牌必点", "seafood": "海鲜", "premiumBeef": "精品肉类", "meatballs": "丸子", "mushrooms": "菌菇", "vegetables": "素菜", "snacks": "凉菜/小吃", "desserts": "甜品", "drinks": "饮品", "lunchSet": "午市套餐", "hotpotBowl": "冒菜", "riceNoodles": "火锅米线", "lunchPieces": "午市点餐"};
 
 let soldOutIds = new Set();
 let selected = new Set();

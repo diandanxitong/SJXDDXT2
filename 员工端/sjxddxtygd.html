@@ -272,10 +272,11 @@ function playSound(kind){
   }catch(e){}
 }
 
-const SIZE_LABELS_ZH = { half:'半份', whole:'整份', large:'大份', small:'小份' };
+const SIZE_LABELS_ZH = { half:'半份', whole:'整份', large:'大份', small:'小份', glass:'杯', bottle:'瓶' };
 const OPTION_LABELS_ZH = { onion:'不要洋葱', scallion:'不要葱', ginger:'不要姜', cilantro:'不要香菜', meat:'不要肉' };
 const COOK_METHOD_LABELS_ZH = { steamed:'蒸', panFried:'煎' };
 const SOUP_BASE_LABELS_ZH = { tomato:'番茄', classicMala:'经典川味麻辣', boneBrothSpicy:'骨汤（辣）', boneBrothMild:'骨汤（不辣）', mushroom:'菌汤', malaBan:'麻辣拌' };
+const DRINK_LABELS_ZH = { cola:'可乐/无糖可乐/健怡可乐', sevenUp:'七喜/无糖七喜', fanta:'芬达', jdb:'加多宝', aloe:'芦荟汁' };
 
 function elapsedInfo(ts){
   const diffMs = Date.now() - ts;
@@ -499,10 +500,10 @@ async function logStaffAction(entry){
 // 删掉某一道合并显示的菜：这道菜可能来自同一顾客的好几次加菜（好几个 order 文档各贡献
 // 一条 items 记录），所以要在这些文档里逐个找到匹配的那一条删掉，文档删空了就整份删除
 async function performDeleteItem(target, operatorName){
-  const { table, keys, name, spice, size, cookMethod, soupBase, forDish, qty } = target;
+  const { table, keys, name, spice, size, cookMethod, soupBase, drink, forDish, qty } = target;
   const matches = it => it.name === name && (it.spice || '') === (spice || '')
     && (it.size || '') === (size || '') && (it.cookMethod || '') === (cookMethod || '')
-    && (it.soupBase || '') === (soupBase || '') && (it.forDish || '') === (forDish || '');
+    && (it.soupBase || '') === (soupBase || '') && (it.drink || '') === (drink || '') && (it.forDish || '') === (forDish || '');
   const toDelete = [];
   const toUpdate = [];
   keys.forEach(key => {
@@ -582,9 +583,9 @@ function mergeItems(batch){
   const merged = new Map();
   batch.forEach((o, batchIndex) => {
     o.items.forEach(it => {
-      const itemKey = it.name + '__' + it.spice + '__' + (it.size || '') + '__' + (it.cookMethod || '') + '__' + (it.soupBase || '') + '__' + (it.forDish || '');
+      const itemKey = it.name + '__' + it.spice + '__' + (it.size || '') + '__' + (it.cookMethod || '') + '__' + (it.soupBase || '') + '__' + (it.drink || '') + '__' + (it.forDish || '');
       if(!merged.has(itemKey)){
-        merged.set(itemKey, { name: it.name, spice: it.spice, size: it.size || null, cookMethod: it.cookMethod || null, soupBase: it.soupBase || null, forDish: it.forDish || null, excludes: it.excludes || [], qty: 0, isNew: batchIndex > 0 });
+        merged.set(itemKey, { name: it.name, spice: it.spice, size: it.size || null, cookMethod: it.cookMethod || null, soupBase: it.soupBase || null, drink: it.drink || null, forDish: it.forDish || null, excludes: it.excludes || [], qty: 0, isNew: batchIndex > 0 });
       }
       merged.get(itemKey).qty += it.qty;
     });
@@ -604,13 +605,14 @@ function itemLineHTML(it, table, orderKeys){
   if(it.size) tags.push(`<span class="spice-tag">${SIZE_LABELS_ZH[it.size] || it.size}</span>`);
   if(it.cookMethod) tags.push(`<span class="spice-tag">${COOK_METHOD_LABELS_ZH[it.cookMethod] || it.cookMethod}</span>`);
   if(it.soupBase) tags.push(`<span class="spice-tag">${SOUP_BASE_LABELS_ZH[it.soupBase] || it.soupBase}</span>`);
+  if(it.drink) tags.push(`<span class="spice-tag">${DRINK_LABELS_ZH[it.drink] || it.drink}</span>`);
   it.excludes.forEach(k => tags.push(`<span class="exclude-tag">${OPTION_LABELS_ZH[k] || k}</span>`));
   if(it.forDish) tags.push(`<span class="for-dish-tag">加菜给：${it.forDish}</span>`);
   if(it.isNew) tags.push('<span class="new-tag">新加</span>');
   const idx = itemDeleteTargets.length;
   itemDeleteTargets.push({
     table, keys: orderKeys,
-    name: it.name, spice: it.spice, size: it.size, cookMethod: it.cookMethod, soupBase: it.soupBase, forDish: it.forDish, qty: it.qty,
+    name: it.name, spice: it.spice, size: it.size, cookMethod: it.cookMethod, soupBase: it.soupBase, drink: it.drink, forDish: it.forDish, qty: it.qty,
   });
   return `<li class="${it.isNew?'is-new':''}">
       <span class="item-main"><span><span class="qty">${it.qty}×</span>${it.name}</span><span style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">${tags.join('')}</span></span>

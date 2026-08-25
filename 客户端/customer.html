@@ -399,6 +399,8 @@
   .flame{fill:var(--card-line);}
   .spice-pill.active .flame.lit{fill:var(--cinnabar);}
   .spice-pill:not(.active) .flame.lit{fill:var(--text-muted);}
+  .spice-pill:disabled{opacity:.4;cursor:not-allowed;}
+  .spice-row-disabled{cursor:not-allowed;}
 
   /* ---------- sticky bottom bar ---------- */
   .bottom-bar{
@@ -990,7 +992,7 @@ const I18N = {
     allergensBtn:"过敏原", allergensModalTitle:"过敏原说明", allergenTapHint:"点击查看过敏原", totalLabel:"合计", perPersonSuffix:" /人",
     orderReviewTitle:"确认订单", nicknamePlaceholder:"请输入你的昵称，例如：JOHN", partySizeLabel:"请选择您的就餐人数",
     upsellTitle:"忘了点什么？", addToOrderBtn:"加入到当前订单", laterBtn:"以后再说",
-    categories:{ soupBase:"锅底", houseSpecial:"招牌必点", seafood:"海鲜", premiumBeef:"精品肉类", meatballs:"丸子", mushrooms:"菌菇", vegetables:"素菜", snacks:"凉菜/小吃", desserts:"甜品", drinks:"饮品", lunchSet:"午市套餐", hotpotBowl:"冒菜", riceNoodles:"火锅米线", miniHotpot:"迷你火锅", lunchPieces:"加菜" },
+    categories:{ soupBase:"锅底", houseSpecial:"招牌必点", seafood:"海鲜", premiumBeef:"精品肉类", meatballs:"丸子", mushrooms:"菌菇", vegetables:"素菜", snacks:"凉菜/小吃", desserts:"甜品", drinks:"果香鲜饮", wine:"酒水", lunchSet:"午市套餐", hotpotBowl:"冒菜", riceNoodles:"火锅米线", miniHotpot:"迷你火锅", lunchPieces:"加菜" },
     spice:["微辣","中辣","特辣"],
     soldOutMsg:"暂时售罄，抱歉！",
     perPieceSuffix:" /件",
@@ -1003,7 +1005,7 @@ const I18N = {
     missingMiniHotpotFillingsMsg:"迷你火锅至少要选够10件配菜才能下单哦，再去挑几样吧~",
     customMiniHotpotPickMsg:"已为您跳转到加菜，选够10件配菜搭配迷你火锅吧~",
     missingLunchTypeMsg:"点单前先选一个午餐类型哦：冒菜 / 火锅米线 / 自选米线~",
-    missingLunchFlavorMsg:"还有一份没选好口味哦，辣度和汤底都要选一下～",
+    missingLunchFlavorMsg:"还有一份没选好口味哦，锅底、辣度和饮品都要选一下～",
     addExtraBtn:"加菜", addOnBannerPrefix:"正在为", addOnBannerSuffix:" 加菜，选好后点下方完成", addOnDoneBtn:"完成加菜", addOnTagPrefix:"加菜给：",
   },
   zhHant:{
@@ -1027,7 +1029,7 @@ const I18N = {
     allergensBtn:'過敏原', allergensModalTitle:'過敏原說明', allergenTapHint:'點擊查看過敏原', totalLabel:'合計', perPersonSuffix:' /人',
     orderReviewTitle:'確認訂單', nicknamePlaceholder:'請輸入你的暱稱，例如：JOHN', partySizeLabel:'請選擇您的就餐人數',
     upsellTitle:'忘了點什麼？', addToOrderBtn:'加入到當前訂單', laterBtn:'以後再說',
-    categories:{ soupBase:'鍋底', houseSpecial:'招牌必點', seafood:'海鮮', premiumBeef:'精品肉類', meatballs:'丸子', mushrooms:'菌菇', vegetables:'素菜', snacks:'涼菜/小吃', desserts:'甜品', drinks:'飲品', lunchSet:'午市套餐', hotpotBowl:'冒菜', riceNoodles:'火鍋米線', miniHotpot:'迷你火鍋', lunchPieces:'加菜' },
+    categories:{ soupBase:'鍋底', houseSpecial:'招牌必點', seafood:'海鮮', premiumBeef:'精品肉類', meatballs:'丸子', mushrooms:'菌菇', vegetables:'素菜', snacks:'涼菜/小吃', desserts:'甜品', drinks:'果香鮮飲', wine:'酒水', lunchSet:'午市套餐', hotpotBowl:'冒菜', riceNoodles:'火鍋米線', miniHotpot:'迷你火鍋', lunchPieces:'加菜' },
     spice:['微辣','中辣','特辣'],
     soldOutMsg:'暫時售罄，抱歉！',
     perPieceSuffix:' /件',
@@ -1040,7 +1042,7 @@ const I18N = {
     missingMiniHotpotFillingsMsg:'迷你火鍋至少要選夠10件配菜才能下單哦，再去挑幾樣吧~',
     customMiniHotpotPickMsg:'已為您跳轉到加菜，選夠10件配菜搭配迷你火鍋吧~',
     missingLunchTypeMsg:'點單前先選一個午餐類型哦：冒菜 / 火鍋米線 / 自選米線~',
-    missingLunchFlavorMsg:'還有一份沒選好口味哦，辣度和湯底都要選一下～',
+    missingLunchFlavorMsg:'還有一份沒選好口味哦，鍋底、辣度和飲品都要選一下～',
     addExtraBtn:'加菜', addOnBannerPrefix:'正在為', addOnBannerSuffix:' 加菜，選好後點下方完成', addOnDoneBtn:'完成加菜', addOnTagPrefix:'加菜給：',
   },
   en:{
@@ -1064,7 +1066,7 @@ const I18N = {
     allergensBtn:"Allergens", allergensModalTitle:"Allergen Guide", allergenTapHint:"Tap to view allergen", totalLabel:"Total", perPersonSuffix:" / person",
     orderReviewTitle:"Confirm Order", nicknamePlaceholder:"Enter your nickname, e.g. JOHN", partySizeLabel:"Select your party size",
     upsellTitle:"Forgot Something?", addToOrderBtn:"Add to Order", laterBtn:"Later",
-    categories:{ soupBase:"Soup Base", houseSpecial:"Signature Must-Haves", seafood:"Seafood", premiumBeef:"Premium Meats", meatballs:"Meatballs", mushrooms:"Mushrooms", vegetables:"Vegetables", snacks:"Snacks", desserts:"Desserts", drinks:"Drinks", lunchSet:"Lunch Set", hotpotBowl:"Hotpot Bowl", riceNoodles:"Rice Noodles", miniHotpot:"Mini Hotpot", lunchPieces:"Add-Ons" },
+    categories:{ soupBase:"Soup Base", houseSpecial:"Signature Must-Haves", seafood:"Seafood", premiumBeef:"Premium Meats", meatballs:"Meatballs", mushrooms:"Mushrooms", vegetables:"Vegetables", snacks:"Snacks", desserts:"Desserts", drinks:"Handmade Fresh Juice Drinks", wine:"Wine & Beverages", lunchSet:"Lunch Set", hotpotBowl:"Hotpot Bowl", riceNoodles:"Rice Noodles", miniHotpot:"Mini Hotpot", lunchPieces:"Add-Ons" },
     spice:["Mild","Medium","Extra Spicy"],
     soldOutMsg:"Sorry, temporarily sold out~",
     perPieceSuffix:" / piece",
@@ -1077,7 +1079,7 @@ const I18N = {
     missingMiniHotpotFillingsMsg:"Your mini hotpot needs at least 10 topping items before ordering — pick a few more~",
     customMiniHotpotPickMsg:"Jumped to Add-Ons — pick at least 10 toppings for your mini hotpot~",
     missingLunchTypeMsg:"Please pick a lunch type first: Hotpot Bowl / Hotpot Rice Noodles / Custom Rice Noodles~",
-    missingLunchFlavorMsg:"One of your lunch bowls still needs its flavour — pick a spice level and a soup base~",
+    missingLunchFlavorMsg:"One of your lunch bowls still needs its flavour — pick a soup base, spice level, and a drink~",
     addExtraBtn:"Add Extra", addOnBannerPrefix:"Adding extras for ", addOnBannerSuffix:" — tap Done when you're finished", addOnDoneBtn:"Done Adding", addOnTagPrefix:"Add-on for: ",
   },
   it:{
@@ -1101,7 +1103,7 @@ const I18N = {
     allergensBtn:"Allergeni", allergensModalTitle:"Guida agli Allergeni", allergenTapHint:"Tocca per vedere l'allergene", totalLabel:"Totale", perPersonSuffix:" / persona",
     orderReviewTitle:"Conferma Ordine", nicknamePlaceholder:"Inserisci il tuo nome, es. JOHN", partySizeLabel:"Seleziona il numero di persone",
     upsellTitle:"Hai Dimenticato Qualcosa?", addToOrderBtn:"Aggiungi all'Ordine", laterBtn:"Più Tardi",
-    categories:{ soupBase:"Base Zuppa", houseSpecial:"Specialità Imperdibili", seafood:"Frutti di Mare", premiumBeef:"Carni Pregiate", meatballs:"Polpette", mushrooms:"Funghi", vegetables:"Verdure", snacks:"Snack", desserts:"Dessert", drinks:"Bevande", lunchSet:"Menu Pranzo", hotpotBowl:"Ciotola Hotpot", riceNoodles:"Noodles di Riso", miniHotpot:"Mini Hotpot", lunchPieces:"Extra" },
+    categories:{ soupBase:"Base Zuppa", houseSpecial:"Specialità Imperdibili", seafood:"Frutti di Mare", premiumBeef:"Carni Pregiate", meatballs:"Polpette", mushrooms:"Funghi", vegetables:"Verdure", snacks:"Snack", desserts:"Dessert", drinks:"Bevande Fresche Artigianali", wine:"Vini e Bevande", lunchSet:"Menu Pranzo", hotpotBowl:"Ciotola Hotpot", riceNoodles:"Noodles di Riso", miniHotpot:"Mini Hotpot", lunchPieces:"Extra" },
     spice:["Poco Piccante","Piccante","Molto Piccante"],
     soldOutMsg:"Siamo spiacenti, momentaneamente esaurito~",
     perPieceSuffix:" / pezzo",
@@ -1114,7 +1116,7 @@ const I18N = {
     missingMiniHotpotFillingsMsg:"Il tuo mini hotpot ha bisogno di almeno 10 ingredienti prima di ordinare — scegline qualcuno in più~",
     customMiniHotpotPickMsg:"Passato a Extra — scegli almeno 10 ingredienti per il tuo mini hotpot~",
     missingLunchTypeMsg:"Scegli prima un tipo di pranzo: Ciotola Hotpot / Noodles di Riso Hotpot / Noodles di Riso Personalizzati~",
-    missingLunchFlavorMsg:"Una delle tue ciotole pranzo non ha ancora il sapore completo — scegli piccantezza e base zuppa~",
+    missingLunchFlavorMsg:"Una delle tue ciotole pranzo non ha ancora il sapore completo — scegli base zuppa, piccantezza e una bevanda~",
     addExtraBtn:"Aggiungi Extra", addOnBannerPrefix:"Stai aggiungendo extra per ", addOnBannerSuffix:" — tocca Fine quando hai finito", addOnDoneBtn:"Fine Aggiunta", addOnTagPrefix:"Extra per: ",
   },
   fr:{
@@ -1138,7 +1140,7 @@ const I18N = {
     allergensBtn:"Allergènes", allergensModalTitle:"Guide des Allergènes", allergenTapHint:"Touchez pour voir l'allergène", totalLabel:"Total", perPersonSuffix:" / personne",
     orderReviewTitle:"Confirmer la Commande", nicknamePlaceholder:"Entrez votre surnom, ex. JOHN", partySizeLabel:"Sélectionnez le nombre de convives",
     upsellTitle:"Vous Avez Oublié Quelque Chose ?", addToOrderBtn:"Ajouter à la Commande", laterBtn:"Plus Tard",
-    categories:{ soupBase:"Base de Bouillon", houseSpecial:"Incontournables Signature", seafood:"Fruits de Mer", premiumBeef:"Viandes Premium", meatballs:"Boulettes", mushrooms:"Champignons", vegetables:"Légumes", snacks:"En-cas", desserts:"Desserts", drinks:"Boissons", lunchSet:"Menu Déjeuner", hotpotBowl:"Bol Hotpot", riceNoodles:"Nouilles de Riz", miniHotpot:"Mini Hotpot", lunchPieces:"Suppléments" },
+    categories:{ soupBase:"Base de Bouillon", houseSpecial:"Incontournables Signature", seafood:"Fruits de Mer", premiumBeef:"Viandes Premium", meatballs:"Boulettes", mushrooms:"Champignons", vegetables:"Légumes", snacks:"En-cas", desserts:"Desserts", drinks:"Boissons Fraîches Artisanales", wine:"Vins et Boissons", lunchSet:"Menu Déjeuner", hotpotBowl:"Bol Hotpot", riceNoodles:"Nouilles de Riz", miniHotpot:"Mini Hotpot", lunchPieces:"Suppléments" },
     spice:["Peu Épicé","Épicé","Très Épicé"],
     soldOutMsg:"Désolé, temporairement épuisé~",
     perPieceSuffix:" / pièce",
@@ -1151,7 +1153,7 @@ const I18N = {
     missingMiniHotpotFillingsMsg:"Votre mini hotpot a besoin d'au moins 10 garnitures avant de commander — choisissez-en quelques-unes de plus~",
     customMiniHotpotPickMsg:"Direction Suppléments — choisissez au moins 10 garnitures pour votre mini hotpot~",
     missingLunchTypeMsg:"Choisissez d'abord un type de déjeuner : Bol Hotpot / Nouilles de Riz Hotpot / Nouilles de Riz Personnalisées~",
-    missingLunchFlavorMsg:"Un de vos bols déjeuner n'a pas encore sa saveur complète — choisissez le piquant et la base de bouillon~",
+    missingLunchFlavorMsg:"Un de vos bols déjeuner n'a pas encore sa saveur complète — choisissez la base de bouillon, le piquant et une boisson~",
     addExtraBtn:"Ajouter un Extra", addOnBannerPrefix:"Ajout d'extras pour ", addOnBannerSuffix:" — appuyez sur Terminé une fois fini", addOnDoneBtn:"Terminer l'Ajout", addOnTagPrefix:"Extra pour : ",
   },
   es:{
@@ -1175,7 +1177,7 @@ const I18N = {
     allergensBtn:"Alérgenos", allergensModalTitle:"Guía de Alérgenos", allergenTapHint:"Toca para ver el alérgeno", totalLabel:"Total", perPersonSuffix:" / persona",
     orderReviewTitle:"Confirmar Pedido", nicknamePlaceholder:"Introduce tu apodo, ej. JOHN", partySizeLabel:"Selecciona tu número de comensales",
     upsellTitle:"¿Olvidaste Algo?", addToOrderBtn:"Añadir al Pedido", laterBtn:"Más Tarde",
-    categories:{ soupBase:"Base de Sopa", houseSpecial:"Imprescindibles de la Casa", seafood:"Marisco", premiumBeef:"Carnes Premium", meatballs:"Albóndigas", mushrooms:"Setas", vegetables:"Verduras", snacks:"Aperitivos", desserts:"Postres", drinks:"Bebidas", lunchSet:"Menú de Almuerzo", hotpotBowl:"Bol de Hotpot", riceNoodles:"Fideos de Arroz", miniHotpot:"Mini Hotpot", lunchPieces:"Extras" },
+    categories:{ soupBase:"Base de Sopa", houseSpecial:"Imprescindibles de la Casa", seafood:"Marisco", premiumBeef:"Carnes Premium", meatballs:"Albóndigas", mushrooms:"Setas", vegetables:"Verduras", snacks:"Aperitivos", desserts:"Postres", drinks:"Bebidas Frescas Artesanales", wine:"Vinos y Bebidas", lunchSet:"Menú de Almuerzo", hotpotBowl:"Bol de Hotpot", riceNoodles:"Fideos de Arroz", miniHotpot:"Mini Hotpot", lunchPieces:"Extras" },
     spice:["Poco Picante","Picante","Muy Picante"],
     soldOutMsg:"Lo sentimos, agotado temporalmente~",
     perPieceSuffix:" / pieza",
@@ -1188,7 +1190,7 @@ const I18N = {
     missingMiniHotpotFillingsMsg:"Tu mini hotpot necesita al menos 10 ingredientes antes de pedir — elige algunos más~",
     customMiniHotpotPickMsg:"Saltamos a Extras — elige al menos 10 ingredientes para tu mini hotpot~",
     missingLunchTypeMsg:"Elige primero un tipo de almuerzo: Bol de Hotpot / Fideos de Arroz Hotpot / Fideos de Arroz Personalizados~",
-    missingLunchFlavorMsg:"A uno de tus bols de almuerzo le falta el sabor completo — elige el picante y la base de sopa~",
+    missingLunchFlavorMsg:"A uno de tus bols de almuerzo le falta el sabor completo — elige la base de sopa, el picante y una bebida~",
     addExtraBtn:"Añadir Extra", addOnBannerPrefix:"Añadiendo extras para ", addOnBannerSuffix:" — toca Listo cuando termines", addOnDoneBtn:"Terminar de Añadir", addOnTagPrefix:"Extra para: ",
   },
 };
@@ -1232,6 +1234,16 @@ const SOUP_BASE_LABELS = {
   mushroom:{zh:'菌汤',zhHant:'菌湯',en:'Mushroom',it:'Funghi',fr:'Champignons',es:'Setas'},
   malaBan:{zh:'麻辣拌',zhHant:'麻辣拌',en:'Mixed Mala',it:'Mala Mista',fr:'Mala Mixte',es:'Mala Mixta'},
 };
+// 只有这几种口味带辣味，选了才能选辣度；番茄/菌汤不辣，辣度那一行灰掉不可选
+const SPICE_ELIGIBLE_SOUP_KEYS = ['classicMala','boneBrothSpicy','boneBrothMild','malaBan'];
+// 午市套餐（冒菜/火锅米线）含一杯饮品，从这几款里选一款，不额外计价
+const DRINK_LABELS = {
+  cola:{zh:'可乐/无糖可乐/健怡可乐',zhHant:'可樂/無糖可樂/健怡可樂',en:'Coke / Diet Coke / Coke Zero',it:'Coca-Cola / Coca-Cola Light / Coca-Cola Zero',fr:'Coca-Cola / Coca-Cola Light / Coca-Cola Zero',es:'Coca-Cola / Coca-Cola Light / Coca-Cola Zero'},
+  sevenUp:{zh:'七喜/无糖七喜',zhHant:'七喜/無糖七喜',en:'7 Up / Diet 7 Up',it:'7 Up / 7 Up Senza Zucchero',fr:'7 Up / 7 Up Sans Sucre',es:'7 Up / 7 Up Sin Azúcar'},
+  fanta:{zh:'芬达',zhHant:'芬達',en:'Fanta',it:'Fanta',fr:'Fanta',es:'Fanta'},
+  jdb:{zh:'加多宝',zhHant:'加多寶',en:'Jiaduobao',it:'Jiaduobao',fr:'Jiaduobao',es:'Jiaduobao'},
+  aloe:{zh:'芦荟汁',zhHant:'蘆薈汁',en:'Aloe Juice',it:'Succo di Aloe',fr:'Jus d\'Aloe Vera',es:'Zumo de Aloe Vera'},
+};
 const SUBGROUP_LABELS = {
   potSingle:{zh:'单锅',zhHant:'單鍋',en:'Single Pot',it:'Pentola Singola',fr:'Marmite Simple',es:'Olla Sencilla'},
   potDual:{zh:'鸳鸯锅',zhHant:'鴛鴦鍋',en:'Two-Flavour Pot',it:'Pentola a Due Sapori',fr:'Marmite Deux Saveurs',es:'Olla de Dos Sabores'},
@@ -1239,6 +1251,13 @@ const SUBGROUP_LABELS = {
   lunchMeat:{zh:'肉类',zhHant:'肉類',en:'Meat',it:'Carne',fr:'Viande',es:'Carne'},
   lunchNoodles:{zh:'面食',zhHant:'麵食',en:'Noodles',it:'Noodles',fr:'Nouilles',es:'Fideos'},
   lunchVeg:{zh:'素菜',zhHant:'素菜',en:'Vegetables',it:'Verdure',fr:'Légumes',es:'Verduras'},
+  wineWhite:{zh:'白葡萄酒',zhHant:'白葡萄酒',en:'White Wine',it:'Vino Bianco',fr:'Vin Blanc',es:'Vino Blanco'},
+  wineRed:{zh:'红葡萄酒',zhHant:'紅葡萄酒',en:'Red Wine',it:'Vino Rosso',fr:'Vin Rouge',es:'Vino Tinto'},
+  wineRose:{zh:'桃红',zhHant:'桃紅',en:'Rosé',it:'Rosé',fr:'Rosé',es:'Rosado'},
+  wineSparkling:{zh:'起泡酒',zhHant:'起泡酒',en:'Sparkling',it:'Spumante',fr:'Effervescent',es:'Espumoso'},
+  wineSoft:{zh:'软饮 + 水',zhHant:'軟飲 + 水',en:'Soft Drinks + Water',it:'Bevande Analcoliche + Acqua',fr:'Boissons Sans Alcool + Eau',es:'Refrescos + Agua'},
+  wineJuice:{zh:'果汁',zhHant:'果汁',en:'Juices',it:'Succhi',fr:'Jus',es:'Zumos'},
+  wineBeer:{zh:'啤酒',zhHant:'啤酒',en:'Beer',it:'Birra',fr:'Bière',es:'Cerveza'},
 };
 function tSubGroup(key){ return (SUBGROUP_LABELS[key] || {})[state.lang] || SUBGROUP_LABELS[key].zh; }
 const OPTION_LABELS = {
@@ -1292,6 +1311,7 @@ function tAllergen(code){ return (ALLERGEN_NAMES[code] || {})[state.lang] || ALL
 function tSize(key){ return (SIZE_LABELS[key] || {})[state.lang] || SIZE_LABELS[key].zh; }
 function tCookMethod(key){ return (COOK_METHOD_LABELS[key] || {})[state.lang] || COOK_METHOD_LABELS[key].zh; }
 function tSoupBase(key){ return key ? ((SOUP_BASE_LABELS[key] || {})[state.lang] || SOUP_BASE_LABELS[key].zh) : ''; }
+function tDrink(key){ return key ? ((DRINK_LABELS[key] || {})[state.lang] || DRINK_LABELS[key].zh) : ''; }
 function tOption(key){ return (OPTION_LABELS[key] || {})[state.lang] || OPTION_LABELS[key].zh; }
 function displayDishName(zhName){
   const id = ZH_NAME_TO_ID[zhName];
@@ -1320,8 +1340,8 @@ function dishPriceLabel(d, item){
 
 // 火锅菜单/午餐菜单各自的主打分类在前，凉菜/小吃、甜品、饮品两边都有且统一排最后
 const VIEW_CATEGORIES = {
-  hotpot: ['soupBase','houseSpecial','seafood','premiumBeef','meatballs','mushrooms','vegetables','snacks','desserts','drinks'],
-  lunch: ['lunchSet','hotpotBowl','riceNoodles','miniHotpot','lunchPieces','snacks','desserts','drinks'],
+  hotpot: ['soupBase','houseSpecial','seafood','premiumBeef','meatballs','mushrooms','vegetables','snacks','desserts','drinks','wine'],
+  lunch: ['lunchSet','hotpotBowl','riceNoodles','miniHotpot','lunchPieces','snacks','desserts','drinks','wine'],
 };
 const SPICE_LEVELS = ['微辣','中辣','特辣'];
 
@@ -1357,89 +1377,89 @@ const DISH_DATA = [
 {"id": "potTomatoMushroom", "category": "soupBase", "sub": "potDual", "price": 13.6, "allergens": [], "i18n": {"zh": {"name": "番茄锅 + 菌汤锅", "tag": ""}, "zhHant": {"name": "番茄鍋 + 菌湯鍋", "tag": ""}, "en": {"name": "Half Tomato & Half Mushroom Broth", "tag": ""}, "it": {"name": "Metà Pomodoro e Metà Brodo di Funghi", "tag": ""}, "fr": {"name": "Moitié Tomate et Moitié Bouillon aux Champignons", "tag": ""}, "es": {"name": "Mitad Tomate y Mitad Caldo de Setas", "tag": ""}}},
 {"id": "potMushroomPork", "category": "soupBase", "sub": "potDual", "price": 13.6, "allergens": [], "i18n": {"zh": {"name": "菌汤锅 + 骨汤锅", "tag": ""}, "zhHant": {"name": "菌湯鍋 + 骨湯鍋", "tag": ""}, "en": {"name": "Half Mushroom & Half Pork Bone Broth", "tag": ""}, "it": {"name": "Metà Funghi e Metà Brodo di Ossa di Maiale", "tag": ""}, "fr": {"name": "Moitié Champignons et Moitié Bouillon d'Os de Porc", "tag": ""}, "es": {"name": "Mitad Setas y Mitad Caldo de Hueso de Cerdo", "tag": ""}}},
 {"id": "dipSauce", "category": "soupBase", "sub": "dipSauce", "price": 1.98, "unit": "person", "allergens": [], "i18n": {"zh": {"name": "蘸料", "tag": "自取"}, "zhHant": {"name": "蘸料", "tag": "自取"}, "en": {"name": "Dipping Sauce", "tag": "Self service"}, "it": {"name": "Salsa per Intingere", "tag": "Self-service"}, "fr": {"name": "Sauce à Tremper", "tag": "Self-service"}, "es": {"name": "Salsa para Mojar", "tag": "Autoservicio"}}},
-{"id": "beefTripePremium", "category": "houseSpecial", "price": 14.0, "allergens": [], "i18n": {"zh": {"name": "极品鲜毛肚", "tag": ""}, "zhHant": {"name": "極品鮮毛肚", "tag": ""}, "en": {"name": "Premium Fresh Beef Tripe", "tag": ""}, "it": {"name": "Trippa di Manzo Fresca Premium", "tag": ""}, "fr": {"name": "Tripes de Bœuf Fraîches Premium", "tag": ""}, "es": {"name": "Callos de Ternera Frescos Premium", "tag": ""}}},
-{"id": "porkKidneySliced", "category": "houseSpecial", "price": 11.8, "allergens": [], "i18n": {"zh": {"name": "大刀腰片", "tag": ""}, "zhHant": {"name": "大刀腰片", "tag": ""}, "en": {"name": "Broad-Cut Pork Kidney", "tag": ""}, "it": {"name": "Rognone di Maiale a Fette Larghe", "tag": ""}, "fr": {"name": "Rognon de Porc Tranché Épais", "tag": ""}, "es": {"name": "Riñón de Cerdo en Lonchas Gruesas", "tag": ""}}},
-{"id": "beefTripeLayered", "category": "houseSpecial", "price": 10.8, "allergens": [], "i18n": {"zh": {"name": "草原干层肚", "tag": ""}, "zhHant": {"name": "草原干層肚", "tag": ""}, "en": {"name": "Prairie Thousand-Layer Tripe", "tag": ""}, "it": {"name": "Trippa di Manzo a Mille Strati (Prateria)", "tag": ""}, "fr": {"name": "Tripes de Bœuf Mille-Feuilles (Prairie)", "tag": ""}, "es": {"name": "Callos de Ternera de Mil Capas (Pradera)", "tag": ""}}},
-{"id": "duckBlood", "category": "houseSpecial", "price": 7.8, "allergens": ["2"], "i18n": {"zh": {"name": "鸭血", "tag": ""}, "zhHant": {"name": "鴨血", "tag": ""}, "en": {"name": "Duck Blood", "tag": ""}, "it": {"name": "Sangue d'Anatra", "tag": ""}, "fr": {"name": "Sang de Canard", "tag": ""}, "es": {"name": "Sangre de Pato", "tag": ""}}},
-{"id": "porkLiverTender", "category": "houseSpecial", "price": 7.8, "allergens": ["3"], "i18n": {"zh": {"name": "嫩滋猪肝", "tag": ""}, "zhHant": {"name": "嫩滋豬肝", "tag": ""}, "en": {"name": "Tender Pork Liver", "tag": ""}, "it": {"name": "Fegato di Maiale Tenero", "tag": ""}, "fr": {"name": "Foie de Porc Tendre", "tag": ""}, "es": {"name": "Hígado de Cerdo Tierno", "tag": ""}}},
-{"id": "malingLuncheonMeat", "category": "houseSpecial", "price": 6.6, "allergens": ["4"], "i18n": {"zh": {"name": "梅林午餐肉", "tag": ""}, "zhHant": {"name": "梅林午餐肉", "tag": ""}, "en": {"name": "Maling Luncheon Meat", "tag": ""}, "it": {"name": "Carne in Scatola MaLing", "tag": ""}, "fr": {"name": "Viande en Conserve MaLing", "tag": ""}, "es": {"name": "Fiambre MaLing", "tag": ""}}},
-{"id": "pigBrain", "category": "houseSpecial", "price": 9.6, "allergens": [], "i18n": {"zh": {"name": "鲜绿脑花", "tag": ""}, "zhHant": {"name": "鮮綠腦花", "tag": ""}, "en": {"name": "Pig Brain", "tag": ""}, "it": {"name": "Cervello di Maiale", "tag": ""}, "fr": {"name": "Cervelle de Porc", "tag": ""}, "es": {"name": "Sesos de Cerdo", "tag": ""}}},
-{"id": "spicyTenderBeef", "category": "houseSpecial", "price": 12.8, "allergens": ["1", "3"], "i18n": {"zh": {"name": "麻辣牛肉", "tag": ""}, "zhHant": {"name": "麻辣牛肉", "tag": ""}, "en": {"name": "Mala Beef Slices", "tag": ""}, "it": {"name": "Fettine di Manzo Mala", "tag": ""}, "fr": {"name": "Tranches de Bœuf Mala", "tag": ""}, "es": {"name": "Lonchas de Ternera Mala", "tag": ""}}},
-{"id": "seasonedBeef", "category": "houseSpecial", "price": 11.8, "allergens": ["1", "3"], "i18n": {"zh": {"name": "私房嫩牛肉", "tag": ""}, "zhHant": {"name": "私房嫩牛肉", "tag": ""}, "en": {"name": "House Special Tender Beef", "tag": ""}, "it": {"name": "Manzo Tenero della Casa", "tag": ""}, "fr": {"name": "Bœuf Tendre Maison", "tag": ""}, "es": {"name": "Ternera Tierna de la Casa", "tag": ""}}},
-{"id": "chickenGizzard", "category": "houseSpecial", "price": 11.0, "allergens": [], "i18n": {"zh": {"name": "特色小郡肝", "tag": ""}, "zhHant": {"name": "特色小郡肝", "tag": ""}, "en": {"name": "Signature Chicken Gizzard Bites", "tag": ""}, "it": {"name": "Ventriglio di Pollo della Casa", "tag": ""}, "fr": {"name": "Gésier de Poulet Signature", "tag": ""}, "es": {"name": "Molleja de Pollo de la Casa", "tag": ""}}},
+{"id": "beefTripePremium", "category": "houseSpecial", "price": 14.0, "allergens": [], "img": "../image/菜品/极品鲜毛肚.webp", "i18n": {"zh": {"name": "极品鲜毛肚", "tag": ""}, "zhHant": {"name": "極品鮮毛肚", "tag": ""}, "en": {"name": "Premium Fresh Beef Tripe", "tag": ""}, "it": {"name": "Trippa di Manzo Fresca Premium", "tag": ""}, "fr": {"name": "Tripes de Bœuf Fraîches Premium", "tag": ""}, "es": {"name": "Callos de Ternera Frescos Premium", "tag": ""}}},
+{"id": "porkKidneySliced", "category": "houseSpecial", "price": 11.8, "allergens": [], "img": "../image/菜品/大刀腰片.webp", "i18n": {"zh": {"name": "大刀腰片", "tag": ""}, "zhHant": {"name": "大刀腰片", "tag": ""}, "en": {"name": "Broad-Cut Pork Kidney", "tag": ""}, "it": {"name": "Rognone di Maiale a Fette Larghe", "tag": ""}, "fr": {"name": "Rognon de Porc Tranché Épais", "tag": ""}, "es": {"name": "Riñón de Cerdo en Lonchas Gruesas", "tag": ""}}},
+{"id": "beefTripeLayered", "category": "houseSpecial", "price": 10.8, "allergens": [], "img": "../image/菜品/草原千层肚.webp", "i18n": {"zh": {"name": "草原千层肚", "tag": ""}, "zhHant": {"name": "草原千層肚", "tag": ""}, "en": {"name": "Prairie Thousand-Layer Tripe", "tag": ""}, "it": {"name": "Trippa di Manzo a Mille Strati (Prateria)", "tag": ""}, "fr": {"name": "Tripes de Bœuf Mille-Feuilles (Prairie)", "tag": ""}, "es": {"name": "Callos de Ternera de Mil Capas (Pradera)", "tag": ""}}},
+{"id": "duckBlood", "category": "houseSpecial", "price": 7.8, "allergens": ["2"], "img": "../image/菜品/鸭血.webp", "i18n": {"zh": {"name": "鸭血", "tag": ""}, "zhHant": {"name": "鴨血", "tag": ""}, "en": {"name": "Duck Blood", "tag": ""}, "it": {"name": "Sangue d'Anatra", "tag": ""}, "fr": {"name": "Sang de Canard", "tag": ""}, "es": {"name": "Sangre de Pato", "tag": ""}}},
+{"id": "porkLiverTender", "category": "houseSpecial", "price": 7.8, "allergens": ["3"], "img": "../image/菜品/嫩滋猪肝.webp", "i18n": {"zh": {"name": "嫩滋猪肝", "tag": ""}, "zhHant": {"name": "嫩滋豬肝", "tag": ""}, "en": {"name": "Tender Pork Liver", "tag": ""}, "it": {"name": "Fegato di Maiale Tenero", "tag": ""}, "fr": {"name": "Foie de Porc Tendre", "tag": ""}, "es": {"name": "Hígado de Cerdo Tierno", "tag": ""}}},
+{"id": "malingLuncheonMeat", "category": "houseSpecial", "price": 6.6, "allergens": ["4"], "img": "../image/菜品/梅林午餐肉.webp", "i18n": {"zh": {"name": "梅林午餐肉", "tag": ""}, "zhHant": {"name": "梅林午餐肉", "tag": ""}, "en": {"name": "Maling Luncheon Meat", "tag": ""}, "it": {"name": "Carne in Scatola MaLing", "tag": ""}, "fr": {"name": "Viande en Conserve MaLing", "tag": ""}, "es": {"name": "Fiambre MaLing", "tag": ""}}},
+{"id": "pigBrain", "category": "houseSpecial", "price": 9.6, "allergens": [], "img": "../image/菜品/鲜绿脑花.webp", "i18n": {"zh": {"name": "鲜绿脑花", "tag": ""}, "zhHant": {"name": "鮮綠腦花", "tag": ""}, "en": {"name": "Pig Brain", "tag": ""}, "it": {"name": "Cervello di Maiale", "tag": ""}, "fr": {"name": "Cervelle de Porc", "tag": ""}, "es": {"name": "Sesos de Cerdo", "tag": ""}}},
+{"id": "spicyTenderBeef", "category": "houseSpecial", "price": 12.8, "allergens": ["1", "3"], "img": "../image/菜品/麻辣牛肉.webp", "i18n": {"zh": {"name": "麻辣牛肉", "tag": ""}, "zhHant": {"name": "麻辣牛肉", "tag": ""}, "en": {"name": "Mala Beef Slices", "tag": ""}, "it": {"name": "Fettine di Manzo Mala", "tag": ""}, "fr": {"name": "Tranches de Bœuf Mala", "tag": ""}, "es": {"name": "Lonchas de Ternera Mala", "tag": ""}}},
+{"id": "seasonedBeef", "category": "houseSpecial", "price": 11.8, "allergens": ["1", "3"], "img": "../image/菜品/私房嫩牛肉.webp", "i18n": {"zh": {"name": "私房嫩牛肉", "tag": ""}, "zhHant": {"name": "私房嫩牛肉", "tag": ""}, "en": {"name": "House Special Tender Beef", "tag": ""}, "it": {"name": "Manzo Tenero della Casa", "tag": ""}, "fr": {"name": "Bœuf Tendre Maison", "tag": ""}, "es": {"name": "Ternera Tierna de la Casa", "tag": ""}}},
+{"id": "chickenGizzard", "category": "houseSpecial", "price": 11.0, "allergens": [], "img": "../image/菜品/特色小郡肝.webp", "i18n": {"zh": {"name": "特色小郡肝", "tag": ""}, "zhHant": {"name": "特色小郡肝", "tag": ""}, "en": {"name": "Signature Chicken Gizzard Bites", "tag": ""}, "it": {"name": "Ventriglio di Pollo della Casa", "tag": ""}, "fr": {"name": "Gésier de Poulet Signature", "tag": ""}, "es": {"name": "Molleja de Pollo de la Casa", "tag": ""}}},
 {"id": "braisedChickenFeet", "category": "houseSpecial", "price": 8.8, "allergens": ["4"], "i18n": {"zh": {"name": "特色肥鸡爪", "tag": ""}, "zhHant": {"name": "特色肥雞爪", "tag": ""}, "en": {"name": "Special Braised Chicken Feet (with bones)", "tag": ""}, "it": {"name": "Zampe di Pollo Brasate Speciali (con osso)", "tag": ""}, "fr": {"name": "Pattes de Poulet Braisées Spéciales (avec os)", "tag": ""}, "es": {"name": "Patas de Pollo Estofadas Especiales (con hueso)", "tag": ""}}},
-{"id": "beefTendonFresh", "category": "houseSpecial", "price": 8.6, "allergens": [], "i18n": {"zh": {"name": "特色肥腿筋", "tag": ""}, "zhHant": {"name": "特色肥腿筋", "tag": ""}, "en": {"name": "Fresh Beef Tendon", "tag": ""}, "it": {"name": "Tendine di Manzo Fresco", "tag": ""}, "fr": {"name": "Tendon de Bœuf Frais", "tag": ""}, "es": {"name": "Tendón de Ternera Fresco", "tag": ""}}},
-{"id": "spicyChickenDrumstick", "category": "houseSpecial", "price": 8.6, "allergens": [], "i18n": {"zh": {"name": "麻辣鸡腿肉", "tag": ""}, "zhHant": {"name": "麻辣雞腿肉", "tag": ""}, "en": {"name": "Mala Chicken Drumstick (Boneless)", "tag": ""}, "it": {"name": "Coscia di Pollo Mala (Disossata)", "tag": ""}, "fr": {"name": "Cuisse de Poulet Mala (Désossée)", "tag": ""}, "es": {"name": "Muslo de Pollo Mala (Deshuesado)", "tag": ""}}},
-{"id": "braisedPorkIntestine", "category": "houseSpecial", "price": 7.8, "allergens": [], "i18n": {"zh": {"name": "特色肥肠", "tag": ""}, "zhHant": {"name": "特色肥腸", "tag": ""}, "en": {"name": "Special Braised Pork Intestines", "tag": ""}, "it": {"name": "Intestino di Maiale Brasato Speciale", "tag": ""}, "fr": {"name": "Intestins de Porc Braisés Spéciaux", "tag": ""}, "es": {"name": "Intestino de Cerdo Estofado Especial", "tag": ""}}},
-{"id": "braisedBeefTendon", "category": "houseSpecial", "price": 6.8, "allergens": ["4"], "i18n": {"zh": {"name": "特色肥牛筋儿", "tag": ""}, "zhHant": {"name": "特色肥牛筋兒", "tag": ""}, "en": {"name": "Special Braised Beef Tendon", "tag": ""}, "it": {"name": "Tendine di Manzo Brasato Speciale", "tag": ""}, "fr": {"name": "Tendon de Bœuf Braisé Spécial", "tag": ""}, "es": {"name": "Tendón de Ternera Estofado Especial", "tag": ""}}},
-{"id": "friedEggViral", "category": "houseSpecial", "price": 2.8, "allergens": ["1"], "i18n": {"zh": {"name": "网红炸蛋", "tag": ""}, "zhHant": {"name": "網紅炸蛋", "tag": ""}, "en": {"name": "Viral Fried Egg", "tag": ""}, "it": {"name": "Uovo Fritto Virale", "tag": ""}, "fr": {"name": "Œuf Frit Viral", "tag": ""}, "es": {"name": "Huevo Frito Viral", "tag": ""}}},
-{"id": "rawEgg", "category": "houseSpecial", "price": 1.6, "allergens": [], "i18n": {"zh": {"name": "生鸡蛋", "tag": "计价单位：每个"}, "zhHant": {"name": "生雞蛋", "tag": "計價單位：每個"}, "en": {"name": "Raw Egg", "tag": "Priced per piece"}, "it": {"name": "Uovo Crudo", "tag": "Prezzo a pezzo"}, "fr": {"name": "Œuf Cru", "tag": "Prix à la pièce"}, "es": {"name": "Huevo Crudo", "tag": "Precio por unidad"}}},
-{"id": "kingPrawns8", "category": "seafood", "price": 11.0, "allergens": ["6"], "i18n": {"zh": {"name": "带头大虾", "tag": ""}, "zhHant": {"name": "帶頭大蝦", "tag": ""}, "en": {"name": "King Prawns (8 Pieces)", "tag": ""}, "it": {"name": "Gamberoni con Testa (8 pezzi)", "tag": ""}, "fr": {"name": "Grosses Crevettes avec Tête (8 pièces)", "tag": ""}, "es": {"name": "Langostinos con Cabeza (8 piezas)", "tag": ""}}},
-{"id": "seaBassSliced", "category": "seafood", "price": 16.8, "allergens": ["5"], "i18n": {"zh": {"name": "海鲈鱼片", "tag": ""}, "zhHant": {"name": "海鱸魚片", "tag": ""}, "en": {"name": "Sliced Sea Bass", "tag": ""}, "it": {"name": "Branzino Affettato", "tag": ""}, "fr": {"name": "Bar Tranché", "tag": ""}, "es": {"name": "Lubina en Lonchas", "tag": ""}}},
-{"id": "shrimpBallsHandmade", "category": "seafood", "sizes": [{"key": "large", "price": 13.8}, {"key": "small", "price": 6.9}], "allergens": ["6"], "i18n": {"zh": {"name": "手打虾滑", "tag": ""}, "zhHant": {"name": "手打蝦滑", "tag": ""}, "en": {"name": "Handmade Mashed Shrimp Balls", "tag": ""}, "it": {"name": "Polpette di Gamberi Fatte a Mano", "tag": ""}, "fr": {"name": "Boulettes de Crevettes Faites Main", "tag": ""}, "es": {"name": "Bolas de Gambas Hechas a Mano", "tag": ""}}},
-{"id": "babyCuttlefish", "category": "seafood", "price": 8.2, "allergens": ["5"], "i18n": {"zh": {"name": "墨鱼仔", "tag": ""}, "zhHant": {"name": "墨魚仔", "tag": ""}, "en": {"name": "Baby Cuttlefish", "tag": ""}, "it": {"name": "Seppioline", "tag": ""}, "fr": {"name": "Petites Seiches", "tag": ""}, "es": {"name": "Sepia Pequeña", "tag": ""}}},
-{"id": "squid", "category": "seafood", "price": 6.8, "allergens": ["14"], "i18n": {"zh": {"name": "鱿鱼", "tag": ""}, "zhHant": {"name": "魷魚", "tag": ""}, "en": {"name": "Squid", "tag": ""}, "it": {"name": "Calamari", "tag": ""}, "fr": {"name": "Calamar", "tag": ""}, "es": {"name": "Calamar", "tag": ""}}},
-{"id": "shrimpDumpling", "category": "seafood", "price": 6.8, "allergens": [], "i18n": {"zh": {"name": "虾饺", "tag": ""}, "zhHant": {"name": "蝦餃", "tag": ""}, "en": {"name": "Shrimp Dumpling", "tag": ""}, "it": {"name": "Ravioli di Gamberi", "tag": ""}, "fr": {"name": "Raviolis aux Crevettes", "tag": ""}, "es": {"name": "Empanadillas de Gambas", "tag": ""}}},
-{"id": "japaneseWagyu", "category": "premiumBeef", "price": 68.0, "allergens": [], "i18n": {"zh": {"name": "日本和牛", "tag": ""}, "zhHant": {"name": "日本和牛", "tag": ""}, "en": {"name": "Japanese Wagyu", "tag": ""}, "it": {"name": "Wagyu Giapponese", "tag": ""}, "fr": {"name": "Wagyu Japonais", "tag": ""}, "es": {"name": "Wagyu Japonés", "tag": ""}}},
-{"id": "premiumMarbledFattyBeef", "category": "premiumBeef", "sizes": [{"key": "large", "price": 26.0}, {"key": "small", "price": 16.8}], "allergens": [], "i18n": {"zh": {"name": "极品雪花肥牛", "tag": ""}, "zhHant": {"name": "極品雪花肥牛", "tag": ""}, "en": {"name": "Sliced Premium Marbled Fatty Beef", "tag": ""}, "it": {"name": "Manzo Marmorizzato Premium Affettato", "tag": ""}, "fr": {"name": "Bœuf Persillé Premium Tranché", "tag": ""}, "es": {"name": "Ternera Marmoleada Premium en Lonchas", "tag": ""}}},
-{"id": "angusBeefSlices", "category": "premiumBeef", "sizes": [{"key": "large", "price": 16.8}, {"key": "small", "price": 12.8}], "allergens": [], "i18n": {"zh": {"name": "安格斯吊龙", "tag": ""}, "zhHant": {"name": "安格斯吊龍", "tag": ""}, "en": {"name": "Angus Beef Slices", "tag": ""}, "it": {"name": "Manzo Angus Affettato", "tag": ""}, "fr": {"name": "Tranches de Bœuf Angus", "tag": ""}, "es": {"name": "Ternera Angus en Lonchas", "tag": ""}}},
-{"id": "lambRoll", "category": "premiumBeef", "price": 11.8, "allergens": [], "i18n": {"zh": {"name": "羔羊卷", "tag": ""}, "zhHant": {"name": "羔羊卷", "tag": ""}, "en": {"name": "Lamb Roll", "tag": ""}, "it": {"name": "Involtini di Agnello", "tag": ""}, "fr": {"name": "Rouleaux d'Agneau", "tag": ""}, "es": {"name": "Rollo de Cordero", "tag": ""}}},
-{"id": "beefTongueFresh", "category": "premiumBeef", "price": 10.8, "allergens": [], "i18n": {"zh": {"name": "现切牛舌", "tag": ""}, "zhHant": {"name": "現切牛舌", "tag": ""}, "en": {"name": "Freshly Sliced Beef Tongue", "tag": ""}, "it": {"name": "Lingua di Manzo Affettata Fresca", "tag": ""}, "fr": {"name": "Langue de Bœuf Fraîchement Tranchée", "tag": ""}, "es": {"name": "Lengua de Ternera Recién Cortada", "tag": ""}}},
-{"id": "fattyBeefRollOriginal", "category": "premiumBeef", "price": 13.8, "allergens": [], "i18n": {"zh": {"name": "原切肥牛", "tag": ""}, "zhHant": {"name": "原切肥牛", "tag": ""}, "en": {"name": "Fatty Beef Roll", "tag": ""}, "it": {"name": "Involtini di Manzo Marmorizzato", "tag": ""}, "fr": {"name": "Rouleaux de Bœuf Persillé", "tag": ""}, "es": {"name": "Rollo de Ternera Grasa", "tag": ""}}},
-{"id": "porkBellyFresh", "category": "premiumBeef", "price": 7.8, "allergens": ["3"], "i18n": {"zh": {"name": "现切五花肉", "tag": ""}, "zhHant": {"name": "現切五花肉", "tag": ""}, "en": {"name": "Pork Belly Slice", "tag": ""}, "it": {"name": "Pancetta di Maiale Affettata", "tag": ""}, "fr": {"name": "Tranches de Poitrine de Porc", "tag": ""}, "es": {"name": "Panceta de Cerdo en Lonchas", "tag": ""}}},
-{"id": "thickPorkSlice", "category": "premiumBeef", "price": 7.8, "allergens": [], "i18n": {"zh": {"name": "现切老肉片", "tag": ""}, "zhHant": {"name": "現切老肉片", "tag": ""}, "en": {"name": "Thick Sliced Pork", "tag": ""}, "it": {"name": "Maiale Affettato Spesso", "tag": ""}, "fr": {"name": "Porc Tranché Épais", "tag": ""}, "es": {"name": "Cerdo en Lonchas Gruesas", "tag": ""}}},
+{"id": "beefTendonFresh", "category": "houseSpecial", "price": 8.6, "allergens": [], "img": "../image/菜品/特色肥腿筋.webp", "i18n": {"zh": {"name": "特色肥腿筋", "tag": ""}, "zhHant": {"name": "特色肥腿筋", "tag": ""}, "en": {"name": "Fresh Beef Tendon", "tag": ""}, "it": {"name": "Tendine di Manzo Fresco", "tag": ""}, "fr": {"name": "Tendon de Bœuf Frais", "tag": ""}, "es": {"name": "Tendón de Ternera Fresco", "tag": ""}}},
+{"id": "spicyChickenDrumstick", "category": "houseSpecial", "price": 8.6, "allergens": [], "img": "../image/菜品/麻辣鸡腿肉.webp", "i18n": {"zh": {"name": "麻辣鸡腿肉", "tag": ""}, "zhHant": {"name": "麻辣雞腿肉", "tag": ""}, "en": {"name": "Mala Chicken Drumstick (Boneless)", "tag": ""}, "it": {"name": "Coscia di Pollo Mala (Disossata)", "tag": ""}, "fr": {"name": "Cuisse de Poulet Mala (Désossée)", "tag": ""}, "es": {"name": "Muslo de Pollo Mala (Deshuesado)", "tag": ""}}},
+{"id": "braisedPorkIntestine", "category": "houseSpecial", "price": 7.8, "allergens": [], "img": "../image/菜品/特色肥肠.webp", "i18n": {"zh": {"name": "特色肥肠", "tag": ""}, "zhHant": {"name": "特色肥腸", "tag": ""}, "en": {"name": "Special Braised Pork Intestines", "tag": ""}, "it": {"name": "Intestino di Maiale Brasato Speciale", "tag": ""}, "fr": {"name": "Intestins de Porc Braisés Spéciaux", "tag": ""}, "es": {"name": "Intestino de Cerdo Estofado Especial", "tag": ""}}},
+{"id": "braisedBeefTendon", "category": "houseSpecial", "price": 6.8, "allergens": ["4"], "img": "../image/菜品/特色肥牛筋儿.webp", "i18n": {"zh": {"name": "特色肥牛筋儿", "tag": ""}, "zhHant": {"name": "特色肥牛筋兒", "tag": ""}, "en": {"name": "Special Braised Beef Tendon", "tag": ""}, "it": {"name": "Tendine di Manzo Brasato Speciale", "tag": ""}, "fr": {"name": "Tendon de Bœuf Braisé Spécial", "tag": ""}, "es": {"name": "Tendón de Ternera Estofado Especial", "tag": ""}}},
+{"id": "friedEggViral", "category": "houseSpecial", "price": 2.8, "allergens": ["1"], "img": "../image/菜品/网红炸蛋.webp", "i18n": {"zh": {"name": "网红炸蛋", "tag": ""}, "zhHant": {"name": "網紅炸蛋", "tag": ""}, "en": {"name": "Viral Fried Egg", "tag": ""}, "it": {"name": "Uovo Fritto Virale", "tag": ""}, "fr": {"name": "Œuf Frit Viral", "tag": ""}, "es": {"name": "Huevo Frito Viral", "tag": ""}}},
+{"id": "rawEgg", "category": "houseSpecial", "price": 1.6, "allergens": [], "img": "../image/菜品/生鸡蛋.webp", "i18n": {"zh": {"name": "生鸡蛋", "tag": "计价单位：每个"}, "zhHant": {"name": "生雞蛋", "tag": "計價單位：每個"}, "en": {"name": "Raw Egg", "tag": "Priced per piece"}, "it": {"name": "Uovo Crudo", "tag": "Prezzo a pezzo"}, "fr": {"name": "Œuf Cru", "tag": "Prix à la pièce"}, "es": {"name": "Huevo Crudo", "tag": "Precio por unidad"}}},
+{"id": "kingPrawns8", "category": "seafood", "price": 11.0, "allergens": ["6"], "img": "../image/菜品/带头大虾.webp", "i18n": {"zh": {"name": "带头大虾", "tag": ""}, "zhHant": {"name": "帶頭大蝦", "tag": ""}, "en": {"name": "King Prawns (8 Pieces)", "tag": ""}, "it": {"name": "Gamberoni con Testa (8 pezzi)", "tag": ""}, "fr": {"name": "Grosses Crevettes avec Tête (8 pièces)", "tag": ""}, "es": {"name": "Langostinos con Cabeza (8 piezas)", "tag": ""}}},
+{"id": "seaBassSliced", "category": "seafood", "price": 16.8, "allergens": ["5"], "img": "../image/菜品/海鲈鱼片.webp", "i18n": {"zh": {"name": "海鲈鱼片", "tag": ""}, "zhHant": {"name": "海鱸魚片", "tag": ""}, "en": {"name": "Sliced Sea Bass", "tag": ""}, "it": {"name": "Branzino Affettato", "tag": ""}, "fr": {"name": "Bar Tranché", "tag": ""}, "es": {"name": "Lubina en Lonchas", "tag": ""}}},
+{"id": "shrimpBallsHandmade", "category": "seafood", "sizes": [{"key": "large", "price": 13.8}, {"key": "small", "price": 6.9}], "allergens": ["6"], "img": "../image/菜品/手打虾滑.webp", "i18n": {"zh": {"name": "手打虾滑", "tag": ""}, "zhHant": {"name": "手打蝦滑", "tag": ""}, "en": {"name": "Handmade Mashed Shrimp Balls", "tag": ""}, "it": {"name": "Polpette di Gamberi Fatte a Mano", "tag": ""}, "fr": {"name": "Boulettes de Crevettes Faites Main", "tag": ""}, "es": {"name": "Bolas de Gambas Hechas a Mano", "tag": ""}}},
+{"id": "babyCuttlefish", "category": "seafood", "price": 8.2, "allergens": ["5"], "img": "../image/菜品/墨鱼仔.webp", "i18n": {"zh": {"name": "墨鱼仔", "tag": ""}, "zhHant": {"name": "墨魚仔", "tag": ""}, "en": {"name": "Baby Cuttlefish", "tag": ""}, "it": {"name": "Seppioline", "tag": ""}, "fr": {"name": "Petites Seiches", "tag": ""}, "es": {"name": "Sepia Pequeña", "tag": ""}}},
+{"id": "squid", "category": "seafood", "price": 6.8, "allergens": ["14"], "img": "../image/菜品/鱿鱼.webp", "i18n": {"zh": {"name": "鱿鱼", "tag": ""}, "zhHant": {"name": "魷魚", "tag": ""}, "en": {"name": "Squid", "tag": ""}, "it": {"name": "Calamari", "tag": ""}, "fr": {"name": "Calamar", "tag": ""}, "es": {"name": "Calamar", "tag": ""}}},
+{"id": "shrimpDumpling", "category": "seafood", "price": 6.8, "allergens": [], "img": "../image/菜品/虾饺.webp", "i18n": {"zh": {"name": "虾饺", "tag": ""}, "zhHant": {"name": "蝦餃", "tag": ""}, "en": {"name": "Shrimp Dumpling", "tag": ""}, "it": {"name": "Ravioli di Gamberi", "tag": ""}, "fr": {"name": "Raviolis aux Crevettes", "tag": ""}, "es": {"name": "Empanadillas de Gambas", "tag": ""}}},
+{"id": "japaneseWagyu", "category": "premiumBeef", "price": 68.0, "allergens": [], "img": "../image/菜品/日本和牛.webp", "i18n": {"zh": {"name": "日本和牛", "tag": ""}, "zhHant": {"name": "日本和牛", "tag": ""}, "en": {"name": "Japanese Wagyu", "tag": ""}, "it": {"name": "Wagyu Giapponese", "tag": ""}, "fr": {"name": "Wagyu Japonais", "tag": ""}, "es": {"name": "Wagyu Japonés", "tag": ""}}},
+{"id": "premiumMarbledFattyBeef", "category": "premiumBeef", "sizes": [{"key": "large", "price": 26.0}, {"key": "small", "price": 16.8}], "allergens": [], "img": "../image/菜品/极品雪花肥牛.webp", "i18n": {"zh": {"name": "极品雪花肥牛", "tag": ""}, "zhHant": {"name": "極品雪花肥牛", "tag": ""}, "en": {"name": "Sliced Premium Marbled Fatty Beef", "tag": ""}, "it": {"name": "Manzo Marmorizzato Premium Affettato", "tag": ""}, "fr": {"name": "Bœuf Persillé Premium Tranché", "tag": ""}, "es": {"name": "Ternera Marmoleada Premium en Lonchas", "tag": ""}}},
+{"id": "angusBeefSlices", "category": "premiumBeef", "sizes": [{"key": "large", "price": 16.8}, {"key": "small", "price": 12.8}], "allergens": [], "img": "../image/菜品/安格斯吊龙.webp", "i18n": {"zh": {"name": "安格斯吊龙", "tag": ""}, "zhHant": {"name": "安格斯吊龍", "tag": ""}, "en": {"name": "Angus Beef Slices", "tag": ""}, "it": {"name": "Manzo Angus Affettato", "tag": ""}, "fr": {"name": "Tranches de Bœuf Angus", "tag": ""}, "es": {"name": "Ternera Angus en Lonchas", "tag": ""}}},
+{"id": "lambRoll", "category": "premiumBeef", "price": 11.8, "allergens": [], "img": "../image/菜品/羔羊卷.webp", "i18n": {"zh": {"name": "羔羊卷", "tag": ""}, "zhHant": {"name": "羔羊卷", "tag": ""}, "en": {"name": "Lamb Roll", "tag": ""}, "it": {"name": "Involtini di Agnello", "tag": ""}, "fr": {"name": "Rouleaux d'Agneau", "tag": ""}, "es": {"name": "Rollo de Cordero", "tag": ""}}},
+{"id": "beefTongueFresh", "category": "premiumBeef", "price": 10.8, "allergens": [], "img": "../image/菜品/现切牛舌.webp", "i18n": {"zh": {"name": "现切牛舌", "tag": ""}, "zhHant": {"name": "現切牛舌", "tag": ""}, "en": {"name": "Freshly Sliced Beef Tongue", "tag": ""}, "it": {"name": "Lingua di Manzo Affettata Fresca", "tag": ""}, "fr": {"name": "Langue de Bœuf Fraîchement Tranchée", "tag": ""}, "es": {"name": "Lengua de Ternera Recién Cortada", "tag": ""}}},
+{"id": "fattyBeefRollOriginal", "category": "premiumBeef", "price": 13.8, "allergens": [], "img": "../image/菜品/原切肥牛.webp", "i18n": {"zh": {"name": "原切肥牛", "tag": ""}, "zhHant": {"name": "原切肥牛", "tag": ""}, "en": {"name": "Fatty Beef Roll", "tag": ""}, "it": {"name": "Involtini di Manzo Marmorizzato", "tag": ""}, "fr": {"name": "Rouleaux de Bœuf Persillé", "tag": ""}, "es": {"name": "Rollo de Ternera Grasa", "tag": ""}}},
+{"id": "porkBellyFresh", "category": "premiumBeef", "price": 7.8, "allergens": ["3"], "img": "../image/菜品/现切五花肉.webp", "i18n": {"zh": {"name": "现切五花肉", "tag": ""}, "zhHant": {"name": "現切五花肉", "tag": ""}, "en": {"name": "Pork Belly Slice", "tag": ""}, "it": {"name": "Pancetta di Maiale Affettata", "tag": ""}, "fr": {"name": "Tranches de Poitrine de Porc", "tag": ""}, "es": {"name": "Panceta de Cerdo en Lonchas", "tag": ""}}},
+{"id": "thickPorkSlice", "category": "premiumBeef", "price": 7.8, "allergens": [], "img": "../image/菜品/现切老肉片.webp", "i18n": {"zh": {"name": "现切老肉片", "tag": ""}, "zhHant": {"name": "現切老肉片", "tag": ""}, "en": {"name": "Thick Sliced Pork", "tag": ""}, "it": {"name": "Maiale Affettato Spesso", "tag": ""}, "fr": {"name": "Porc Tranché Épais", "tag": ""}, "es": {"name": "Cerdo en Lonchas Gruesas", "tag": ""}}},
 {"id": "meatballMix", "category": "meatballs", "price": 16.8, "allergens": [], "i18n": {"zh": {"name": "丸子拼盘", "tag": ""}, "zhHant": {"name": "丸子拼盤", "tag": ""}, "en": {"name": "Meatball Mix", "tag": ""}, "it": {"name": "Misto di Polpette", "tag": ""}, "fr": {"name": "Assortiment de Boulettes", "tag": ""}, "es": {"name": "Surtido de Albóndigas", "tag": ""}}},
-{"id": "porkMeatballsCoriander", "category": "meatballs", "price": 8.6, "allergens": ["1"], "i18n": {"zh": {"name": "香菜猪肉丸", "tag": ""}, "zhHant": {"name": "香菜豬肉丸", "tag": ""}, "en": {"name": "Pork Meatballs with Coriander", "tag": ""}, "it": {"name": "Polpette di Maiale al Coriandolo", "tag": ""}, "fr": {"name": "Boulettes de Porc à la Coriandre", "tag": ""}, "es": {"name": "Albóndigas de Cerdo con Cilantro", "tag": ""}}},
-{"id": "crispySausageJapanese", "category": "meatballs", "price": 8.0, "allergens": [], "i18n": {"zh": {"name": "日式脆皮肠", "tag": ""}, "zhHant": {"name": "日式脆皮腸", "tag": ""}, "en": {"name": "Japanese Crispy Sausages", "tag": ""}, "it": {"name": "Salsicce Croccanti Giapponesi", "tag": ""}, "fr": {"name": "Saucisses Croustillantes Japonaises", "tag": ""}, "es": {"name": "Salchichas Crujientes Japonesas", "tag": ""}}},
-{"id": "crabStick", "category": "meatballs", "price": 6.8, "allergens": ["6"], "i18n": {"zh": {"name": "蟹肉棒", "tag": ""}, "zhHant": {"name": "蟹肉棒", "tag": ""}, "en": {"name": "Crab Stick", "tag": ""}, "it": {"name": "Bastoncini di Granchio", "tag": ""}, "fr": {"name": "Bâtonnets de Crabe", "tag": ""}, "es": {"name": "Palitos de Cangrejo", "tag": ""}}},
-{"id": "fuzhouFishBalls", "category": "meatballs", "sizes": [{"key": "large", "price": 11.8}, {"key": "small", "price": 5.8}], "allergens": ["1", "5"], "i18n": {"zh": {"name": "福州鱼丸", "tag": ""}, "zhHant": {"name": "福州魚丸", "tag": ""}, "en": {"name": "FuZhou Fish Balls", "tag": ""}, "it": {"name": "Polpette di Pesce di Fuzhou", "tag": ""}, "fr": {"name": "Boulettes de Poisson de Fuzhou", "tag": ""}, "es": {"name": "Bolas de Pescado de Fuzhou", "tag": ""}}},
-{"id": "juicyBeefBalls", "category": "meatballs", "sizes": [{"key": "large", "price": 7.8}, {"key": "small", "price": 4.8}], "allergens": ["1"], "i18n": {"zh": {"name": "撒尿牛丸", "tag": ""}, "zhHant": {"name": "撒尿牛丸", "tag": ""}, "en": {"name": "Juicy Beef Balls", "tag": ""}, "it": {"name": "Polpette di Manzo Succose", "tag": ""}, "fr": {"name": "Boulettes de Bœuf Juteuses", "tag": ""}, "es": {"name": "Albóndigas de Ternera Jugosas", "tag": ""}}},
-{"id": "chickenMeatballs", "category": "meatballs", "sizes": [{"key": "large", "price": 7.8}, {"key": "small", "price": 4.8}], "allergens": [], "i18n": {"zh": {"name": "鸡肉丸", "tag": ""}, "zhHant": {"name": "雞肉丸", "tag": ""}, "en": {"name": "Chicken Meatballs", "tag": ""}, "it": {"name": "Polpette di Pollo", "tag": ""}, "fr": {"name": "Boulettes de Poulet", "tag": ""}, "es": {"name": "Albóndigas de Pollo", "tag": ""}}},
+{"id": "porkMeatballsCoriander", "category": "meatballs", "price": 8.6, "allergens": ["1"], "img": "../image/菜品/香菜猪肉丸.webp", "i18n": {"zh": {"name": "香菜猪肉丸", "tag": ""}, "zhHant": {"name": "香菜豬肉丸", "tag": ""}, "en": {"name": "Pork Meatballs with Coriander", "tag": ""}, "it": {"name": "Polpette di Maiale al Coriandolo", "tag": ""}, "fr": {"name": "Boulettes de Porc à la Coriandre", "tag": ""}, "es": {"name": "Albóndigas de Cerdo con Cilantro", "tag": ""}}},
+{"id": "crispySausageJapanese", "category": "meatballs", "price": 8.0, "allergens": [], "img": "../image/菜品/日式脆皮肠.webp", "i18n": {"zh": {"name": "日式脆皮肠", "tag": ""}, "zhHant": {"name": "日式脆皮腸", "tag": ""}, "en": {"name": "Japanese Crispy Sausages", "tag": ""}, "it": {"name": "Salsicce Croccanti Giapponesi", "tag": ""}, "fr": {"name": "Saucisses Croustillantes Japonaises", "tag": ""}, "es": {"name": "Salchichas Crujientes Japonesas", "tag": ""}}},
+{"id": "crabStick", "category": "meatballs", "price": 6.8, "allergens": ["6"], "img": "../image/菜品/蟹肉棒.webp", "i18n": {"zh": {"name": "蟹肉棒", "tag": ""}, "zhHant": {"name": "蟹肉棒", "tag": ""}, "en": {"name": "Crab Stick", "tag": ""}, "it": {"name": "Bastoncini di Granchio", "tag": ""}, "fr": {"name": "Bâtonnets de Crabe", "tag": ""}, "es": {"name": "Palitos de Cangrejo", "tag": ""}}},
+{"id": "fuzhouFishBalls", "category": "meatballs", "sizes": [{"key": "large", "price": 11.8}, {"key": "small", "price": 5.8}], "allergens": ["1", "5"], "img": "../image/菜品/火锅鱼丸.webp", "i18n": {"zh": {"name": "福州鱼丸", "tag": ""}, "zhHant": {"name": "福州魚丸", "tag": ""}, "en": {"name": "FuZhou Fish Balls", "tag": ""}, "it": {"name": "Polpette di Pesce di Fuzhou", "tag": ""}, "fr": {"name": "Boulettes de Poisson de Fuzhou", "tag": ""}, "es": {"name": "Bolas de Pescado de Fuzhou", "tag": ""}}},
+{"id": "juicyBeefBalls", "category": "meatballs", "sizes": [{"key": "large", "price": 7.8}, {"key": "small", "price": 4.8}], "allergens": ["1"], "img": "../image/菜品/撒尿牛丸.webp", "i18n": {"zh": {"name": "撒尿牛丸", "tag": ""}, "zhHant": {"name": "撒尿牛丸", "tag": ""}, "en": {"name": "Beef Meatballs", "tag": ""}, "it": {"name": "Polpette di Manzo", "tag": ""}, "fr": {"name": "Boulettes de Bœuf", "tag": ""}, "es": {"name": "Albóndigas de Ternera", "tag": ""}}},
+{"id": "chickenMeatballs", "category": "meatballs", "sizes": [{"key": "large", "price": 7.8}, {"key": "small", "price": 4.8}], "allergens": [], "img": "../image/菜品/鸡肉丸.webp", "i18n": {"zh": {"name": "鸡肉丸", "tag": ""}, "zhHant": {"name": "雞肉丸", "tag": ""}, "en": {"name": "Chicken Meatballs", "tag": ""}, "it": {"name": "Polpette di Pollo", "tag": ""}, "fr": {"name": "Boulettes de Poulet", "tag": ""}, "es": {"name": "Albóndigas de Pollo", "tag": ""}}},
 {"id": "mushroomPlatter", "category": "mushrooms", "price": 12.0, "allergens": [], "i18n": {"zh": {"name": "菌类拼盘", "tag": ""}, "zhHant": {"name": "菌類拼盤", "tag": ""}, "en": {"name": "Mushroom Platter", "tag": ""}, "it": {"name": "Misto di Funghi", "tag": ""}, "fr": {"name": "Assortiment de Champignons", "tag": ""}, "es": {"name": "Surtido de Setas", "tag": ""}}},
-{"id": "shiitakeMushroom", "category": "mushrooms", "price": 6.8, "allergens": [], "i18n": {"zh": {"name": "香菇", "tag": ""}, "zhHant": {"name": "香菇", "tag": ""}, "en": {"name": "Shiitake Mushroom", "tag": ""}, "it": {"name": "Fungo Shiitake", "tag": ""}, "fr": {"name": "Champignon Shiitake", "tag": ""}, "es": {"name": "Champiñón Shiitake", "tag": ""}}},
-{"id": "enokiMushroom", "category": "mushrooms", "price": 5.8, "allergens": [], "i18n": {"zh": {"name": "金针菇", "tag": ""}, "zhHant": {"name": "金針菇", "tag": ""}, "en": {"name": "Enoki Mushroom", "tag": ""}, "it": {"name": "Fungo Enoki", "tag": ""}, "fr": {"name": "Champignon Enoki", "tag": ""}, "es": {"name": "Champiñón Enoki", "tag": ""}}},
-{"id": "kingOysterMushroom", "category": "mushrooms", "price": 5.8, "allergens": [], "i18n": {"zh": {"name": "杏鲍菇", "tag": ""}, "zhHant": {"name": "杏鮑菇", "tag": ""}, "en": {"name": "King Oyster Mushroom", "tag": ""}, "it": {"name": "Fungo Cardoncello", "tag": ""}, "fr": {"name": "Pleurote du Panicaut", "tag": ""}, "es": {"name": "Seta Cardo", "tag": ""}}},
-{"id": "oysterMushroom", "category": "mushrooms", "price": 5.8, "allergens": [], "i18n": {"zh": {"name": "平菇", "tag": ""}, "zhHant": {"name": "平菇", "tag": ""}, "en": {"name": "Oyster Mushroom", "tag": ""}, "it": {"name": "Fungo Ostrica", "tag": ""}, "fr": {"name": "Pleurote", "tag": ""}, "es": {"name": "Seta Ostra", "tag": ""}}},
-{"id": "blackFungus", "category": "mushrooms", "price": 5.8, "allergens": [], "i18n": {"zh": {"name": "黑木耳", "tag": ""}, "zhHant": {"name": "黑木耳", "tag": ""}, "en": {"name": "Black Fungus", "tag": ""}, "it": {"name": "Fungo Nero", "tag": ""}, "fr": {"name": "Champignon Noir", "tag": ""}, "es": {"name": "Hongo Negro", "tag": ""}}},
+{"id": "shiitakeMushroom", "category": "mushrooms", "price": 6.8, "allergens": [], "img": "../image/菜品/香菇.webp", "i18n": {"zh": {"name": "香菇", "tag": ""}, "zhHant": {"name": "香菇", "tag": ""}, "en": {"name": "Shiitake Mushroom", "tag": ""}, "it": {"name": "Fungo Shiitake", "tag": ""}, "fr": {"name": "Champignon Shiitake", "tag": ""}, "es": {"name": "Champiñón Shiitake", "tag": ""}}},
+{"id": "enokiMushroom", "category": "mushrooms", "price": 5.8, "allergens": [], "img": "../image/菜品/金针菇.webp", "i18n": {"zh": {"name": "金针菇", "tag": ""}, "zhHant": {"name": "金針菇", "tag": ""}, "en": {"name": "Enoki Mushroom", "tag": ""}, "it": {"name": "Fungo Enoki", "tag": ""}, "fr": {"name": "Champignon Enoki", "tag": ""}, "es": {"name": "Champiñón Enoki", "tag": ""}}},
+{"id": "kingOysterMushroom", "category": "mushrooms", "price": 5.8, "allergens": [], "img": "../image/菜品/杏鲍菇.webp", "i18n": {"zh": {"name": "杏鲍菇", "tag": ""}, "zhHant": {"name": "杏鮑菇", "tag": ""}, "en": {"name": "King Oyster Mushroom", "tag": ""}, "it": {"name": "Fungo Cardoncello", "tag": ""}, "fr": {"name": "Pleurote du Panicaut", "tag": ""}, "es": {"name": "Seta Cardo", "tag": ""}}},
+{"id": "oysterMushroom", "category": "mushrooms", "price": 5.8, "allergens": [], "img": "../image/菜品/平菇.webp", "i18n": {"zh": {"name": "平菇", "tag": ""}, "zhHant": {"name": "平菇", "tag": ""}, "en": {"name": "Oyster Mushroom", "tag": ""}, "it": {"name": "Fungo Ostrica", "tag": ""}, "fr": {"name": "Pleurote", "tag": ""}, "es": {"name": "Seta Ostra", "tag": ""}}},
+{"id": "blackFungus", "category": "mushrooms", "price": 5.8, "allergens": [], "img": "../image/菜品/黑木耳.webp", "i18n": {"zh": {"name": "黑木耳", "tag": ""}, "zhHant": {"name": "黑木耳", "tag": ""}, "en": {"name": "Black Fungus", "tag": ""}, "it": {"name": "Fungo Nero", "tag": ""}, "fr": {"name": "Champignon Noir", "tag": ""}, "es": {"name": "Hongo Negro", "tag": ""}}},
 {"id": "vegPlatter", "category": "vegetables", "price": 12.0, "allergens": [], "i18n": {"zh": {"name": "蔬菜拼盘", "tag": ""}, "zhHant": {"name": "蔬菜拼盤", "tag": ""}, "en": {"name": "Vegetable Platter", "tag": ""}, "it": {"name": "Misto di Verdure", "tag": ""}, "fr": {"name": "Assortiment de Légumes", "tag": ""}, "es": {"name": "Surtido de Verduras", "tag": ""}}},
-{"id": "soybeanRoll", "category": "vegetables", "price": 7.8, "allergens": [], "i18n": {"zh": {"name": "响铃卷", "tag": ""}, "zhHant": {"name": "響鈴卷", "tag": ""}, "en": {"name": "Soybean Roll", "tag": ""}, "it": {"name": "Involtini di Soia", "tag": ""}, "fr": {"name": "Rouleaux de Soja", "tag": ""}, "es": {"name": "Rollo de Soja", "tag": ""}}},
-{"id": "beancurdSticks", "category": "vegetables", "price": 7.8, "allergens": ["4"], "i18n": {"zh": {"name": "腐竹", "tag": ""}, "zhHant": {"name": "腐竹", "tag": ""}, "en": {"name": "Beancurd Sticks", "tag": ""}, "it": {"name": "Bastoncini di Tofu Essiccato", "tag": ""}, "fr": {"name": "Bâtonnets de Tofu Séché", "tag": ""}, "es": {"name": "Palitos de Tofu Seco", "tag": ""}}},
-{"id": "bambooSlicesSunan", "category": "vegetables", "price": 6.8, "allergens": [], "i18n": {"zh": {"name": "蜀南竹笋片", "tag": ""}, "zhHant": {"name": "蜀南竹筍片", "tag": ""}, "en": {"name": "Sunan Bamboo Slices", "tag": ""}, "it": {"name": "Germogli di Bambù Sunan", "tag": ""}, "fr": {"name": "Pousses de Bambou Sunan", "tag": ""}, "es": {"name": "Brotes de Bambú Sunan", "tag": ""}}},
-{"id": "driedBeanCurdSheet", "category": "vegetables", "price": 6.8, "allergens": ["4"], "i18n": {"zh": {"name": "干豆皮", "tag": ""}, "zhHant": {"name": "乾豆皮", "tag": ""}, "en": {"name": "Dried Bean Curd Sheet", "tag": ""}, "it": {"name": "Foglie di Tofu Essiccato", "tag": ""}, "fr": {"name": "Feuilles de Tofu Séché", "tag": ""}, "es": {"name": "Hojas de Tofu Seco", "tag": ""}}},
-{"id": "deepFriedTofu", "category": "vegetables", "price": 6.8, "allergens": ["4"], "i18n": {"zh": {"name": "油豆腐", "tag": ""}, "zhHant": {"name": "油豆腐", "tag": ""}, "en": {"name": "Deep Fried Tofu", "tag": ""}, "it": {"name": "Tofu Fritto", "tag": ""}, "fr": {"name": "Tofu Frit", "tag": ""}, "es": {"name": "Tofu Frito", "tag": ""}}},
-{"id": "wulongVermicelli", "category": "vegetables", "price": 6.5, "allergens": [], "i18n": {"zh": {"name": "武隆粉丝", "tag": ""}, "zhHant": {"name": "武隆粉絲", "tag": ""}, "en": {"name": "WuLong Sweet Potato Starch Noodles", "tag": ""}, "it": {"name": "Noodles di Patata Dolce WuLong", "tag": ""}, "fr": {"name": "Nouilles de Patate Douce WuLong", "tag": ""}, "es": {"name": "Fideos de Boniato WuLong", "tag": ""}}},
-{"id": "lotusRootSlices", "category": "vegetables", "price": 5.8, "allergens": [], "i18n": {"zh": {"name": "藕片", "tag": ""}, "zhHant": {"name": "藕片", "tag": ""}, "en": {"name": "Lotus Root Slices", "tag": ""}, "it": {"name": "Radice di Loto Affettata", "tag": ""}, "fr": {"name": "Racine de Lotus Tranchée", "tag": ""}, "es": {"name": "Raíz de Loto en Lonchas", "tag": ""}}},
-{"id": "broccoliSprouts", "category": "vegetables", "price": 5.8, "allergens": [], "i18n": {"zh": {"name": "西兰花苔", "tag": ""}, "zhHant": {"name": "西蘭花苔", "tag": ""}, "en": {"name": "Broccoli Sprouts", "tag": ""}, "it": {"name": "Germogli di Broccoli", "tag": ""}, "fr": {"name": "Pousses de Brocoli", "tag": ""}, "es": {"name": "Brotes de Brócoli", "tag": ""}}},
-{"id": "riceCake", "category": "vegetables", "price": 5.8, "allergens": [], "i18n": {"zh": {"name": "年糕", "tag": ""}, "zhHant": {"name": "年糕", "tag": ""}, "en": {"name": "Rice Cake", "tag": ""}, "it": {"name": "Torta di Riso", "tag": ""}, "fr": {"name": "Gâteau de Riz", "tag": ""}, "es": {"name": "Pastel de Arroz", "tag": ""}}},
-{"id": "crownDaisy", "category": "vegetables", "price": 5.8, "allergens": [], "i18n": {"zh": {"name": "茼蒿菜", "tag": ""}, "zhHant": {"name": "茼蒿菜", "tag": ""}, "en": {"name": "Crown Daisy", "tag": ""}, "it": {"name": "Crisantemo da Foglia", "tag": ""}, "fr": {"name": "Chrysanthème Comestible", "tag": ""}, "es": {"name": "Crisantemo Comestible", "tag": ""}}},
-{"id": "pakChoi", "category": "vegetables", "price": 5.8, "allergens": [], "i18n": {"zh": {"name": "上海青", "tag": ""}, "zhHant": {"name": "上海青", "tag": ""}, "en": {"name": "Pak Choi", "tag": ""}, "it": {"name": "Pak Choi", "tag": ""}, "fr": {"name": "Pak Choi", "tag": ""}, "es": {"name": "Pak Choi", "tag": ""}}},
-{"id": "lettuce", "category": "vegetables", "price": 5.8, "allergens": [], "i18n": {"zh": {"name": "生菜", "tag": ""}, "zhHant": {"name": "生菜", "tag": ""}, "en": {"name": "Lettuce", "tag": ""}, "it": {"name": "Lattuga", "tag": ""}, "fr": {"name": "Laitue", "tag": ""}, "es": {"name": "Lechuga", "tag": ""}}},
-{"id": "kelpSeaweed", "category": "vegetables", "price": 5.8, "allergens": [], "i18n": {"zh": {"name": "海带", "tag": ""}, "zhHant": {"name": "海帶", "tag": ""}, "en": {"name": "Kelp Seaweed", "tag": ""}, "it": {"name": "Alga Kelp", "tag": ""}, "fr": {"name": "Algue Kelp", "tag": ""}, "es": {"name": "Alga Kelp", "tag": ""}}},
-{"id": "konjacNoodles", "category": "vegetables", "price": 5.8, "allergens": ["1"], "i18n": {"zh": {"name": "魔芋丝", "tag": ""}, "zhHant": {"name": "魔芋絲", "tag": ""}, "en": {"name": "Konjac Noodles", "tag": ""}, "it": {"name": "Noodles di Konjac", "tag": ""}, "fr": {"name": "Nouilles de Konjac", "tag": ""}, "es": {"name": "Fideos de Konjac", "tag": ""}}},
-{"id": "chineseYam", "category": "vegetables", "price": 4.9, "allergens": [], "i18n": {"zh": {"name": "山药", "tag": ""}, "zhHant": {"name": "山藥", "tag": ""}, "en": {"name": "Chinese Yam", "tag": ""}, "it": {"name": "Igname Cinese", "tag": ""}, "fr": {"name": "Igname Chinois", "tag": ""}, "es": {"name": "Ñame Chino", "tag": ""}}},
-{"id": "softTofu", "category": "vegetables", "price": 4.8, "allergens": [], "i18n": {"zh": {"name": "豆腐", "tag": ""}, "zhHant": {"name": "豆腐", "tag": ""}, "en": {"name": "Soft Tofu", "tag": ""}, "it": {"name": "Tofu Morbido", "tag": ""}, "fr": {"name": "Tofu Doux", "tag": ""}, "es": {"name": "Tofu Suave", "tag": ""}}},
-{"id": "instantNoodles", "category": "vegetables", "price": 4.8, "allergens": ["1"], "i18n": {"zh": {"name": "方便面", "tag": ""}, "zhHant": {"name": "方便麵", "tag": ""}, "en": {"name": "Instant Noodles", "tag": ""}, "it": {"name": "Noodles Istantanei", "tag": ""}, "fr": {"name": "Nouilles Instantanées", "tag": ""}, "es": {"name": "Fideos Instantáneos", "tag": ""}}},
-{"id": "chineseCabbage", "category": "vegetables", "price": 4.8, "allergens": [], "i18n": {"zh": {"name": "大白菜", "tag": ""}, "zhHant": {"name": "大白菜", "tag": ""}, "en": {"name": "Chinese Cabbage", "tag": ""}, "it": {"name": "Cavolo Cinese", "tag": ""}, "fr": {"name": "Chou Chinois", "tag": ""}, "es": {"name": "Col China", "tag": ""}}},
-{"id": "spinach", "category": "vegetables", "price": 4.8, "allergens": [], "i18n": {"zh": {"name": "菠菜", "tag": ""}, "zhHant": {"name": "菠菜", "tag": ""}, "en": {"name": "Spinach", "tag": ""}, "it": {"name": "Spinaci", "tag": ""}, "fr": {"name": "Épinards", "tag": ""}, "es": {"name": "Espinacas", "tag": ""}}},
-{"id": "sweetCorn", "category": "vegetables", "price": 4.8, "allergens": [], "i18n": {"zh": {"name": "甜玉米", "tag": ""}, "zhHant": {"name": "甜玉米", "tag": ""}, "en": {"name": "Sweet Corn", "tag": ""}, "it": {"name": "Mais Dolce", "tag": ""}, "fr": {"name": "Maïs Doux", "tag": ""}, "es": {"name": "Maíz Dulce", "tag": ""}}},
-{"id": "beanSprout", "category": "vegetables", "price": 4.8, "allergens": ["4"], "i18n": {"zh": {"name": "豆芽", "tag": ""}, "zhHant": {"name": "豆芽", "tag": ""}, "en": {"name": "Bean Sprout", "tag": ""}, "it": {"name": "Germogli di Soia", "tag": ""}, "fr": {"name": "Pousses de Soja", "tag": ""}, "es": {"name": "Brotes de Soja", "tag": ""}}},
-{"id": "whiteRadish", "category": "vegetables", "price": 4.8, "allergens": [], "i18n": {"zh": {"name": "白萝卜", "tag": ""}, "zhHant": {"name": "白蘿蔔", "tag": ""}, "en": {"name": "White Radish", "tag": ""}, "it": {"name": "Ravanello Bianco", "tag": ""}, "fr": {"name": "Radis Blanc", "tag": ""}, "es": {"name": "Rábano Blanco", "tag": ""}}},
-{"id": "babyKelpSprouts", "category": "vegetables", "price": 4.8, "allergens": [], "i18n": {"zh": {"name": "海带芽", "tag": ""}, "zhHant": {"name": "海帶芽", "tag": ""}, "en": {"name": "Baby Kelp Sprouts", "tag": ""}, "it": {"name": "Germogli di Kelp", "tag": ""}, "fr": {"name": "Jeunes Pousses de Kelp", "tag": ""}, "es": {"name": "Brotes de Kelp", "tag": ""}}},
-{"id": "longkouVermicelli", "category": "vegetables", "price": 4.8, "allergens": ["1"], "i18n": {"zh": {"name": "龙口粉丝", "tag": ""}, "zhHant": {"name": "龍口粉絲", "tag": ""}, "en": {"name": "Longkou Vermicelli (Glass Noodles)", "tag": ""}, "it": {"name": "Vermicelli di Longkou (Noodles di Vetro)", "tag": ""}, "fr": {"name": "Vermicelles de Longkou (Nouilles de Verre)", "tag": ""}, "es": {"name": "Fideos de Longkou (Fideos de Cristal)", "tag": ""}}},
-{"id": "shreddedPotato", "category": "vegetables", "price": 4.8, "allergens": [], "i18n": {"zh": {"name": "千丝土豆", "tag": ""}, "zhHant": {"name": "千絲土豆", "tag": ""}, "en": {"name": "Shredded Potato", "tag": ""}, "it": {"name": "Patate Julienne", "tag": ""}, "fr": {"name": "Pommes de Terre en Julienne", "tag": ""}, "es": {"name": "Patata en Juliana", "tag": ""}}},
-{"id": "potatoSlices", "category": "vegetables", "price": 3.8, "allergens": [], "i18n": {"zh": {"name": "土豆", "tag": ""}, "zhHant": {"name": "土豆", "tag": ""}, "en": {"name": "Potato Slices", "tag": ""}, "it": {"name": "Patate Affettate", "tag": ""}, "fr": {"name": "Pommes de Terre Tranchées", "tag": ""}, "es": {"name": "Patata en Lonchas", "tag": ""}}},
-{"id": "crispyPorkStrips", "category": "snacks", "price": 9.9, "allergens": ["1", "3"], "i18n": {"zh": {"name": "现炸酥肉", "tag": ""}, "zhHant": {"name": "現炸酥肉", "tag": ""}, "en": {"name": "Deep Fried Crispy Pork Strips", "tag": ""}, "it": {"name": "Striscioline di Maiale Fritte Croccanti", "tag": ""}, "fr": {"name": "Lanières de Porc Frites Croustillantes", "tag": ""}, "es": {"name": "Tiras de Cerdo Fritas Crujientes", "tag": ""}}},
-{"id": "brownSugarRiceCake", "category": "snacks", "price": 8.8, "allergens": ["1", "4"], "i18n": {"zh": {"name": "红糖糍粑", "tag": ""}, "zhHant": {"name": "紅糖糍粑", "tag": ""}, "en": {"name": "Brown Sugar Glutinous Rice Cake", "tag": ""}, "it": {"name": "Torta di Riso Glutinoso allo Zucchero di Canna", "tag": ""}, "fr": {"name": "Gâteau de Riz Gluant au Sucre Roux", "tag": ""}, "es": {"name": "Pastel de Arroz Glutinoso con Azúcar Moreno", "tag": ""}}},
-{"id": "blackFungusSalad", "category": "snacks", "price": 6.9, "allergens": ["4"], "i18n": {"zh": {"name": "开胃黑木耳", "tag": ""}, "zhHant": {"name": "開胃黑木耳", "tag": ""}, "en": {"name": "Black Fungus Salad (Spicy)", "tag": ""}, "it": {"name": "Insalata di Fungo Nero (Piccante)", "tag": ""}, "fr": {"name": "Salade de Champignon Noir (Épicée)", "tag": ""}, "es": {"name": "Ensalada de Hongo Negro (Picante)", "tag": ""}}},
-{"id": "friedKingPrawn", "category": "snacks", "price": 6.8, "allergens": ["6"], "i18n": {"zh": {"name": "炸虾", "tag": ""}, "zhHant": {"name": "炸蝦", "tag": ""}, "en": {"name": "Deep Fried King Prawn", "tag": ""}, "it": {"name": "Gamberoni Fritti", "tag": ""}, "fr": {"name": "Grosses Crevettes Frites", "tag": ""}, "es": {"name": "Langostinos Fritos", "tag": ""}}},
-{"id": "kimchi", "category": "snacks", "price": 4.8, "allergens": [], "i18n": {"zh": {"name": "韩国泡菜", "tag": ""}, "zhHant": {"name": "韓國泡菜", "tag": ""}, "en": {"name": "Kimchi", "tag": ""}, "it": {"name": "Kimchi", "tag": ""}, "fr": {"name": "Kimchi", "tag": ""}, "es": {"name": "Kimchi", "tag": ""}}},
-{"id": "springRoll", "category": "snacks", "price": 4.8, "allergens": [], "i18n": {"zh": {"name": "春卷", "tag": ""}, "zhHant": {"name": "春卷", "tag": ""}, "en": {"name": "Deep Fried Spring Roll", "tag": ""}, "it": {"name": "Involtino Primavera Fritto", "tag": ""}, "fr": {"name": "Rouleau de Printemps Frit", "tag": ""}, "es": {"name": "Rollito de Primavera Frito", "tag": ""}}},
-{"id": "cucumberSaladSpicy", "category": "snacks", "price": 4.8, "allergens": ["4"], "i18n": {"zh": {"name": "凉拌黄瓜", "tag": ""}, "zhHant": {"name": "涼拌黃瓜", "tag": ""}, "en": {"name": "Shredded Cucumber Salad (Spicy)", "tag": ""}, "it": {"name": "Insalata di Cetrioli (Piccante)", "tag": ""}, "fr": {"name": "Salade de Concombre (Épicée)", "tag": ""}, "es": {"name": "Ensalada de Pepino (Picante)", "tag": ""}}},
-{"id": "friedDoughSticks", "category": "snacks", "price": 4.8, "allergens": [], "i18n": {"zh": {"name": "油条", "tag": ""}, "zhHant": {"name": "油條", "tag": ""}, "en": {"name": "Fried Dough Sticks", "tag": ""}, "it": {"name": "Bastoncini di Pasta Fritta", "tag": ""}, "fr": {"name": "Bâtonnets de Pâte Frite", "tag": ""}, "es": {"name": "Palitos de Masa Frita", "tag": ""}}},
-{"id": "housePickledVeg", "category": "snacks", "price": 2.8, "allergens": [], "i18n": {"zh": {"name": "秘制泡菜", "tag": ""}, "zhHant": {"name": "秘製泡菜", "tag": ""}, "en": {"name": "House Special Pickled Vegetables", "tag": ""}, "it": {"name": "Verdure Sott'Aceto della Casa", "tag": ""}, "fr": {"name": "Légumes Marinés Maison", "tag": ""}, "es": {"name": "Verduras Encurtidas de la Casa", "tag": ""}}},
-{"id": "eggFriedRiceClassic", "category": "snacks", "price": 3.6, "unit": "person", "allergens": ["3"], "i18n": {"zh": {"name": "特色蛋炒饭", "tag": ""}, "zhHant": {"name": "特色蛋炒飯", "tag": ""}, "en": {"name": "Classic Egg Fried Rice", "tag": ""}, "it": {"name": "Riso Fritto Classico all'Uovo", "tag": ""}, "fr": {"name": "Riz Frit Classique aux Œufs", "tag": ""}, "es": {"name": "Arroz Frito Clásico con Huevo", "tag": ""}}},
-{"id": "steamedRice", "category": "snacks", "price": 2.6, "unit": "person", "allergens": [], "i18n": {"zh": {"name": "白米饭", "tag": ""}, "zhHant": {"name": "白米飯", "tag": ""}, "en": {"name": "Steamed Rice", "tag": ""}, "it": {"name": "Riso al Vapore", "tag": ""}, "fr": {"name": "Riz Vapeur", "tag": ""}, "es": {"name": "Arroz al Vapor", "tag": ""}}},
-{"id": "spiceBag", "category": "snacks", "price": 9.5, "allergens": ["1", "2"], "img": "../image/菜品/spice bag.jpg", "i18n": {"zh": {"name": "辣袋", "tag": ""}, "zhHant": {"name": "辣袋", "tag": ""}, "en": {"name": "Spice Bag", "tag": ""}, "it": {"name": "Sacchetto Piccante", "tag": ""}, "fr": {"name": "Sachet Épicé", "tag": ""}, "es": {"name": "Bolsa Picante", "tag": ""}}},
+{"id": "soybeanRoll", "category": "vegetables", "price": 7.8, "allergens": [], "img": "../image/菜品/响铃卷.webp", "i18n": {"zh": {"name": "响铃卷", "tag": ""}, "zhHant": {"name": "響鈴卷", "tag": ""}, "en": {"name": "Soybean Roll", "tag": ""}, "it": {"name": "Involtini di Soia", "tag": ""}, "fr": {"name": "Rouleaux de Soja", "tag": ""}, "es": {"name": "Rollo de Soja", "tag": ""}}},
+{"id": "beancurdSticks", "category": "vegetables", "price": 7.8, "allergens": ["4"], "img": "../image/菜品/腐竹.webp", "i18n": {"zh": {"name": "腐竹", "tag": ""}, "zhHant": {"name": "腐竹", "tag": ""}, "en": {"name": "Beancurd Sticks", "tag": ""}, "it": {"name": "Bastoncini di Tofu Essiccato", "tag": ""}, "fr": {"name": "Bâtonnets de Tofu Séché", "tag": ""}, "es": {"name": "Palitos de Tofu Seco", "tag": ""}}},
+{"id": "bambooSlicesSunan", "category": "vegetables", "price": 6.8, "allergens": [], "img": "../image/菜品/蜀南竹笋片.webp", "i18n": {"zh": {"name": "蜀南竹笋片", "tag": ""}, "zhHant": {"name": "蜀南竹筍片", "tag": ""}, "en": {"name": "Sunan Bamboo Slices", "tag": ""}, "it": {"name": "Germogli di Bambù Sunan", "tag": ""}, "fr": {"name": "Pousses de Bambou Sunan", "tag": ""}, "es": {"name": "Brotes de Bambú Sunan", "tag": ""}}},
+{"id": "driedBeanCurdSheet", "category": "vegetables", "price": 6.8, "allergens": ["4"], "img": "../image/菜品/干豆皮.webp", "i18n": {"zh": {"name": "干豆皮", "tag": ""}, "zhHant": {"name": "乾豆皮", "tag": ""}, "en": {"name": "Dried Bean Curd Sheet", "tag": ""}, "it": {"name": "Foglie di Tofu Essiccato", "tag": ""}, "fr": {"name": "Feuilles de Tofu Séché", "tag": ""}, "es": {"name": "Hojas de Tofu Seco", "tag": ""}}},
+{"id": "deepFriedTofu", "category": "vegetables", "price": 6.8, "allergens": ["4"], "img": "../image/菜品/油豆腐.webp", "i18n": {"zh": {"name": "油豆腐", "tag": ""}, "zhHant": {"name": "油豆腐", "tag": ""}, "en": {"name": "Deep Fried Tofu", "tag": ""}, "it": {"name": "Tofu Fritto", "tag": ""}, "fr": {"name": "Tofu Frit", "tag": ""}, "es": {"name": "Tofu Frito", "tag": ""}}},
+{"id": "wulongVermicelli", "category": "vegetables", "price": 6.5, "allergens": [], "img": "../image/菜品/武隆粉丝.webp", "i18n": {"zh": {"name": "武隆粉丝", "tag": ""}, "zhHant": {"name": "武隆粉絲", "tag": ""}, "en": {"name": "WuLong Sweet Potato Starch Noodles", "tag": ""}, "it": {"name": "Noodles di Patata Dolce WuLong", "tag": ""}, "fr": {"name": "Nouilles de Patate Douce WuLong", "tag": ""}, "es": {"name": "Fideos de Boniato WuLong", "tag": ""}}},
+{"id": "lotusRootSlices", "category": "vegetables", "price": 5.8, "allergens": [], "img": "../image/菜品/藕片.webp", "i18n": {"zh": {"name": "藕片", "tag": ""}, "zhHant": {"name": "藕片", "tag": ""}, "en": {"name": "Lotus Root Slices", "tag": ""}, "it": {"name": "Radice di Loto Affettata", "tag": ""}, "fr": {"name": "Racine de Lotus Tranchée", "tag": ""}, "es": {"name": "Raíz de Loto en Lonchas", "tag": ""}}},
+{"id": "broccoliSprouts", "category": "vegetables", "price": 5.8, "allergens": [], "img": "../image/菜品/西兰花苔.webp", "i18n": {"zh": {"name": "西兰花苔", "tag": ""}, "zhHant": {"name": "西蘭花苔", "tag": ""}, "en": {"name": "Broccoli Sprouts", "tag": ""}, "it": {"name": "Germogli di Broccoli", "tag": ""}, "fr": {"name": "Pousses de Brocoli", "tag": ""}, "es": {"name": "Brotes de Brócoli", "tag": ""}}},
+{"id": "riceCake", "category": "vegetables", "price": 5.8, "allergens": [], "img": "../image/菜品/年糕.webp", "i18n": {"zh": {"name": "年糕", "tag": ""}, "zhHant": {"name": "年糕", "tag": ""}, "en": {"name": "Rice Cake", "tag": ""}, "it": {"name": "Torta di Riso", "tag": ""}, "fr": {"name": "Gâteau de Riz", "tag": ""}, "es": {"name": "Pastel de Arroz", "tag": ""}}},
+{"id": "crownDaisy", "category": "vegetables", "price": 5.8, "allergens": [], "img": "../image/菜品/茼蒿菜.webp", "i18n": {"zh": {"name": "茼蒿菜", "tag": ""}, "zhHant": {"name": "茼蒿菜", "tag": ""}, "en": {"name": "Crown Daisy", "tag": ""}, "it": {"name": "Crisantemo da Foglia", "tag": ""}, "fr": {"name": "Chrysanthème Comestible", "tag": ""}, "es": {"name": "Crisantemo Comestible", "tag": ""}}},
+{"id": "pakChoi", "category": "vegetables", "price": 5.8, "allergens": [], "img": "../image/菜品/上海青.webp", "i18n": {"zh": {"name": "上海青", "tag": ""}, "zhHant": {"name": "上海青", "tag": ""}, "en": {"name": "Pak Choi", "tag": ""}, "it": {"name": "Pak Choi", "tag": ""}, "fr": {"name": "Pak Choi", "tag": ""}, "es": {"name": "Pak Choi", "tag": ""}}},
+{"id": "lettuce", "category": "vegetables", "price": 5.8, "allergens": [], "img": "../image/菜品/生菜.webp", "i18n": {"zh": {"name": "生菜", "tag": ""}, "zhHant": {"name": "生菜", "tag": ""}, "en": {"name": "Lettuce", "tag": ""}, "it": {"name": "Lattuga", "tag": ""}, "fr": {"name": "Laitue", "tag": ""}, "es": {"name": "Lechuga", "tag": ""}}},
+{"id": "kelpSeaweed", "category": "vegetables", "price": 5.8, "allergens": [], "img": "../image/菜品/海带.webp", "i18n": {"zh": {"name": "海带", "tag": ""}, "zhHant": {"name": "海帶", "tag": ""}, "en": {"name": "Kelp Seaweed", "tag": ""}, "it": {"name": "Alga Kelp", "tag": ""}, "fr": {"name": "Algue Kelp", "tag": ""}, "es": {"name": "Alga Kelp", "tag": ""}}},
+{"id": "konjacNoodles", "category": "vegetables", "price": 5.8, "allergens": ["1"], "img": "../image/菜品/魔芋丝.webp", "i18n": {"zh": {"name": "魔芋丝", "tag": ""}, "zhHant": {"name": "魔芋絲", "tag": ""}, "en": {"name": "Konjac Noodles", "tag": ""}, "it": {"name": "Noodles di Konjac", "tag": ""}, "fr": {"name": "Nouilles de Konjac", "tag": ""}, "es": {"name": "Fideos de Konjac", "tag": ""}}},
+{"id": "chineseYam", "category": "vegetables", "price": 4.9, "allergens": [], "img": "../image/菜品/山药.webp", "i18n": {"zh": {"name": "山药", "tag": ""}, "zhHant": {"name": "山藥", "tag": ""}, "en": {"name": "Chinese Yam", "tag": ""}, "it": {"name": "Igname Cinese", "tag": ""}, "fr": {"name": "Igname Chinois", "tag": ""}, "es": {"name": "Ñame Chino", "tag": ""}}},
+{"id": "softTofu", "category": "vegetables", "price": 4.8, "allergens": [], "img": "../image/菜品/豆腐.webp", "i18n": {"zh": {"name": "豆腐", "tag": ""}, "zhHant": {"name": "豆腐", "tag": ""}, "en": {"name": "Soft Tofu", "tag": ""}, "it": {"name": "Tofu Morbido", "tag": ""}, "fr": {"name": "Tofu Doux", "tag": ""}, "es": {"name": "Tofu Suave", "tag": ""}}},
+{"id": "instantNoodles", "category": "vegetables", "price": 4.8, "allergens": ["1"], "img": "../image/菜品/方便面.webp", "i18n": {"zh": {"name": "方便面", "tag": ""}, "zhHant": {"name": "方便麵", "tag": ""}, "en": {"name": "Instant Noodles", "tag": ""}, "it": {"name": "Noodles Istantanei", "tag": ""}, "fr": {"name": "Nouilles Instantanées", "tag": ""}, "es": {"name": "Fideos Instantáneos", "tag": ""}}},
+{"id": "chineseCabbage", "category": "vegetables", "price": 4.8, "allergens": [], "img": "../image/菜品/大白菜.webp", "i18n": {"zh": {"name": "大白菜", "tag": ""}, "zhHant": {"name": "大白菜", "tag": ""}, "en": {"name": "Chinese Cabbage", "tag": ""}, "it": {"name": "Cavolo Cinese", "tag": ""}, "fr": {"name": "Chou Chinois", "tag": ""}, "es": {"name": "Col China", "tag": ""}}},
+{"id": "spinach", "category": "vegetables", "price": 4.8, "allergens": [], "img": "../image/菜品/菠菜.webp", "i18n": {"zh": {"name": "菠菜", "tag": ""}, "zhHant": {"name": "菠菜", "tag": ""}, "en": {"name": "Spinach", "tag": ""}, "it": {"name": "Spinaci", "tag": ""}, "fr": {"name": "Épinards", "tag": ""}, "es": {"name": "Espinacas", "tag": ""}}},
+{"id": "sweetCorn", "category": "vegetables", "price": 4.8, "allergens": [], "img": "../image/菜品/甜玉米.webp", "i18n": {"zh": {"name": "甜玉米", "tag": ""}, "zhHant": {"name": "甜玉米", "tag": ""}, "en": {"name": "Sweet Corn", "tag": ""}, "it": {"name": "Mais Dolce", "tag": ""}, "fr": {"name": "Maïs Doux", "tag": ""}, "es": {"name": "Maíz Dulce", "tag": ""}}},
+{"id": "beanSprout", "category": "vegetables", "price": 4.8, "allergens": ["4"], "img": "../image/菜品/豆芽.webp", "i18n": {"zh": {"name": "豆芽", "tag": ""}, "zhHant": {"name": "豆芽", "tag": ""}, "en": {"name": "Bean Sprout", "tag": ""}, "it": {"name": "Germogli di Soia", "tag": ""}, "fr": {"name": "Pousses de Soja", "tag": ""}, "es": {"name": "Brotes de Soja", "tag": ""}}},
+{"id": "whiteRadish", "category": "vegetables", "price": 4.8, "allergens": [], "img": "../image/菜品/白萝卜.webp", "i18n": {"zh": {"name": "白萝卜", "tag": ""}, "zhHant": {"name": "白蘿蔔", "tag": ""}, "en": {"name": "White Radish", "tag": ""}, "it": {"name": "Ravanello Bianco", "tag": ""}, "fr": {"name": "Radis Blanc", "tag": ""}, "es": {"name": "Rábano Blanco", "tag": ""}}},
+{"id": "babyKelpSprouts", "category": "vegetables", "price": 4.8, "allergens": [], "img": "../image/菜品/海带芽.webp", "i18n": {"zh": {"name": "海带芽", "tag": ""}, "zhHant": {"name": "海帶芽", "tag": ""}, "en": {"name": "Baby Kelp Sprouts", "tag": ""}, "it": {"name": "Germogli di Kelp", "tag": ""}, "fr": {"name": "Jeunes Pousses de Kelp", "tag": ""}, "es": {"name": "Brotes de Kelp", "tag": ""}}},
+{"id": "longkouVermicelli", "category": "vegetables", "price": 4.8, "allergens": ["1"], "img": "../image/菜品/龙口粉丝.webp", "i18n": {"zh": {"name": "龙口粉丝", "tag": ""}, "zhHant": {"name": "龍口粉絲", "tag": ""}, "en": {"name": "Longkou Vermicelli (Glass Noodles)", "tag": ""}, "it": {"name": "Vermicelli di Longkou (Noodles di Vetro)", "tag": ""}, "fr": {"name": "Vermicelles de Longkou (Nouilles de Verre)", "tag": ""}, "es": {"name": "Fideos de Longkou (Fideos de Cristal)", "tag": ""}}},
+{"id": "shreddedPotato", "category": "vegetables", "price": 4.8, "allergens": [], "img": "../image/菜品/千丝土豆.webp", "i18n": {"zh": {"name": "千丝土豆", "tag": ""}, "zhHant": {"name": "千絲土豆", "tag": ""}, "en": {"name": "Shredded Potato", "tag": ""}, "it": {"name": "Patate Julienne", "tag": ""}, "fr": {"name": "Pommes de Terre en Julienne", "tag": ""}, "es": {"name": "Patata en Juliana", "tag": ""}}},
+{"id": "potatoSlices", "category": "vegetables", "price": 3.8, "allergens": [], "img": "../image/菜品/土豆片.webp", "i18n": {"zh": {"name": "土豆", "tag": ""}, "zhHant": {"name": "土豆", "tag": ""}, "en": {"name": "Potato Slices", "tag": ""}, "it": {"name": "Patate Affettate", "tag": ""}, "fr": {"name": "Pommes de Terre Tranchées", "tag": ""}, "es": {"name": "Patata en Lonchas", "tag": ""}}},
+{"id": "crispyPorkStrips", "category": "snacks", "price": 9.9, "allergens": ["1", "3"], "img": "../image/菜品/酥肉.webp", "i18n": {"zh": {"name": "现炸酥肉", "tag": ""}, "zhHant": {"name": "現炸酥肉", "tag": ""}, "en": {"name": "Deep Fried Crispy Pork Strips", "tag": ""}, "it": {"name": "Striscioline di Maiale Fritte Croccanti", "tag": ""}, "fr": {"name": "Lanières de Porc Frites Croustillantes", "tag": ""}, "es": {"name": "Tiras de Cerdo Fritas Crujientes", "tag": ""}}},
+{"id": "brownSugarRiceCake", "category": "snacks", "price": 8.8, "allergens": ["1", "4"], "img": "../image/菜品/红糖糍粑.webp", "i18n": {"zh": {"name": "红糖糍粑", "tag": ""}, "zhHant": {"name": "紅糖糍粑", "tag": ""}, "en": {"name": "Brown Sugar Glutinous Rice Cake", "tag": ""}, "it": {"name": "Torta di Riso Glutinoso allo Zucchero di Canna", "tag": ""}, "fr": {"name": "Gâteau de Riz Gluant au Sucre Roux", "tag": ""}, "es": {"name": "Pastel de Arroz Glutinoso con Azúcar Moreno", "tag": ""}}},
+{"id": "blackFungusSalad", "category": "snacks", "price": 6.9, "allergens": ["4"], "img": "../image/菜品/开胃黑木耳.webp", "i18n": {"zh": {"name": "开胃黑木耳", "tag": ""}, "zhHant": {"name": "開胃黑木耳", "tag": ""}, "en": {"name": "Black Fungus Salad (Spicy)", "tag": ""}, "it": {"name": "Insalata di Fungo Nero (Piccante)", "tag": ""}, "fr": {"name": "Salade de Champignon Noir (Épicée)", "tag": ""}, "es": {"name": "Ensalada de Hongo Negro (Picante)", "tag": ""}}},
+{"id": "friedKingPrawn", "category": "snacks", "price": 6.8, "allergens": ["6"], "img": "../image/菜品/炸虾.webp", "i18n": {"zh": {"name": "炸虾", "tag": ""}, "zhHant": {"name": "炸蝦", "tag": ""}, "en": {"name": "Deep Fried King Prawn", "tag": ""}, "it": {"name": "Gamberoni Fritti", "tag": ""}, "fr": {"name": "Grosses Crevettes Frites", "tag": ""}, "es": {"name": "Langostinos Fritos", "tag": ""}}},
+{"id": "kimchi", "category": "snacks", "price": 4.8, "allergens": [], "img": "../image/菜品/韩国泡菜.webp", "i18n": {"zh": {"name": "韩国泡菜", "tag": ""}, "zhHant": {"name": "韓國泡菜", "tag": ""}, "en": {"name": "Kimchi", "tag": ""}, "it": {"name": "Kimchi", "tag": ""}, "fr": {"name": "Kimchi", "tag": ""}, "es": {"name": "Kimchi", "tag": ""}}},
+{"id": "springRoll", "category": "snacks", "price": 4.8, "allergens": [], "img": "../image/菜品/春卷.webp", "i18n": {"zh": {"name": "春卷", "tag": ""}, "zhHant": {"name": "春卷", "tag": ""}, "en": {"name": "Deep Fried Spring Roll", "tag": ""}, "it": {"name": "Involtino Primavera Fritto", "tag": ""}, "fr": {"name": "Rouleau de Printemps Frit", "tag": ""}, "es": {"name": "Rollito de Primavera Frito", "tag": ""}}},
+{"id": "cucumberSaladSpicy", "category": "snacks", "price": 4.8, "allergens": ["4"], "img": "../image/菜品/拍黄瓜.webp", "i18n": {"zh": {"name": "凉拌黄瓜", "tag": ""}, "zhHant": {"name": "涼拌黃瓜", "tag": ""}, "en": {"name": "Shredded Cucumber Salad (Spicy)", "tag": ""}, "it": {"name": "Insalata di Cetrioli (Piccante)", "tag": ""}, "fr": {"name": "Salade de Concombre (Épicée)", "tag": ""}, "es": {"name": "Ensalada de Pepino (Picante)", "tag": ""}}},
+{"id": "friedDoughSticks", "category": "snacks", "price": 4.8, "allergens": [], "img": "../image/菜品/油条.webp", "i18n": {"zh": {"name": "油条", "tag": ""}, "zhHant": {"name": "油條", "tag": ""}, "en": {"name": "Fried Dough Sticks", "tag": ""}, "it": {"name": "Bastoncini di Pasta Fritta", "tag": ""}, "fr": {"name": "Bâtonnets de Pâte Frite", "tag": ""}, "es": {"name": "Palitos de Masa Frita", "tag": ""}}},
+{"id": "housePickledVeg", "category": "snacks", "price": 2.8, "allergens": [], "img": "../image/菜品/秘制泡菜.webp", "i18n": {"zh": {"name": "秘制泡菜", "tag": ""}, "zhHant": {"name": "秘製泡菜", "tag": ""}, "en": {"name": "House Special Pickled Vegetables", "tag": ""}, "it": {"name": "Verdure Sott'Aceto della Casa", "tag": ""}, "fr": {"name": "Légumes Marinés Maison", "tag": ""}, "es": {"name": "Verduras Encurtidas de la Casa", "tag": ""}}},
+{"id": "eggFriedRiceClassic", "category": "snacks", "price": 3.6, "unit": "person", "allergens": ["3"], "img": "../image/菜品/特色蛋炒饭.webp", "i18n": {"zh": {"name": "特色蛋炒饭", "tag": ""}, "zhHant": {"name": "特色蛋炒飯", "tag": ""}, "en": {"name": "Classic Egg Fried Rice", "tag": ""}, "it": {"name": "Riso Fritto Classico all'Uovo", "tag": ""}, "fr": {"name": "Riz Frit Classique aux Œufs", "tag": ""}, "es": {"name": "Arroz Frito Clásico con Huevo", "tag": ""}}},
+{"id": "steamedRice", "category": "snacks", "price": 2.6, "unit": "person", "allergens": [], "img": "../image/菜品/白米饭.webp", "i18n": {"zh": {"name": "白米饭", "tag": ""}, "zhHant": {"name": "白米飯", "tag": ""}, "en": {"name": "Steamed Rice", "tag": ""}, "it": {"name": "Riso al Vapore", "tag": ""}, "fr": {"name": "Riz Vapeur", "tag": ""}, "es": {"name": "Arroz al Vapor", "tag": ""}}},
+{"id": "spiceBag", "category": "snacks", "price": 9.5, "allergens": ["1", "2"], "img": "../image/菜品/spice bag.webp", "i18n": {"zh": {"name": "辣袋", "tag": ""}, "zhHant": {"name": "辣袋", "tag": ""}, "en": {"name": "Spice Bag", "tag": ""}, "it": {"name": "Sacchetto Piccante", "tag": ""}, "fr": {"name": "Sachet Épicé", "tag": ""}, "es": {"name": "Bolsa Picante", "tag": ""}}},
 {"id": "mangoPomeloSago", "category": "desserts", "price": 5.8, "allergens": ["2"], "i18n": {"zh": {"name": "杨枝甘露", "tag": ""}, "zhHant": {"name": "楊枝甘露", "tag": ""}, "en": {"name": "Mango Pomelo Sago", "tag": ""}, "it": {"name": "Sago con Mango e Pomelo", "tag": ""}, "fr": {"name": "Sagou Mangue et Pomelo", "tag": ""}, "es": {"name": "Sagú de Mango y Pomelo", "tag": ""}}},
 {"id": "matchaShavedIce", "category": "desserts", "price": 5.8, "allergens": [], "i18n": {"zh": {"name": "抹茶绵绵冰", "tag": ""}, "zhHant": {"name": "抹茶綿綿冰", "tag": ""}, "en": {"name": "Matcha Shaved Ice", "tag": ""}, "it": {"name": "Ghiaccio Tritato al Matcha", "tag": ""}, "fr": {"name": "Glace Pilée au Matcha", "tag": ""}, "es": {"name": "Hielo Raspado de Matcha", "tag": ""}}},
 {"id": "chocoShavedIce", "category": "desserts", "price": 5.8, "allergens": [], "i18n": {"zh": {"name": "巧克力绵绵冰", "tag": ""}, "zhHant": {"name": "巧克力綿綿冰", "tag": ""}, "en": {"name": "Chocolate Shaved Ice", "tag": ""}, "it": {"name": "Ghiaccio Tritato al Cioccolato", "tag": ""}, "fr": {"name": "Glace Pilée au Chocolat", "tag": ""}, "es": {"name": "Hielo Raspado de Chocolate", "tag": ""}}},
@@ -1527,6 +1547,47 @@ const DISH_DATA = [
 {"id": "lpSweetCorn", "category": "lunchPieces", "sub": "lunchVeg", "price": 4.8, "unit": "piece", "allergens": [], "i18n": {"zh": {"name": "玉米（午市）", "tag": ""}, "zhHant": {"name": "玉米（午市）", "tag": ""}, "en": {"name": "Sweet Corn (Lunch)", "tag": ""}, "it": {"name": "Mais Dolce (Pranzo)", "tag": ""}, "fr": {"name": "Maïs Doux (Déjeuner)", "tag": ""}, "es": {"name": "Maíz Dulce (Almuerzo)", "tag": ""}}},
 {"id": "lpFriedDoughSticks", "category": "lunchPieces", "sub": "lunchVeg", "price": 1.89, "unit": "piece", "allergens": [], "i18n": {"zh": {"name": "油条（午市）", "tag": ""}, "zhHant": {"name": "油條（午市）", "tag": ""}, "en": {"name": "Fried Dough Sticks (Lunch)", "tag": ""}, "it": {"name": "Bastoncini di Pasta Fritta (Pranzo)", "tag": ""}, "fr": {"name": "Bâtonnets de Pâte Frite (Déjeuner)", "tag": ""}, "es": {"name": "Palitos de Masa Frita (Almuerzo)", "tag": ""}}},
 {"id": "lpRiceCake", "category": "lunchPieces", "sub": "lunchVeg", "price": 1.19, "unit": "piece", "allergens": [], "i18n": {"zh": {"name": "年糕（午市）", "tag": ""}, "zhHant": {"name": "年糕（午市）", "tag": ""}, "en": {"name": "Rice Cake (Lunch)", "tag": ""}, "it": {"name": "Torta di Riso (Pranzo)", "tag": ""}, "fr": {"name": "Gâteau de Riz (Déjeuner)", "tag": ""}, "es": {"name": "Pastel de Arroz (Almuerzo)", "tag": ""}}},
+// ---- 酒水 Wine & Beverages ----
+{"id": "wineMurariPinotGrigio", "category": "wine", "sub": "wineWhite", "sizes": [{"key": "glass", "price": 7.9}, {"key": "bottle", "price": 28}], "allergens": ["10"], "i18n": {"zh": {"name": "Murari Pinot Grigio 卡斯特拉尼灰皮诺", "tag": "意大利·威尼托"}, "zhHant": {"name": "Murari Pinot Grigio 卡斯特拉尼灰皮諾", "tag": "義大利·威尼托"}, "en": {"name": "Murari Pinot Grigio", "tag": "Veneto, Italy"}, "it": {"name": "Murari Pinot Grigio", "tag": "Veneto, Italia"}, "fr": {"name": "Murari Pinot Grigio", "tag": "Vénétie, Italie"}, "es": {"name": "Murari Pinot Grigio", "tag": "Véneto, Italia"}}},
+{"id": "wineBouchardSauvignonBlanc", "category": "wine", "sub": "wineWhite", "sizes": [{"key": "glass", "price": 8.5}, {"key": "bottle", "price": 32}], "allergens": ["10"], "i18n": {"zh": {"name": "Bouchard Aine & Fils Sauvignon Blanc 长相思", "tag": "法国·朗格多克"}, "zhHant": {"name": "Bouchard Aine & Fils Sauvignon Blanc 長相思", "tag": "法國·朗格多克"}, "en": {"name": "Bouchard Aine & Fils Sauvignon Blanc", "tag": "Languedoc, France"}, "it": {"name": "Bouchard Aine & Fils Sauvignon Blanc", "tag": "Linguadoca, Francia"}, "fr": {"name": "Bouchard Aine & Fils Sauvignon Blanc", "tag": "Languedoc, France"}, "es": {"name": "Bouchard Aine & Fils Sauvignon Blanc", "tag": "Languedoc, Francia"}}},
+{"id": "winePeterRiesling", "category": "wine", "sub": "wineWhite", "sizes": [{"key": "glass", "price": 9.9}, {"key": "bottle", "price": 36}], "allergens": ["10"], "i18n": {"zh": {"name": "Peter & Peter Riesling", "tag": "德国·摩泽尔"}, "zhHant": {"name": "Peter & Peter Riesling", "tag": "德國·摩澤爾"}, "en": {"name": "Peter & Peter Riesling", "tag": "Mosel, Germany"}, "it": {"name": "Peter & Peter Riesling", "tag": "Mosella, Germania"}, "fr": {"name": "Peter & Peter Riesling", "tag": "Moselle, Allemagne"}, "es": {"name": "Peter & Peter Riesling", "tag": "Mosela, Alemania"}}},
+{"id": "wineNauMaiSauvignonBlanc", "category": "wine", "sub": "wineWhite", "sizes": [{"key": "bottle", "price": 39}], "allergens": ["10"], "i18n": {"zh": {"name": "Nau Mai Sauvignon Blanc", "tag": "新西兰·马尔堡"}, "zhHant": {"name": "Nau Mai Sauvignon Blanc", "tag": "紐西蘭·馬爾堡"}, "en": {"name": "Nau Mai Sauvignon Blanc", "tag": "Marlborough, New Zealand"}, "it": {"name": "Nau Mai Sauvignon Blanc", "tag": "Marlborough, Nuova Zelanda"}, "fr": {"name": "Nau Mai Sauvignon Blanc", "tag": "Marlborough, Nouvelle-Zélande"}, "es": {"name": "Nau Mai Sauvignon Blanc", "tag": "Marlborough, Nueva Zelanda"}}},
+{"id": "wineCasalVentozelaAlvarinho", "category": "wine", "sub": "wineWhite", "sizes": [{"key": "bottle", "price": 45}], "allergens": ["10"], "i18n": {"zh": {"name": "Casal de Ventozela Alvarinho 阿瓦里诺", "tag": "葡萄牙·绿酒产区"}, "zhHant": {"name": "Casal de Ventozela Alvarinho 阿瓦里諾", "tag": "葡萄牙·綠酒產區"}, "en": {"name": "Casal de Ventozela Alvarinho", "tag": "Vinho Verde, Portugal"}, "it": {"name": "Casal de Ventozela Alvarinho", "tag": "Vinho Verde, Portogallo"}, "fr": {"name": "Casal de Ventozela Alvarinho", "tag": "Vinho Verde, Portugal"}, "es": {"name": "Casal de Ventozela Alvarinho", "tag": "Vinho Verde, Portugal"}}},
+{"id": "wineDomaneWachauGruner", "category": "wine", "sub": "wineWhite", "sizes": [{"key": "bottle", "price": 49}], "allergens": ["10"], "i18n": {"zh": {"name": "Domäne Wachau Grüner Veltliner Federspiel", "tag": "奥地利·瓦豪"}, "zhHant": {"name": "Domäne Wachau Grüner Veltliner Federspiel", "tag": "奧地利·瓦豪"}, "en": {"name": "Domäne Wachau Grüner Veltliner Federspiel", "tag": "Wachau, Austria"}, "it": {"name": "Domäne Wachau Grüner Veltliner Federspiel", "tag": "Wachau, Austria"}, "fr": {"name": "Domäne Wachau Grüner Veltliner Federspiel", "tag": "Wachau, Autriche"}, "es": {"name": "Domäne Wachau Grüner Veltliner Federspiel", "tag": "Wachau, Austria"}}},
+{"id": "wineLouisJadotChardonnay", "category": "wine", "sub": "wineWhite", "sizes": [{"key": "bottle", "price": 65}], "allergens": ["10"], "i18n": {"zh": {"name": "Louis Jadot Bourgogne Chardonnay 'Couvent des Jacobins' 勃艮第霞多丽", "tag": "法国·勃艮第"}, "zhHant": {"name": "Louis Jadot Bourgogne Chardonnay 'Couvent des Jacobins' 勃艮第霞多麗", "tag": "法國·勃艮第"}, "en": {"name": "Louis Jadot Bourgogne Chardonnay 'Couvent des Jacobins'", "tag": "Burgundy, France"}, "it": {"name": "Louis Jadot Bourgogne Chardonnay 'Couvent des Jacobins'", "tag": "Borgogna, Francia"}, "fr": {"name": "Louis Jadot Bourgogne Chardonnay « Couvent des Jacobins »", "tag": "Bourgogne, France"}, "es": {"name": "Louis Jadot Bourgogne Chardonnay 'Couvent des Jacobins'", "tag": "Borgoña, Francia"}}},
+{"id": "wineMarquisGoulaineSancerre", "category": "wine", "sub": "wineWhite", "sizes": [{"key": "bottle", "price": 79}], "allergens": ["10"], "i18n": {"zh": {"name": "Marquis de Goulaine Sancerre 'Les Lorys' 桑塞尔", "tag": "法国·卢瓦尔河谷"}, "zhHant": {"name": "Marquis de Goulaine Sancerre 'Les Lorys' 桑塞爾", "tag": "法國·盧瓦爾河谷"}, "en": {"name": "Marquis de Goulaine Sancerre 'Les Lorys'", "tag": "Loire Valley, France"}, "it": {"name": "Marquis de Goulaine Sancerre 'Les Lorys'", "tag": "Valle della Loira, Francia"}, "fr": {"name": "Marquis de Goulaine Sancerre « Les Lorys »", "tag": "Vallée de la Loire, France"}, "es": {"name": "Marquis de Goulaine Sancerre 'Les Lorys'", "tag": "Valle del Loira, Francia"}}},
+{"id": "wineOrquestraTempranillo", "category": "wine", "sub": "wineRed", "sizes": [{"key": "glass", "price": 7.9}, {"key": "bottle", "price": 28}], "allergens": ["10"], "i18n": {"zh": {"name": "Orquestra Tempranillo 丹魄乐团", "tag": "西班牙·拉曼恰"}, "zhHant": {"name": "Orquestra Tempranillo 丹魄樂團", "tag": "西班牙·拉曼恰"}, "en": {"name": "Orquestra Tempranillo", "tag": "La Mancha, Spain"}, "it": {"name": "Orquestra Tempranillo", "tag": "La Mancha, Spagna"}, "fr": {"name": "Orquestra Tempranillo", "tag": "La Manche, Espagne"}, "es": {"name": "Orquestra Tempranillo", "tag": "La Mancha, España"}}},
+{"id": "wineReserveAubeSyrahMerlot", "category": "wine", "sub": "wineRed", "sizes": [{"key": "glass", "price": 8.5}, {"key": "bottle", "price": 32}], "allergens": ["10"], "i18n": {"zh": {"name": "Reserve de L'Aube Syrah Merlot 奥布西拉梅洛珍藏", "tag": "法国·朗格多克"}, "zhHant": {"name": "Reserve de L'Aube Syrah Merlot 奧布西拉梅洛珍藏", "tag": "法國·朗格多克"}, "en": {"name": "Reserve de L'Aube Syrah Merlot", "tag": "Languedoc, France"}, "it": {"name": "Reserve de L'Aube Syrah Merlot", "tag": "Linguadoca, Francia"}, "fr": {"name": "Réserve de L'Aube Syrah Merlot", "tag": "Languedoc, France"}, "es": {"name": "Reserve de L'Aube Syrah Merlot", "tag": "Languedoc, Francia"}}},
+{"id": "wineChateauGrandVallons", "category": "wine", "sub": "wineRed", "sizes": [{"key": "glass", "price": 10.95}, {"key": "bottle", "price": 39}], "allergens": ["10"], "i18n": {"zh": {"name": "Château Les Grand Vallons 波尔多-城堡", "tag": "法国·波尔多丘布拉伊"}, "zhHant": {"name": "Château Les Grand Vallons 波爾多-城堡", "tag": "法國·波爾多丘布拉伊"}, "en": {"name": "Château Les Grand Vallons", "tag": "Blaye, Côtes de Bordeaux, France"}, "it": {"name": "Château Les Grand Vallons", "tag": "Blaye, Côtes de Bordeaux, Francia"}, "fr": {"name": "Château Les Grand Vallons", "tag": "Blaye, Côtes de Bordeaux, France"}, "es": {"name": "Château Les Grand Vallons", "tag": "Blaye, Côtes de Bordeaux, Francia"}}},
+{"id": "wineFincaMonicaCrianza", "category": "wine", "sub": "wineRed", "sizes": [{"key": "bottle", "price": 42}], "allergens": ["10"], "i18n": {"zh": {"name": "Finca Mónica Crianza", "tag": "西班牙·里奥哈"}, "zhHant": {"name": "Finca Mónica Crianza", "tag": "西班牙·里奧哈"}, "en": {"name": "Finca Mónica Crianza", "tag": "Rioja, Spain"}, "it": {"name": "Finca Mónica Crianza", "tag": "Rioja, Spagna"}, "fr": {"name": "Finca Mónica Crianza", "tag": "Rioja, Espagne"}, "es": {"name": "Finca Mónica Crianza", "tag": "Rioja, España"}}},
+{"id": "wineFinDelMundoMalbec", "category": "wine", "sub": "wineRed", "sizes": [{"key": "bottle", "price": 45}], "allergens": ["10"], "i18n": {"zh": {"name": "Fin del Mundo Reserva Malbec 珍藏马尔贝克", "tag": "阿根廷·巴塔哥尼亚"}, "zhHant": {"name": "Fin del Mundo Reserva Malbec 珍藏馬爾貝克", "tag": "阿根廷·巴塔哥尼亞"}, "en": {"name": "Fin del Mundo Reserva Malbec", "tag": "Patagonia, Argentina"}, "it": {"name": "Fin del Mundo Reserva Malbec", "tag": "Patagonia, Argentina"}, "fr": {"name": "Fin del Mundo Reserva Malbec", "tag": "Patagonie, Argentine"}, "es": {"name": "Fin del Mundo Reserva Malbec", "tag": "Patagonia, Argentina"}}},
+{"id": "wineSuraniPrimitivo", "category": "wine", "sub": "wineRed", "sizes": [{"key": "bottle", "price": 49}], "allergens": ["10"], "i18n": {"zh": {"name": "Surani Primitivo di Manduria", "tag": "意大利·普利亚"}, "zhHant": {"name": "Surani Primitivo di Manduria", "tag": "義大利·普利亞"}, "en": {"name": "Surani Primitivo di Manduria", "tag": "Puglia, Italy"}, "it": {"name": "Surani Primitivo di Manduria", "tag": "Puglia, Italia"}, "fr": {"name": "Surani Primitivo di Manduria", "tag": "Pouilles, Italie"}, "es": {"name": "Surani Primitivo di Manduria", "tag": "Apulia, Italia"}}},
+{"id": "wineLouisJadotPinotNoir", "category": "wine", "sub": "wineRed", "sizes": [{"key": "bottle", "price": 69}], "allergens": ["10"], "i18n": {"zh": {"name": "Louis Jadot Bourgogne Pinot Noir 'Couvent des Jacobins' 勃艮第黑皮诺", "tag": "法国·勃艮第"}, "zhHant": {"name": "Louis Jadot Bourgogne Pinot Noir 'Couvent des Jacobins' 勃艮第黑皮諾", "tag": "法國·勃艮第"}, "en": {"name": "Louis Jadot Bourgogne Pinot Noir 'Couvent des Jacobins'", "tag": "Burgundy, France"}, "it": {"name": "Louis Jadot Bourgogne Pinot Noir 'Couvent des Jacobins'", "tag": "Borgogna, Francia"}, "fr": {"name": "Louis Jadot Bourgogne Pinot Noir « Couvent des Jacobins »", "tag": "Bourgogne, France"}, "es": {"name": "Louis Jadot Bourgogne Pinot Noir 'Couvent des Jacobins'", "tag": "Borgoña, Francia"}}},
+{"id": "wineHautsLynchMoussas", "category": "wine", "sub": "wineRed", "sizes": [{"key": "bottle", "price": 89}], "allergens": ["10"], "i18n": {"zh": {"name": "Les Hauts de Lynch Moussas 上梦多克", "tag": "法国·波尔多上梅多克"}, "zhHant": {"name": "Les Hauts de Lynch Moussas 上夢多克", "tag": "法國·波爾多上梅多克"}, "en": {"name": "Les Hauts de Lynch Moussas", "tag": "Haut-Médoc, Bordeaux, France"}, "it": {"name": "Les Hauts de Lynch Moussas", "tag": "Haut-Médoc, Bordeaux, Francia"}, "fr": {"name": "Les Hauts de Lynch Moussas", "tag": "Haut-Médoc, Bordeaux, France"}, "es": {"name": "Les Hauts de Lynch Moussas", "tag": "Haut-Médoc, Burdeos, Francia"}}},
+{"id": "wineColombetteGrenacheRose", "category": "wine", "sub": "wineRose", "sizes": [{"key": "glass", "price": 8}, {"key": "bottle", "price": 29}], "allergens": ["10"], "i18n": {"zh": {"name": "Domaine La Colombette Grenache Rosé 歌海娜玫瑰庄", "tag": "法国·朗格多克"}, "zhHant": {"name": "Domaine La Colombette Grenache Rosé 歌海娜玫瑰莊", "tag": "法國·朗格多克"}, "en": {"name": "Domaine La Colombette Grenache Rosé", "tag": "Languedoc, France"}, "it": {"name": "Domaine La Colombette Grenache Rosé", "tag": "Linguadoca, Francia"}, "fr": {"name": "Domaine La Colombette Grenache Rosé", "tag": "Languedoc, France"}, "es": {"name": "Domaine La Colombette Grenache Rosé", "tag": "Languedoc, Francia"}}},
+{"id": "wineBerneRomanceRose", "category": "wine", "sub": "wineRose", "sizes": [{"key": "glass", "price": 10.95}, {"key": "bottle", "price": 39}], "allergens": ["10"], "i18n": {"zh": {"name": "Château de Berne Romance Rosé 普罗旺斯玫瑰", "tag": "法国·普罗旺斯"}, "zhHant": {"name": "Château de Berne Romance Rosé 普羅旺斯玫瑰", "tag": "法國·普羅旺斯"}, "en": {"name": "Château de Berne Romance Rosé", "tag": "Provence, France"}, "it": {"name": "Château de Berne Romance Rosé", "tag": "Provenza, Francia"}, "fr": {"name": "Château de Berne Romance Rosé", "tag": "Provence, France"}, "es": {"name": "Château de Berne Romance Rosé", "tag": "Provenza, Francia"}}},
+{"id": "wineSerenaProsecco", "category": "wine", "sub": "wineSparkling", "price": 9.95, "allergens": ["10"], "i18n": {"zh": {"name": "Serena Prosecco Frizzante 罗普罗蜜克(单人装20cl)", "tag": ""}, "zhHant": {"name": "Serena Prosecco Frizzante 羅普羅蜜克(單人裝20cl)", "tag": ""}, "en": {"name": "Serena Prosecco Frizzante (Single Serve 20cl)", "tag": ""}, "it": {"name": "Serena Prosecco Frizzante (Formato Singolo 20cl)", "tag": ""}, "fr": {"name": "Serena Prosecco Frizzante (Format Individuel 20cl)", "tag": ""}, "es": {"name": "Serena Prosecco Frizzante (Formato Individual 20cl)", "tag": ""}}},
+{"id": "wineMontegrandeFrizzante", "category": "wine", "sub": "wineSparkling", "price": 29, "allergens": ["10"], "i18n": {"zh": {"name": "Montegrande Bianco Frizzante 蒙特格兰德(瓶)", "tag": ""}, "zhHant": {"name": "Montegrande Bianco Frizzante 蒙特格蘭德(瓶)", "tag": ""}, "en": {"name": "Montegrande Bianco Frizzante (Bottle)", "tag": ""}, "it": {"name": "Montegrande Bianco Frizzante (Bottiglia)", "tag": ""}, "fr": {"name": "Montegrande Bianco Frizzante (Bouteille)", "tag": ""}, "es": {"name": "Montegrande Bianco Frizzante (Botella)", "tag": ""}}},
+{"id": "wineChampagneTheophile", "category": "wine", "sub": "wineSparkling", "price": 89, "allergens": ["10"], "i18n": {"zh": {"name": "Champagne Theophile Brut NV 香槟(瓶)", "tag": ""}, "zhHant": {"name": "Champagne Theophile Brut NV 香檳(瓶)", "tag": ""}, "en": {"name": "Champagne Theophile Brut NV (Bottle)", "tag": ""}, "it": {"name": "Champagne Theophile Brut NV (Bottiglia)", "tag": ""}, "fr": {"name": "Champagne Theophile Brut NV (Bouteille)", "tag": ""}, "es": {"name": "Champagne Theophile Brut NV (Botella)", "tag": ""}}},
+{"id": "wineCola", "category": "wine", "sub": "wineSoft", "price": 3.8, "allergens": [], "i18n": {"zh": {"name": "可乐/无糖可乐/健怡可乐 330ml", "tag": ""}, "zhHant": {"name": "可樂/無糖可樂/健怡可樂 330ml", "tag": ""}, "en": {"name": "Coke / Diet Coke / Coke Zero 330ml", "tag": ""}, "it": {"name": "Coca-Cola / Coca-Cola Light / Coca-Cola Zero 330ml", "tag": ""}, "fr": {"name": "Coca-Cola / Coca-Cola Light / Coca-Cola Zero 330ml", "tag": ""}, "es": {"name": "Coca-Cola / Coca-Cola Light / Coca-Cola Zero 330ml", "tag": ""}}},
+{"id": "wineSevenUp", "category": "wine", "sub": "wineSoft", "price": 3.8, "allergens": [], "i18n": {"zh": {"name": "七喜/无糖七喜 300ml", "tag": ""}, "zhHant": {"name": "七喜/無糖七喜 300ml", "tag": ""}, "en": {"name": "7 Up / Diet 7 Up 300ml", "tag": ""}, "it": {"name": "7 Up / 7 Up Senza Zucchero 300ml", "tag": ""}, "fr": {"name": "7 Up / 7 Up Sans Sucre 300ml", "tag": ""}, "es": {"name": "7 Up / 7 Up Sin Azúcar 300ml", "tag": ""}}},
+{"id": "wineFanta", "category": "wine", "sub": "wineSoft", "price": 3.8, "allergens": [], "i18n": {"zh": {"name": "芬达 Fanta 300ml", "tag": ""}, "zhHant": {"name": "芬達 Fanta 300ml", "tag": ""}, "en": {"name": "Fanta 300ml", "tag": ""}, "it": {"name": "Fanta 300ml", "tag": ""}, "fr": {"name": "Fanta 300ml", "tag": ""}, "es": {"name": "Fanta 300ml", "tag": ""}}},
+{"id": "wineJdb", "category": "wine", "sub": "wineSoft", "price": 3.8, "allergens": [], "i18n": {"zh": {"name": "加多宝 Jiaduobao", "tag": ""}, "zhHant": {"name": "加多寶 Jiaduobao", "tag": ""}, "en": {"name": "Jiaduobao", "tag": ""}, "it": {"name": "Jiaduobao", "tag": ""}, "fr": {"name": "Jiaduobao", "tag": ""}, "es": {"name": "Jiaduobao", "tag": ""}}},
+{"id": "wineAloeRegular", "category": "wine", "sub": "wineSoft", "price": 3.8, "allergens": [], "i18n": {"zh": {"name": "芦荟汁 Aloe Juice", "tag": "常规"}, "zhHant": {"name": "蘆薈汁 Aloe Juice", "tag": "常規"}, "en": {"name": "Aloe Juice (Regular)", "tag": ""}, "it": {"name": "Succo di Aloe (Normale)", "tag": ""}, "fr": {"name": "Jus d'Aloe Vera (Normal)", "tag": ""}, "es": {"name": "Zumo de Aloe Vera (Normal)", "tag": ""}}},
+{"id": "wineAloeLarge", "category": "wine", "sub": "wineSoft", "price": 9.0, "allergens": [], "i18n": {"zh": {"name": "芦荟汁(大) Aloe Juice", "tag": "大杯"}, "zhHant": {"name": "蘆薈汁(大) Aloe Juice", "tag": "大杯"}, "en": {"name": "Aloe Juice (Large)", "tag": ""}, "it": {"name": "Succo di Aloe (Grande)", "tag": ""}, "fr": {"name": "Jus d'Aloe Vera (Grand)", "tag": ""}, "es": {"name": "Zumo de Aloe Vera (Grande)", "tag": ""}}},
+{"id": "wineSoyDrink", "category": "wine", "sub": "wineSoft", "price": 4.6, "allergens": ["4"], "i18n": {"zh": {"name": "维他豆奶(小) Soy Drink", "tag": ""}, "zhHant": {"name": "維他豆奶(小) Soy Drink", "tag": ""}, "en": {"name": "Vita Soy Drink (Small)", "tag": ""}, "it": {"name": "Bevanda di Soia Vita (Piccola)", "tag": ""}, "fr": {"name": "Boisson au Soja Vita (Petite)", "tag": ""}, "es": {"name": "Bebida de Soja Vita (Pequeña)", "tag": ""}}},
+{"id": "wineCoconutJuice", "category": "wine", "sub": "wineSoft", "price": 4.6, "allergens": [], "i18n": {"zh": {"name": "椰树牌椰汁", "tag": ""}, "zhHant": {"name": "椰樹牌椰汁", "tag": ""}, "en": {"name": "Coconut Juice", "tag": ""}, "it": {"name": "Succo di Cocco", "tag": ""}, "fr": {"name": "Jus de Coco", "tag": ""}, "es": {"name": "Zumo de Coco", "tag": ""}}},
+{"id": "wineWaterSmall", "category": "wine", "sub": "wineSoft", "price": 3.8, "allergens": [], "i18n": {"zh": {"name": "小纯净水/小气泡水 330ml", "tag": ""}, "zhHant": {"name": "小純淨水/小氣泡水 330ml", "tag": ""}, "en": {"name": "Still / Sparkling Water (Small) 330ml", "tag": ""}, "it": {"name": "Acqua Naturale / Frizzante (Piccola) 330ml", "tag": ""}, "fr": {"name": "Eau Plate / Pétillante (Petite) 330ml", "tag": ""}, "es": {"name": "Agua Sin Gas / Con Gas (Pequeña) 330ml", "tag": ""}}},
+{"id": "wineWaterLarge", "category": "wine", "sub": "wineSoft", "price": 6.0, "allergens": [], "i18n": {"zh": {"name": "大纯净水/大气泡水 750ml", "tag": ""}, "zhHant": {"name": "大純淨水/大氣泡水 750ml", "tag": ""}, "en": {"name": "Still / Sparkling Water (Large) 750ml", "tag": ""}, "it": {"name": "Acqua Naturale / Frizzante (Grande) 750ml", "tag": ""}, "fr": {"name": "Eau Plate / Pétillante (Grande) 750ml", "tag": ""}, "es": {"name": "Agua Sin Gas / Con Gas (Grande) 750ml", "tag": ""}}},
+{"id": "wineAppleJuice", "category": "wine", "sub": "wineJuice", "sizes": [{"key": "glass", "price": 2.8}, {"key": "bottle", "price": 8.8}], "allergens": [], "i18n": {"zh": {"name": "苹果汁", "tag": ""}, "zhHant": {"name": "蘋果汁", "tag": ""}, "en": {"name": "Apple Juice", "tag": ""}, "it": {"name": "Succo di Mela", "tag": ""}, "fr": {"name": "Jus de Pomme", "tag": ""}, "es": {"name": "Zumo de Manzana", "tag": ""}}},
+{"id": "wineOrangeJuice", "category": "wine", "sub": "wineJuice", "sizes": [{"key": "glass", "price": 2.8}, {"key": "bottle", "price": 8.8}], "allergens": [], "i18n": {"zh": {"name": "橙汁", "tag": ""}, "zhHant": {"name": "橙汁", "tag": ""}, "en": {"name": "Orange Juice", "tag": ""}, "it": {"name": "Succo d'Arancia", "tag": ""}, "fr": {"name": "Jus d'Orange", "tag": ""}, "es": {"name": "Zumo de Naranja", "tag": ""}}},
+{"id": "wineCranberryJuice", "category": "wine", "sub": "wineJuice", "sizes": [{"key": "glass", "price": 2.8}, {"key": "bottle", "price": 8.8}], "allergens": [], "i18n": {"zh": {"name": "蔓越莓汁", "tag": ""}, "zhHant": {"name": "蔓越莓汁", "tag": ""}, "en": {"name": "Cranberry Juice", "tag": ""}, "it": {"name": "Succo di Mirtillo Rosso", "tag": ""}, "fr": {"name": "Jus de Canneberge", "tag": ""}, "es": {"name": "Zumo de Arándano Rojo", "tag": ""}}},
+{"id": "wineTsingtao", "category": "wine", "sub": "wineBeer", "price": 5.95, "allergens": ["1"], "i18n": {"zh": {"name": "青岛啤酒 330ml", "tag": ""}, "zhHant": {"name": "青島啤酒 330ml", "tag": ""}, "en": {"name": "Tsingtao Beer 330ml", "tag": ""}, "it": {"name": "Birra Tsingtao 330ml", "tag": ""}, "fr": {"name": "Bière Tsingtao 330ml", "tag": ""}, "es": {"name": "Cerveza Tsingtao 330ml", "tag": ""}}},
+{"id": "wineAsahi", "category": "wine", "sub": "wineBeer", "price": 5.95, "allergens": ["1"], "i18n": {"zh": {"name": "朝日啤酒 330ml", "tag": ""}, "zhHant": {"name": "朝日啤酒 330ml", "tag": ""}, "en": {"name": "Asahi Beer 330ml", "tag": ""}, "it": {"name": "Birra Asahi 330ml", "tag": ""}, "fr": {"name": "Bière Asahi 330ml", "tag": ""}, "es": {"name": "Cerveza Asahi 330ml", "tag": ""}}},
+{"id": "wineHeineken", "category": "wine", "sub": "wineBeer", "price": 5.95, "allergens": ["1"], "i18n": {"zh": {"name": "喜力啤酒 330ml", "tag": ""}, "zhHant": {"name": "喜力啤酒 330ml", "tag": ""}, "en": {"name": "Heineken 330ml", "tag": ""}, "it": {"name": "Heineken 330ml", "tag": ""}, "fr": {"name": "Heineken 330ml", "tag": ""}, "es": {"name": "Heineken 330ml", "tag": ""}}},
+{"id": "wineHeineken00", "category": "wine", "sub": "wineBeer", "price": 5.5, "allergens": ["1"], "i18n": {"zh": {"name": "喜力0.0 330ml", "tag": ""}, "zhHant": {"name": "喜力0.0 330ml", "tag": ""}, "en": {"name": "Heineken 0.0 330ml", "tag": ""}, "it": {"name": "Heineken 0.0 330ml", "tag": ""}, "fr": {"name": "Heineken 0.0 330ml", "tag": ""}, "es": {"name": "Heineken 0.0 330ml", "tag": ""}}},
+{"id": "wineGuinness", "category": "wine", "sub": "wineBeer", "price": 7.95, "allergens": ["1"], "i18n": {"zh": {"name": "健力士 500ml", "tag": ""}, "zhHant": {"name": "健力士 500ml", "tag": ""}, "en": {"name": "Guinness 500ml", "tag": ""}, "it": {"name": "Guinness 500ml", "tag": ""}, "fr": {"name": "Guinness 500ml", "tag": ""}, "es": {"name": "Guinness 500ml", "tag": ""}}},
+{"id": "wineGuinness00", "category": "wine", "sub": "wineBeer", "price": 7.5, "allergens": ["1"], "i18n": {"zh": {"name": "健力士0.0 500ml", "tag": ""}, "zhHant": {"name": "健力士0.0 500ml", "tag": ""}, "en": {"name": "Guinness 0.0 500ml", "tag": ""}, "it": {"name": "Guinness 0.0 500ml", "tag": ""}, "fr": {"name": "Guinness 0.0 500ml", "tag": ""}, "es": {"name": "Guinness 0.0 500ml", "tag": ""}}},
 ];
 
 // 用常识从中文配料/菜名里判断：这道菜是否可调辣度
@@ -1549,6 +1610,9 @@ DISH_DATA.forEach(d => { ZH_NAME_TO_ID[d.i18n.zh.name] = d.id; });
 const MENU_BY_ID = {};
 MENU.forEach(d => { MENU_BY_ID[d.id] = d; });
 const CHEF_ITEMS = MENU.filter(d => d.category === 'houseSpecial');
+// 脑花只对中文顾客展示，切到中文以外的语言时菜单里直接查无此菜
+const ZH_ONLY_DISH_IDS = ['pigBrain'];
+function isDishVisible(id){ return !ZH_ONLY_DISH_IDS.includes(id) || state.lang === 'zh' || state.lang === 'zhHant'; }
 
 const params = new URLSearchParams(location.search);
 const urlTable = params.get('table');
@@ -1751,7 +1815,7 @@ function backRowHTML(){
 function getItem(id){
   return state.items[id] || {
     qty:0, spice: LUNCH_FLAVOR_DISH_IDS.includes(id) ? null : '中辣',
-    size:null, excludes:{}, cookMethod:'steamed', soupBase:null, addOns:{},
+    size:null, excludes:{}, cookMethod:'steamed', soupBase:null, drink:null, addOns:{},
   };
 }
 
@@ -1764,7 +1828,7 @@ function getEffectiveItem(d){
   if(isAddOnBrowsing(d)){
     const target = getItem(state.addOnTarget);
     const qty = (target.addOns && target.addOns[d.id]) || 0;
-    return { qty, spice:'中辣', size:null, excludes:{}, cookMethod:'steamed', soupBase:null, addOns:{} };
+    return { qty, spice:'中辣', size:null, excludes:{}, cookMethod:'steamed', soupBase:null, drink:null, addOns:{} };
   }
   return getItem(d.id);
 }
@@ -1777,7 +1841,7 @@ function changeQty(id, delta){
   }
   const cur = getItem(id);
   const qty = Math.max(0, Math.min(20, cur.qty + delta));
-  state.items[id] = { qty, spice: cur.spice, size: cur.size, excludes: cur.excludes, cookMethod: cur.cookMethod, soupBase: cur.soupBase, addOns: cur.addOns };
+  state.items[id] = { qty, spice: cur.spice, size: cur.size, excludes: cur.excludes, cookMethod: cur.cookMethod, soupBase: cur.soupBase, drink: cur.drink, addOns: cur.addOns };
   if(delta > 0 && qty > cur.qty) celebrateAddToCart();
   updateItemUI(id);
   // 自选火锅米线只是个空碗，选它的一瞬间就带客人去午市点餐挑配菜
@@ -1807,20 +1871,32 @@ function changeAddOnQty(targetId, lpId, delta){
 function setSpice(id, level){
   const cur = getItem(id);
   if(cur.qty <= 0) return;
-  state.items[id] = { qty: cur.qty, spice: level, size: cur.size, excludes: cur.excludes, cookMethod: cur.cookMethod, soupBase: cur.soupBase, addOns: cur.addOns };
+  // 番茄/菌汤这类不辣的锅底，辣度那一行是灰的，不接受点击
+  if(LUNCH_FLAVOR_DISH_IDS.includes(id) && !SPICE_ELIGIBLE_SOUP_KEYS.includes(cur.soupBase)) return;
+  state.items[id] = { qty: cur.qty, spice: level, size: cur.size, excludes: cur.excludes, cookMethod: cur.cookMethod, soupBase: cur.soupBase, drink: cur.drink, addOns: cur.addOns };
   updateItemUI(id);
 }
 
 function setSoupBase(id, key){
   const cur = getItem(id);
   if(cur.qty <= 0) return;
-  state.items[id] = { qty: cur.qty, spice: cur.spice, size: cur.size, excludes: cur.excludes, cookMethod: cur.cookMethod, soupBase: key, addOns: cur.addOns };
+  // 换成不辣的锅底（番茄/菌汤）时，之前选的辣度就不作数了，清掉避免带着一个选不了的辣度去下单
+  const spice = SPICE_ELIGIBLE_SOUP_KEYS.includes(key) ? cur.spice : null;
+  state.items[id] = { qty: cur.qty, spice, size: cur.size, excludes: cur.excludes, cookMethod: cur.cookMethod, soupBase: key, drink: cur.drink, addOns: cur.addOns };
+  updateItemUI(id);
+}
+
+// 冒菜/火锅米线含一杯饮品，从固定的几款里选一款，不额外计价
+function setDrink(id, key){
+  const cur = getItem(id);
+  if(cur.qty <= 0) return;
+  state.items[id] = { qty: cur.qty, spice: cur.spice, size: cur.size, excludes: cur.excludes, cookMethod: cur.cookMethod, soupBase: cur.soupBase, drink: key, addOns: cur.addOns };
   updateItemUI(id);
 }
 
 function setSize(id, key){
   const cur = getItem(id);
-  state.items[id] = { qty: cur.qty, spice: cur.spice, size: key, excludes: cur.excludes, cookMethod: cur.cookMethod, soupBase: cur.soupBase, addOns: cur.addOns };
+  state.items[id] = { qty: cur.qty, spice: cur.spice, size: key, excludes: cur.excludes, cookMethod: cur.cookMethod, soupBase: cur.soupBase, drink: cur.drink, addOns: cur.addOns };
   updateItemUI(id);
 }
 
@@ -1828,14 +1904,14 @@ function toggleExclude(id, key){
   const cur = getItem(id);
   if(cur.qty <= 0) return;
   const excludes = Object.assign({}, cur.excludes, { [key]: !cur.excludes[key] });
-  state.items[id] = { qty: cur.qty, spice: cur.spice, size: cur.size, excludes, cookMethod: cur.cookMethod, soupBase: cur.soupBase, addOns: cur.addOns };
+  state.items[id] = { qty: cur.qty, spice: cur.spice, size: cur.size, excludes, cookMethod: cur.cookMethod, soupBase: cur.soupBase, drink: cur.drink, addOns: cur.addOns };
   updateItemUI(id);
 }
 
 function setCookMethod(id, method){
   const cur = getItem(id);
   if(cur.qty <= 0) return;
-  state.items[id] = { qty: cur.qty, spice: cur.spice, size: cur.size, excludes: cur.excludes, cookMethod: method, soupBase: cur.soupBase, addOns: cur.addOns };
+  state.items[id] = { qty: cur.qty, spice: cur.spice, size: cur.size, excludes: cur.excludes, cookMethod: method, soupBase: cur.soupBase, drink: cur.drink, addOns: cur.addOns };
   updateItemUI(id);
 }
 
@@ -1978,7 +2054,9 @@ function validateCartForCheckout(){
 
   for(const id of LUNCH_FLAVOR_DISH_IDS){
     const it = getItem(id);
-    if(it.qty > 0 && (!it.spice || !it.soupBase)){
+    // 番茄/菌汤锅底不辣，不强制选辣度；其余口味（经典麻辣/骨汤/麻辣拌）辣度必选
+    const spiceRequired = it.soupBase && SPICE_ELIGIBLE_SOUP_KEYS.includes(it.soupBase);
+    if(it.qty > 0 && (!it.soupBase || !it.drink || (spiceRequired && !it.spice))){
       return { ok:false, view:'lunch', category: MENU_BY_ID[id].category, message:t('missingLunchFlavorMsg') };
     }
   }
@@ -2172,7 +2250,14 @@ function handlePlaceOrderClick(){
 }
 
 function openUpsell(){
-  const pool = MENU.filter(d => (d.category === 'drinks' || d.category === 'desserts') && !isSoldOut(d.id));
+  // 冒菜/火锅米线的套餐本身就含一杯饮品了，点了这些的顾客下单前就不用再推饮品，甜品还是可以推
+  const hasLunchSetWithDrink = LUNCH_FLAVOR_DISH_IDS.some(id => getItem(id).qty > 0);
+  const pool = MENU.filter(d => (d.category === 'desserts' || (d.category === 'drinks' && !hasLunchSetWithDrink)) && !isSoldOut(d.id));
+  if(pool.length === 0){
+    state.upsellShown = true;
+    submitOrder();
+    return;
+  }
   state.upsellItems = shuffle(pool.map(d => d.id)).slice(0, 4);
   state.upsellSelected = {};
   state.upsellOpen = true;
@@ -2277,8 +2362,8 @@ function mergeItems(ordersList){
   const merged = new Map();
   ordersList.forEach(o => {
     o.items.forEach(it => {
-      const key = it.name + '__' + it.spice + '__' + (it.size || '') + '__' + (it.cookMethod || '') + '__' + (it.soupBase || '') + '__' + (it.forDish || '');
-      if(!merged.has(key)) merged.set(key, { name: it.name, spice: it.spice, size: it.size || null, cookMethod: it.cookMethod || null, soupBase: it.soupBase || null, forDish: it.forDish || null, price: it.price, qty: 0 });
+      const key = it.name + '__' + it.spice + '__' + (it.size || '') + '__' + (it.cookMethod || '') + '__' + (it.soupBase || '') + '__' + (it.drink || '') + '__' + (it.forDish || '');
+      if(!merged.has(key)) merged.set(key, { name: it.name, spice: it.spice, size: it.size || null, cookMethod: it.cookMethod || null, soupBase: it.soupBase || null, drink: it.drink || null, forDish: it.forDish || null, price: it.price, qty: 0 });
       merged.get(key).qty += it.qty;
     });
   });
@@ -2298,6 +2383,7 @@ async function submitOrder(){
       if(d.sizes) entry.size = it.size || d.sizes[0].key;
       if(d.category === 'dumplings') entry.cookMethod = it.cookMethod || 'steamed';
       if(SOUP_BASE_DISH_IDS.includes(d.id)) entry.soupBase = it.soupBase;
+      if(LUNCH_FLAVOR_DISH_IDS.includes(d.id)) entry.drink = it.drink;
       const excludeKeys = Object.keys(it.excludes || {}).filter(k => it.excludes[k]);
       if(excludeKeys.length) entry.excludes = excludeKeys;
       items.push(entry);
@@ -2423,8 +2509,10 @@ function stopChefCarousel(){
 function startChefCarousel(){
   if(chefCarouselTimer || CHEF_ITEMS.length < 2) return;
   chefCarouselTimer = setInterval(()=>{
-    chefCarouselIndex = (chefCarouselIndex + 1) % CHEF_ITEMS.length;
-    const d = CHEF_ITEMS[chefCarouselIndex];
+    const visibleChefItems = CHEF_ITEMS.filter(d=>isDishVisible(d.id));
+    if(visibleChefItems.length === 0) return;
+    chefCarouselIndex = (chefCarouselIndex + 1) % visibleChefItems.length;
+    const d = visibleChefItems[chefCarouselIndex];
     const name = tDish(d.id,'name');
     const img = document.getElementById('chef-carousel-photo');
     const cap = document.getElementById('chef-carousel-caption');
@@ -2442,8 +2530,9 @@ function startChefCarousel(){
 }
 
 function chefCarouselHTML(){
-  if(state.menuView !== 'hotpot' || CHEF_ITEMS.length===0) return '';
-  const d = CHEF_ITEMS[chefCarouselIndex % CHEF_ITEMS.length];
+  const visibleChefItems = CHEF_ITEMS.filter(d=>isDishVisible(d.id));
+  if(state.menuView !== 'hotpot' || visibleChefItems.length===0) return '';
+  const d = visibleChefItems[chefCarouselIndex % visibleChefItems.length];
   const name = tDish(d.id,'name');
   return `
     <div class="chef-carousel">
@@ -2453,6 +2542,27 @@ function chefCarouselHTML(){
         <span id="chef-carousel-caption" class="chef-slide-caption">${name}</span>
       </button>
     </div>`;
+}
+
+// 冒菜/火锅米线的辣度行：只有选了经典麻辣/骨汤/麻辣拌这几种带辣味的锅底才能点辣度，
+// 番茄/菌汤本身不辣，这一行灰掉不可点
+function lunchSpiceRowHTML(d, it){
+  const spiceEnabled = SPICE_ELIGIBLE_SOUP_KEYS.includes(it.soupBase);
+  return `<div class="spice-row${spiceEnabled ? '' : ' spice-row-disabled'}">
+    ${SPICE_LEVELS.map((lvl,i)=>`
+      <button class="spice-pill ${it.spice===lvl?'active':''}" ${spiceEnabled?'':'disabled'} onclick="setSpice('${d.id}','${lvl}')">
+        <span class="flames">${flameIcons(i+1)}</span><span class="spice-label">${tSpice(i)}</span>
+      </button>`).join('')}
+  </div>`;
+}
+// 冒菜/火锅米线含一杯饮品，从固定的几款里选一款，不标注价格
+function lunchDrinkRowHTML(d, it){
+  return `<div class="spice-row">
+    ${Object.keys(DRINK_LABELS).map(key=>`
+      <button class="spice-pill ${it.drink===key?'active':''}" onclick="setDrink('${d.id}','${key}')">
+        <span class="spice-label">${tDrink(key)}</span>
+      </button>`).join('')}
+  </div>`;
 }
 
 function dishBodyHTML(d){
@@ -2479,7 +2589,7 @@ function dishBodyHTML(d){
               <button class="stepper-add" onclick="changeQty('${d.id}',1)" aria-label="${t('increaseQty')}">+</button>
             </div>
           </div>
-          ${it.qty>0 && d.spicy && !inAddOnMode ? `
+          ${it.qty>0 && d.spicy && !isLunchFlavorDish && !inAddOnMode ? `
             <div class="spice-row">
               ${SPICE_LEVELS.map((lvl,i)=>`
                 <button class="spice-pill ${it.spice===lvl?'active':''}" onclick="setSpice('${d.id}','${lvl}')">
@@ -2493,6 +2603,8 @@ function dishBodyHTML(d){
                   <span class="spice-label">${tSoupBase(key)}</span>
                 </button>`).join('')}
             </div>` : ''}
+          ${it.qty>0 && isLunchFlavorDish && !inAddOnMode ? lunchSpiceRowHTML(d, it) : ''}
+          ${it.qty>0 && isLunchFlavorDish && !inAddOnMode ? lunchDrinkRowHTML(d, it) : ''}
           ${it.qty>0 && d.category==='dumplings' ? `
             <div class="spice-row">
               ${['steamed','panFried'].map(m=>`
@@ -2532,7 +2644,7 @@ function dishCardHTML(d){
 function menuHTML(){
   const viewCats = VIEW_CATEGORIES[state.menuView] || VIEW_CATEGORIES.hotpot;
   const activeCat = viewCats.includes(state.activeCategory) ? state.activeCategory : viewCats[0];
-  const filteredMenu = MENU.filter(d=>d.category===activeCat);
+  const filteredMenu = MENU.filter(d=>d.category===activeCat && isDishVisible(d.id));
 
   let lastSub = null;
   const dishesHTML = filteredMenu.map(d=>{
@@ -2629,10 +2741,11 @@ function editableOrderSummaryHTML(items, total){
           <span class="order-line-price">${formatPrice(it.price*it.qty)}</span>
         </div>
         <div class="order-line-bottom">
-          ${it.spicy ? `<span class="spice-tag">${displaySpice(it.spice)}</span>` : ''}
+          ${it.spicy && it.spice ? `<span class="spice-tag">${displaySpice(it.spice)}</span>` : ''}
           ${it.sizeLabel ? `<span class="spice-tag">${it.sizeLabel}</span>` : ''}
           ${it.cookMethodLabel ? `<span class="spice-tag">${it.cookMethodLabel}</span>` : ''}
           ${it.soupBaseLabel ? `<span class="spice-tag">${it.soupBaseLabel}</span>` : ''}
+          ${it.drinkLabel ? `<span class="spice-tag">${it.drinkLabel}</span>` : ''}
           ${it.forDish ? `<span class="spice-tag add-on-tag">${t('addOnTagPrefix')}${it.forDish}</span>` : ''}
           ${it.excludeTags}
           <span class="stepper">
@@ -2670,7 +2783,7 @@ function myOrderHTML(){
                   qty: it.qty,
                   spice: dish && dish.spicy ? displaySpice(it.spice) : '',
                   price: it.price,
-                  extra: (it.size ? `<span class="spice-tag">${tSize(it.size)}</span>` : '') + (it.cookMethod ? `<span class="spice-tag">${tCookMethod(it.cookMethod)}</span>` : '') + (it.soupBase ? `<span class="spice-tag">${tSoupBase(it.soupBase)}</span>` : '') + excludesTagsHTML(it.excludes) + (it.forDish ? `<span class="spice-tag add-on-tag">${t('addOnTagPrefix')}${displayDishName(it.forDish)}</span>` : ''),
+                  extra: (it.size ? `<span class="spice-tag">${tSize(it.size)}</span>` : '') + (it.cookMethod ? `<span class="spice-tag">${tCookMethod(it.cookMethod)}</span>` : '') + (it.soupBase ? `<span class="spice-tag">${tSoupBase(it.soupBase)}</span>` : '') + (it.drink ? `<span class="spice-tag">${tDrink(it.drink)}</span>` : '') + excludesTagsHTML(it.excludes) + (it.forDish ? `<span class="spice-tag add-on-tag">${t('addOnTagPrefix')}${displayDishName(it.forDish)}</span>` : ''),
                 });
               }).join('')}
               ${totalRowHTML(total)}
@@ -2692,6 +2805,7 @@ function cartItemsForCheckout(){
         sizeLabel: d.sizes ? tSize(it.size || d.sizes[0].key) : null,
         cookMethodLabel: d.category==='dumplings' ? tCookMethod(it.cookMethod || 'steamed') : null,
         soupBaseLabel: SOUP_BASE_DISH_IDS.includes(d.id) ? tSoupBase(it.soupBase) : null,
+        drinkLabel: LUNCH_FLAVOR_DISH_IDS.includes(d.id) ? tDrink(it.drink) : null,
         excludeTags: excludesTagsHTML(Object.keys(it.excludes||{}).filter(k=>it.excludes[k])),
       });
     }
@@ -2878,7 +2992,7 @@ function confirmHTML(order){
               qty: it.qty,
               spice: dish && dish.spicy ? displaySpice(it.spice) : '',
               price: it.price,
-              extra: (it.size ? `<span class="spice-tag">${tSize(it.size)}</span>` : '') + (it.cookMethod ? `<span class="spice-tag">${tCookMethod(it.cookMethod)}</span>` : '') + (it.soupBase ? `<span class="spice-tag">${tSoupBase(it.soupBase)}</span>` : '') + excludesTagsHTML(it.excludes) + (it.forDish ? `<span class="spice-tag add-on-tag">${t('addOnTagPrefix')}${displayDishName(it.forDish)}</span>` : ''),
+              extra: (it.size ? `<span class="spice-tag">${tSize(it.size)}</span>` : '') + (it.cookMethod ? `<span class="spice-tag">${tCookMethod(it.cookMethod)}</span>` : '') + (it.soupBase ? `<span class="spice-tag">${tSoupBase(it.soupBase)}</span>` : '') + (it.drink ? `<span class="spice-tag">${tDrink(it.drink)}</span>` : '') + excludesTagsHTML(it.excludes) + (it.forDish ? `<span class="spice-tag add-on-tag">${t('addOnTagPrefix')}${displayDishName(it.forDish)}</span>` : ''),
             });
           }).join('')}
           ${totalRowHTML(total)}

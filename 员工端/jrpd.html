@@ -155,8 +155,8 @@ function formatTime(ms){
   return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-const CATEGORY_ORDER = ["soupBase", "houseSpecial", "seafood", "premiumBeef", "meatballs", "mushrooms", "vegetables", "snacks", "desserts", "drinks", "lunchSet", "hotpotBowl", "riceNoodles", "lunchPieces"];
-const CATEGORY_LABELS = {"soupBase": "锅底", "houseSpecial": "招牌必点", "seafood": "海鲜", "premiumBeef": "精品肉类", "meatballs": "丸子", "mushrooms": "菌菇", "vegetables": "素菜", "snacks": "凉菜/小吃", "desserts": "甜品", "drinks": "饮品", "lunchSet": "午市套餐", "hotpotBowl": "冒菜", "riceNoodles": "火锅米线", "lunchPieces": "午市点餐"};
+const CATEGORY_ORDER = ["soupBase", "houseSpecial", "seafood", "premiumBeef", "meatballs", "mushrooms", "vegetables", "snacks", "desserts", "drinks", "wine", "lunchSet", "hotpotBowl", "riceNoodles", "lunchPieces"];
+const CATEGORY_LABELS = {"soupBase": "锅底", "houseSpecial": "招牌必点", "seafood": "海鲜", "premiumBeef": "精品肉类", "meatballs": "丸子", "mushrooms": "菌菇", "vegetables": "素菜", "snacks": "凉菜/小吃", "desserts": "甜品", "drinks": "果香鲜饮", "wine": "酒水", "lunchSet": "午市套餐", "hotpotBowl": "冒菜", "riceNoodles": "火锅米线", "lunchPieces": "午市点餐"};
 // 菜名 -> 分类，跟"沽清菜品"页(gqcp.html)里的 DISH_LIST 保持一致，用来把流水记录里
 // 只有名字的菜品归类，好在报告里按分类分别排名
 const NAME_TO_CATEGORY = {
@@ -173,7 +173,7 @@ const NAME_TO_CATEGORY = {
   "蘸料":"soupBase",
   "极品鲜毛肚":"houseSpecial",
   "大刀腰片":"houseSpecial",
-  "草原干层肚":"houseSpecial",
+  "草原千层肚":"houseSpecial",
   "鸭血":"houseSpecial",
   "嫩滋猪肝":"houseSpecial",
   "梅林午餐肉":"houseSpecial",
@@ -340,6 +340,46 @@ const NAME_TO_CATEGORY = {
   "玉米（午市）":"lunchPieces",
   "油条（午市）":"lunchPieces",
   "年糕（午市）":"lunchPieces",
+  "Murari Pinot Grigio 卡斯特拉尼灰皮诺":"wine",
+  "Bouchard Aine & Fils Sauvignon Blanc 长相思":"wine",
+  "Peter & Peter Riesling":"wine",
+  "Nau Mai Sauvignon Blanc":"wine",
+  "Casal de Ventozela Alvarinho 阿瓦里诺":"wine",
+  "Domäne Wachau Grüner Veltliner Federspiel":"wine",
+  "Louis Jadot Bourgogne Chardonnay 'Couvent des Jacobins' 勃艮第霞多丽":"wine",
+  "Marquis de Goulaine Sancerre 'Les Lorys' 桑塞尔":"wine",
+  "Orquestra Tempranillo 丹魄乐团":"wine",
+  "Reserve de L'Aube Syrah Merlot 奥布西拉梅洛珍藏":"wine",
+  "Château Les Grand Vallons 波尔多-城堡":"wine",
+  "Finca Mónica Crianza":"wine",
+  "Fin del Mundo Reserva Malbec 珍藏马尔贝克":"wine",
+  "Surani Primitivo di Manduria":"wine",
+  "Louis Jadot Bourgogne Pinot Noir 'Couvent des Jacobins' 勃艮第黑皮诺":"wine",
+  "Les Hauts de Lynch Moussas 上梦多克":"wine",
+  "Domaine La Colombette Grenache Rosé 歌海娜玫瑰庄":"wine",
+  "Château de Berne Romance Rosé 普罗旺斯玫瑰":"wine",
+  "Serena Prosecco Frizzante 罗普罗蜜克(单人装20cl)":"wine",
+  "Montegrande Bianco Frizzante 蒙特格兰德(瓶)":"wine",
+  "Champagne Theophile Brut NV 香槟(瓶)":"wine",
+  "可乐/无糖可乐/健怡可乐 330ml":"wine",
+  "七喜/无糖七喜 300ml":"wine",
+  "芬达 Fanta 300ml":"wine",
+  "加多宝 Jiaduobao":"wine",
+  "芦荟汁 Aloe Juice":"wine",
+  "芦荟汁(大) Aloe Juice":"wine",
+  "维他豆奶(小) Soy Drink":"wine",
+  "椰树牌椰汁":"wine",
+  "小纯净水/小气泡水 330ml":"wine",
+  "大纯净水/大气泡水 750ml":"wine",
+  "苹果汁":"wine",
+  "橙汁":"wine",
+  "蔓越莓汁":"wine",
+  "青岛啤酒 330ml":"wine",
+  "朝日啤酒 330ml":"wine",
+  "喜力啤酒 330ml":"wine",
+  "喜力0.0 330ml":"wine",
+  "健力士 500ml":"wine",
+  "健力士0.0 500ml":"wine",
 };
 
 let records = [];

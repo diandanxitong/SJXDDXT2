@@ -3,18 +3,12 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>扫码点单</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Archivo+Black&family=Ma+Shan+Zheng&family=Noto+Serif+TC:wght@400;500;600;700;900&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Noto+Serif+SC:wght@400;500;600;700;900&family=Archivo+Black&family=Ma+Shan+Zheng&family=Noto+Serif+TC:wght@400;500;600;700;900&family=Bodoni+Moda:opsz,wght@6..96,600;6..96,700&display=swap" rel="stylesheet">
 <style>
-  @font-face{
-    font-family:'Zihun Suzhou';
-    src:url("../字体/字体.ttf") format('truetype');
-    font-weight:400;
-    font-display:swap;
-  }
   :root{
     --bg:#F6EFE0;
     --bg-soft:#ECE0C6;
@@ -33,7 +27,7 @@
     --text-muted:#5C4A34;
     --radius:16px;
     --brush:'Ma Shan Zheng',cursive;
-    --serif-display:'Fraunces',serif;
+    --serif-display:'Bodoni Moda',serif;
     --ease-silk:cubic-bezier(.22,1,.36,1);
     --dur-fast:.18s;
     --dur:.32s;
@@ -44,13 +38,19 @@
     --shadow-pop:0 22px 54px rgba(59,44,30,.35);
   }
   *{box-sizing:border-box;margin:0;padding:0;}
+  ::selection{background:rgba(184,64,42,.24);color:var(--text);}
+  :focus-visible{outline:2px solid var(--gold-ink);outline-offset:2px;border-radius:4px;}
+  *{scrollbar-width:thin;scrollbar-color:var(--card-line) transparent;}
+  *::-webkit-scrollbar{width:8px;height:8px;}
+  *::-webkit-scrollbar-track{background:transparent;}
+  *::-webkit-scrollbar-thumb{background:var(--card-line);border-radius:8px;}
   html,body{background:var(--bg);color:var(--text);}
   body{
     font-family:'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif;
     min-height:100vh;
   }
   body.lang-zh-custom{
-    font-family:'Zihun Suzhou','Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif;
+    font-family:'Noto Serif SC','Songti SC','SimSun','Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif;
   }
   body.lang-zh-hant{
     font-family:'Noto Serif TC','PingFang TC','Microsoft JhengHei',serif;
@@ -60,12 +60,6 @@
     display:flex;
     justify-content:center;
     background-color:var(--bg);
-    background-image:
-      radial-gradient(circle at 12% 8%, rgba(184,64,42,.10) 0, transparent 42%),
-      radial-gradient(circle at 88% 92%, rgba(232,162,61,.08) 0, transparent 46%),
-      repeating-linear-gradient(45deg, rgba(232,162,61,.025) 0 2px, transparent 2px 26px),
-      repeating-linear-gradient(-45deg, rgba(184,64,42,.025) 0 2px, transparent 2px 26px);
-    background-attachment:fixed;
   }
   #app{
     width:100%;max-width:480px;min-height:100vh;position:relative;padding-bottom:110px;
@@ -85,7 +79,7 @@
     font-family:var(--brush);
     font-weight:400;
     font-size:44px;margin:10px 0 6px;color:var(--text);
-    text-shadow:0 0 18px rgba(184,64,42,.45);
+    text-shadow:0 2px 1px rgba(184,64,42,.3), 0 6px 14px rgba(59,44,30,.22);
   }
   .pick-hint{color:var(--text-muted);font-size:14px;margin-bottom:32px;}
   .table-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
@@ -113,7 +107,8 @@
   .table-badge .num{
     font-family:var(--serif-display);font-weight:700;
     font-size:36px;color:var(--ember);line-height:1;
-    text-shadow:0 0 22px rgba(201,80,46,.5);
+    font-variant-numeric:tabular-nums;
+    text-shadow:0 3px 2px rgba(201,80,46,.28), 0 8px 16px rgba(59,44,30,.2);
   }
   .masthead-rule{
     margin-top:2px;height:1px;position:relative;
@@ -174,7 +169,7 @@
   .menu-view-btn{
     flex:1;min-width:0;padding:10px 8px;border-radius:12px;
     border:1px solid var(--card-line);background:var(--bg-soft);color:var(--text-muted);
-    font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;
+    font-size:13.5px;font-weight:800;cursor:pointer;font-family:inherit;
   }
   .menu-view-btn.active{border-color:var(--cinnabar);color:var(--gold-ink);background:rgba(184,64,42,.16);}
   .menu-view-btn:hover{color:var(--text);}
@@ -219,7 +214,7 @@
   .cat-btn{
     position:relative;
     background:none;border:none;color:var(--text-muted);
-    font-size:13px;font-weight:700;padding:12px 6px;cursor:pointer;text-align:center;
+    font-size:13.5px;font-weight:700;padding:12px 6px;cursor:pointer;text-align:center;
     font-family:inherit;line-height:1.3;
     margin:2px 8px;border-radius:11px;
     overflow-wrap:break-word;word-break:break-word;hyphens:auto;
@@ -257,7 +252,7 @@
   }
   .dish-panel{flex:1;min-width:0;padding-right:16px;}
   .category-note{
-    font-size:11.5px;line-height:1.5;color:var(--text-muted);
+    font-size:12px;line-height:1.5;color:var(--text-muted);
     background:var(--bg-soft);border:1px solid var(--card-line);border-radius:12px;
     padding:9px 12px;margin:0 0 14px 16px;
   }
@@ -266,17 +261,25 @@
   }
   .dish-list{padding:0 0 0 16px;display:flex;flex-direction:column;gap:10px;}
   .dish-group-header{
-    font-size:13px;font-weight:800;letter-spacing:.04em;color:var(--gold-ink);
+    font-size:13.5px;font-weight:800;letter-spacing:.04em;color:var(--gold-ink);
     padding:2px 2px 0;margin-top:2px;
   }
   .dish-group-header:first-child{margin-top:0;}
   .dish-card{
     position:relative;overflow:hidden;
-    display:flex;align-items:center;gap:10px;padding:10px;
-    background:linear-gradient(160deg,var(--card) 0%,var(--bg-soft) 100%);
+    padding:10px;
+    background-image:
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><g fill='none' stroke='%23E8A23D' stroke-width='2' stroke-opacity='.16'><circle cx='50' cy='50' r='30'/><path d='M20 50 Q35 30 50 50 Q65 70 80 50'/><path d='M20 50 Q35 70 50 50 Q65 30 80 50'/></g></svg>"),
+      linear-gradient(160deg,var(--card) 0%,var(--bg-soft) 100%);
+    background-repeat:no-repeat,no-repeat;
+    background-position:right -20px top -20px,0 0;
+    background-size:86px 86px,100% 100%;
     border:1px solid var(--card-line);border-top:1px solid var(--gold-line);
     border-radius:var(--radius);
   }
+  /* Photo pinned top-left and never re-centered — the extend note below can
+     grow the card as tall as it wants without nudging the photo. */
+  .dish-card-row{display:flex;align-items:flex-start;gap:10px;}
   .dish-photo-wrap{
     position:relative;width:92px;height:92px;flex-shrink:0;overflow:hidden;
     border-radius:calc(var(--radius) - 6px);
@@ -289,13 +292,15 @@
   .dish-photo{position:relative;z-index:1;width:100%;height:100%;object-fit:cover;display:block;}
   .dish-body{flex:1;min-width:0;}
   .dish-title-row{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
-  .dish-name{font-size:14px;font-weight:900;letter-spacing:.01em;line-height:1.3;color:var(--text);}
+  .dish-name{font-size:15px;font-weight:900;letter-spacing:.01em;line-height:1.32;color:var(--text);}
   .dish-price{
-    flex-shrink:0;font-family:'Archivo Black',sans-serif;font-size:11.5px;color:#fff;
-    background:linear-gradient(160deg,var(--jade-hi),var(--jade) 62%,var(--jade-dark));
-    white-space:nowrap;padding:3px 9px 4px;border-radius:7px;margin-top:1px;
+    flex-shrink:0;font-family:'Archivo Black',sans-serif;font-size:13px;color:#fff;font-variant-numeric:tabular-nums;
+    background:linear-gradient(160deg,var(--ember) 0%,var(--ember-dark) 100%);
+    border:1px solid var(--gold-line);
+    white-space:nowrap;padding:4px 10px 5px;border-radius:8px;margin-top:1px;
+    box-shadow:0 2px 6px rgba(150,55,29,.35);
   }
-  .dish-body .tag{font-size:12px;color:var(--text-muted);margin-top:4px;line-height:1.45;overflow-wrap:break-word;}
+  .dish-body .tag{font-size:12.5px;color:var(--text-muted);margin-top:4px;line-height:1.45;overflow-wrap:break-word;}
   .dish-card.sold-out .dish-photo-wrap::after{
     content:"";position:absolute;inset:0;z-index:2;
     background:rgba(245,241,236,.6);
@@ -329,16 +334,16 @@
   .size-pill{
     flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
     padding:7px 4px;border-radius:10px;border:1px solid var(--card-line);
-    background:var(--bg-soft);color:var(--text-muted);font-size:11px;cursor:pointer;text-align:center;
+    background:var(--bg-soft);color:var(--text-muted);font-size:11.5px;cursor:pointer;text-align:center;
   }
   .size-pill .size-label{font-weight:700;}
-  .size-pill .size-price{font-size:10.5px;opacity:.85;}
+  .size-pill .size-price{font-size:11px;opacity:.85;}
   .size-pill.active{border-color:var(--cinnabar);color:var(--gold-ink);background:rgba(184,64,42,.16);}
   .option-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;}
   .option-chip{
     display:flex;align-items:center;gap:5px;
     padding:6px 10px;border-radius:20px;border:1px solid var(--card-line);
-    background:var(--bg-soft);color:var(--text-muted);font-size:11.5px;cursor:pointer;font-family:inherit;
+    background:var(--bg-soft);color:var(--text-muted);font-size:12px;cursor:pointer;font-family:inherit;
   }
   .option-chip .option-check{
     width:13px;height:13px;flex-shrink:0;border-radius:4px;border:1px solid var(--card-line);
@@ -350,7 +355,7 @@
   .dish-actions.with-add-extra{justify-content:space-between;}
   .add-extra-btn{
     background:none;border:1px solid var(--gold-line);color:var(--gold-ink);
-    border-radius:20px;padding:7px 14px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;
+    border-radius:20px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;
   }
   .add-extra-btn:hover{border-color:var(--jade-dark);color:var(--jade-dark);}
   .add-on-banner{
@@ -384,11 +389,14 @@
   .dish-card .stepper button.stepper-add{font-size:17px;}
   .stepper .qty{
     width:28px;text-align:center;font-weight:700;font-size:15px;
-    font-family:'Archivo Black',sans-serif;
+    font-family:'Archivo Black',sans-serif;font-variant-numeric:tabular-nums;
   }
-  .dish-card .stepper button{width:27px;height:27px;font-size:15px;}
-  .dish-card .stepper .qty{width:24px;font-size:13.5px;}
-  .dish-extend{animation:dish-extend-in .3s cubic-bezier(.2,1,.3,1);}
+  .dish-card .stepper button{width:36px;height:36px;font-size:15px;}
+  .dish-card .stepper .qty{width:26px;font-size:13.5px;}
+  .dish-extend{
+    margin-top:12px;padding-top:12px;border-top:1px dashed var(--card-line);
+    animation:dish-extend-in .3s cubic-bezier(.2,1,.3,1);
+  }
   @keyframes dish-extend-in{
     from{opacity:0;transform:translateY(-8px);}
     to{opacity:1;transform:translateY(0);}
@@ -396,11 +404,22 @@
   @media (prefers-reduced-motion:reduce){
     .dish-extend{animation:none;}
   }
+  /* the note reads as a small slip clipped below the ticket, not the card itself stretching */
+  .dish-extend-note{
+    position:relative;background:var(--bg-soft);
+    border:1px solid var(--card-line);border-radius:12px;
+    padding:14px 14px 12px;
+  }
+  .dish-extend-note::before{
+    content:"";position:absolute;top:-7px;left:16px;width:26px;height:7px;
+    background:var(--gold);border-radius:3px 3px 0 0;
+  }
+  .dish-extend-note>*:first-child{margin-top:0;padding-top:0;border-top:none;}
   .spice-row{display:flex;gap:6px;margin-top:14px;padding-top:14px;border-top:1px dashed var(--card-line);}
   .spice-pill{
     flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
     padding:8px 4px;border-radius:10px;border:1px solid var(--card-line);
-    background:var(--bg-soft);color:var(--text-muted);font-size:11px;line-height:1.2;cursor:pointer;
+    background:var(--bg-soft);color:var(--text-muted);font-size:11.5px;line-height:1.25;cursor:pointer;
     text-align:center;
   }
   .spice-pill .flames{display:flex;gap:1px;flex-shrink:0;}
@@ -515,68 +534,17 @@
   .cart-side-close:hover{color:var(--gold-ink);border-color:var(--gold-line);}
   .cart-side-panel .order-summary{margin:0;}
 
-  /* ---------- add-to-cart dumpling/hotpot animation ---------- */
+  /* ---------- add-to-cart status animation (GSAP-driven, see celebrateAddToCart) ---------- */
   .hotpot-toast{
     position:fixed;left:50%;bottom:148px;z-index:80;pointer-events:none;
     display:flex;flex-direction:column;align-items:center;gap:8px;
-    animation:hotpot-toast-life 1.7s ease forwards;
   }
-  @keyframes hotpot-toast-life{
-    0%{opacity:0;transform:translateX(-50%) translateY(10px) scale(.9);}
-    10%{opacity:1;transform:translateX(-50%) translateY(0) scale(1);}
-    82%{opacity:1;transform:translateX(-50%) translateY(0) scale(1);}
-    100%{opacity:0;transform:translateX(-50%) translateY(-8px) scale(.96);}
-  }
-  .hotpot-pot{position:relative;width:112px;height:84px;}
-  .hotpot-pot svg{position:absolute;left:0;top:0;filter:drop-shadow(0 8px 14px rgba(0,0,0,.45));}
-  .hotpot-dumpling{
-    position:absolute;left:50%;top:50%;font-size:26px;line-height:1;
-    transform:translate(-50%,-120px) rotate(-25deg);
-    animation:dumpling-drop .55s cubic-bezier(.55,0,.85,.6) .3s forwards;
-  }
-  @keyframes dumpling-drop{
-    0%{transform:translate(-50%,-120px) rotate(-25deg);opacity:1;}
-    85%{transform:translate(-50%,-14px) rotate(20deg);opacity:1;}
-    100%{transform:translate(-50%,-10px) rotate(15deg) scale(.92);opacity:1;}
-  }
-  .hotpot-splash{
-    position:absolute;left:50%;top:36%;font-size:20px;
-    transform:translate(-50%,-50%) scale(.2);opacity:0;
-    animation:hotpot-splash .45s ease-out .82s forwards;
-  }
-  @keyframes hotpot-splash{
-    0%{transform:translate(-50%,-50%) scale(.2);opacity:0;}
-    35%{transform:translate(-50%,-50%) scale(1.3);opacity:1;}
-    100%{transform:translate(-50%,-60%) scale(1.6);opacity:0;}
-  }
-  .hotpot-steam{
-    position:absolute;color:rgba(255,255,255,.55);font-size:16px;font-weight:700;opacity:0;
-    animation:hotpot-steam-rise 1.6s ease-in-out infinite;
-  }
-  .hotpot-steam.s1{left:36%;top:4px;animation-delay:0s;}
-  .hotpot-steam.s2{left:58%;top:0;animation-delay:.5s;}
-  @keyframes hotpot-steam-rise{
-    0%{opacity:0;transform:translateY(4px) scale(.8);}
-    30%{opacity:.8;}
-    100%{opacity:0;transform:translateY(-22px) scale(1.15);}
-  }
+  .fx-check{width:56px;height:56px;filter:drop-shadow(0 6px 14px rgba(0,0,0,.3));}
   .hotpot-caption{
     background:var(--card);border:1px solid var(--card-line);color:var(--text);
     font-size:12.5px;font-weight:700;padding:6px 14px;border-radius:20px;
-    opacity:0;animation:hotpot-caption-in .4s ease .9s forwards;
   }
-  .call-toast-bell{font-size:48px;line-height:1;animation:call-bell-ring .5s ease-in-out .1s 3;}
-  @keyframes call-bell-ring{
-    0%,100%{transform:rotate(0);}
-    20%{transform:rotate(-18deg);}
-    40%{transform:rotate(14deg);}
-    60%{transform:rotate(-10deg);}
-    80%{transform:rotate(6deg);}
-  }
-  @keyframes hotpot-caption-in{
-    0%{opacity:0;transform:translateY(6px);}
-    100%{opacity:1;transform:translateY(0);}
-  }
+  .call-toast-bell{font-size:48px;line-height:1;}
 
   /* ---------- confirm screen ---------- */
   .confirm-screen{padding:56px 28px 40px;text-align:center;}
@@ -584,7 +552,7 @@
     width:132px;height:132px;margin:0 auto 26px;border-radius:50%;
     border:3px solid var(--cinnabar);display:flex;align-items:center;justify-content:center;
     transform:rotate(-8deg);position:relative;
-    box-shadow:0 0 0 1px rgba(184,64,42,.15), 0 0 26px rgba(184,64,42,.35);
+    box-shadow:0 0 0 1px rgba(184,64,42,.15), 0 10px 24px rgba(59,44,30,.28), 0 3px 6px rgba(184,64,42,.22);
   }
   .stamp-ring::before{
     content:"";position:absolute;inset:8px;border:1px solid var(--cinnabar);border-radius:50%;
@@ -592,35 +560,20 @@
   .stamp-ring span{
     font-family:var(--serif-display);font-weight:700;color:var(--cinnabar);font-size:19px;letter-spacing:.05em;
   }
-  @media (prefers-reduced-motion:no-preference){
-    .stamp-ring{animation:pop .4s cubic-bezier(.2,1.4,.4,1);}
-  }
-  @keyframes pop{from{transform:rotate(-8deg) scale(.6);opacity:0}to{transform:rotate(-8deg) scale(1);opacity:1}}
   .confirm-screen h2{
     font-family:var(--brush);font-weight:400;font-size:34px;color:var(--gold-ink);margin-bottom:22px;
   }
 
-  /* ---------- chef-cooking animation (shown once staff confirms the order) ---------- */
-  .chef-cooking{
-    position:relative;width:170px;height:118px;margin:16px auto 4px;
+  /* ---------- kitchen-status pulse (shown once staff confirms the order, GSAP-driven, see animateChefSteam) ---------- */
+  .chef-cooking{position:relative;width:56px;height:56px;margin:18px auto 10px;}
+  .fx-cooking-ring{
+    position:absolute;left:50%;top:50%;width:16px;height:16px;margin:-8px 0 0 -8px;
+    border-radius:50%;border:2px solid var(--ember);opacity:0;
   }
-  .chef-emoji{font-size:44px;position:absolute;left:2px;bottom:4px;z-index:2;}
-  .chef-wok{font-size:54px;position:absolute;right:6px;bottom:-2px;z-index:1;}
-  .chef-ladle{
-    position:absolute;right:32px;bottom:50px;font-size:30px;
-    transform-origin:bottom center;transform:rotate(0deg);z-index:3;
-  }
-  .chef-ladle.g2{opacity:.4;z-index:2;filter:blur(.3px);}
-  .chef-ladle.g3{opacity:.18;z-index:1;filter:blur(.6px);}
-  @media (prefers-reduced-motion:no-preference){
-    .chef-ladle{animation:chef-swing .5s ease-in-out infinite;}
-    .chef-ladle.g2{animation-delay:-.09s;}
-    .chef-ladle.g3{animation-delay:-.18s;}
-  }
-  @keyframes chef-swing{
-    0%{transform:rotate(-38deg);}
-    50%{transform:rotate(30deg);}
-    100%{transform:rotate(-38deg);}
+  .fx-cooking-dot{
+    position:absolute;left:50%;top:50%;width:16px;height:16px;margin:-8px 0 0 -8px;
+    border-radius:50%;background:linear-gradient(160deg,var(--ember) 0%,var(--ember-dark) 100%);
+    box-shadow:0 3px 8px rgba(150,55,29,.4);
   }
   .kitchen-sent-title{
     font-family:var(--brush);font-weight:400;font-size:26px;color:var(--gold-ink);margin:4px 0 2px;
@@ -680,11 +633,23 @@
   .text-link-btn:hover{text-decoration:underline;}
 
   /* ---------- welcome / language select ---------- */
+  /* Lives on body (not .welcome-screen) — body is the element that actually
+     grows to the page's full scrollable height, so a plain (non-fixed)
+     cover background here always reaches the bottom with no seam, and it
+     works on iOS Safari, which largely ignores background-attachment:fixed
+     on non-body elements. */
+  body.welcome-bg{
+    background:var(--bg) url("../image/background/背景图.webp") center/cover no-repeat;
+  }
+  /* #app normally reserves 110px at the bottom for the fixed order bar, but
+     the welcome screen has no order bar — that reserved strip was making the
+     page tall enough to scroll, revealing body's own background underneath
+     the welcome photo. Drop it only here. */
+  body.welcome-bg #app{padding-bottom:0;}
   .welcome-screen{
     position:relative;overflow:hidden;
     min-height:100vh;min-height:100dvh;width:100%;display:flex;align-items:center;justify-content:center;
     padding:min(10vh,40px) 24px;
-    background:var(--bg) url("../image/background/背景图.webp") center/cover no-repeat;
   }
   .welcome-inner{
     position:relative;z-index:1;
@@ -707,7 +672,7 @@
     margin:24px 0 0;min-height:1.3em;
     opacity:0;transform:translateY(10px);
     transition:opacity .8s cubic-bezier(.2,.9,.3,1), transform .8s cubic-bezier(.2,.9,.3,1);
-    font-family:'Fraunces','Zihun Suzhou','Noto Serif TC','Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif;
+    font-family:'Bodoni Moda','Noto Serif SC','Noto Serif TC','Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif;
     font-weight:600;font-size:clamp(26px,6.4vw,32px);
     letter-spacing:.02em;color:var(--text);
     text-shadow:0 1px 2px rgba(239,224,190,.6);
@@ -716,11 +681,12 @@
   .welcome-word.swap{opacity:0;transform:translateY(6px);transition:opacity .38s ease, transform .38s ease;}
 
   .welcome-divider{
-    width:0%;height:1px;margin:22px 0 20px;
+    width:64%;height:1px;margin:22px 0 20px;
     background:linear-gradient(90deg, transparent, var(--gold-deep) 50%, transparent);
-    transition:width 1s ease;
+    transform:scaleX(0);transform-origin:center;
+    transition:transform 1s ease;
   }
-  .welcome-divider.in{width:64%;}
+  .welcome-divider.in{transform:scaleX(1);}
 
   .welcome-wordmark{
     opacity:0;transform:translateY(14px);
@@ -729,7 +695,7 @@
   .welcome-wordmark.in{opacity:1;transform:translateY(0);}
   .welcome-wordmark h1{
     margin:0;
-    font-family:'Fraunces','Zihun Suzhou','Noto Serif TC','Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif;
+    font-family:'Bodoni Moda','Noto Serif SC','Noto Serif TC','Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif;
     font-weight:700;font-size:clamp(20px,5.2vw,26px);
     letter-spacing:.06em;text-transform:uppercase;line-height:1.3;
     color:var(--gold-deep);
@@ -766,16 +732,19 @@
     position:relative;z-index:56;margin-top:14px;
     background:linear-gradient(165deg, var(--card), var(--bg));
     border:1px solid var(--gold-line);
-    border-radius:16px;overflow:hidden;box-shadow:0 14px 34px rgba(59,44,30,.4);
+    border-radius:16px;box-shadow:0 14px 34px rgba(59,44,30,.4);
     text-align:left;
+    display:flex;flex-wrap:wrap;gap:8px;padding:12px;
   }
   .lang-panel button{
-    display:flex;align-items:center;justify-content:space-between;width:100%;
-    background:none;border:none;color:var(--text);font-family:'PingFang SC','Microsoft YaHei','Noto Sans SC',sans-serif;
-    padding:14px 18px;font-size:14.5px;font-weight:700;cursor:pointer;
+    flex:1 1 calc(50% - 4px);
+    display:flex;align-items:center;justify-content:space-between;
+    background:var(--bg-soft);border:1px solid var(--card-line);border-radius:10px;
+    color:var(--text);font-family:'PingFang SC','Microsoft YaHei','Noto Sans SC',sans-serif;
+    padding:12px 14px;font-size:13.5px;font-weight:700;cursor:pointer;
   }
-  .lang-panel button+button{border-top:1px solid var(--card-line);}
-  .lang-panel button:hover{background:rgba(232,162,61,.1);}
+  .lang-panel button:hover{border-color:var(--gold-line);background:rgba(232,162,61,.1);}
+  .lang-panel button.active{border-color:var(--cinnabar);color:var(--gold-ink);background:rgba(184,64,42,.14);}
   .lang-panel .lang-check{color:var(--gold-ink);opacity:0;font-size:13px;}
   .lang-panel button.active .lang-check{opacity:1;}
 
@@ -936,6 +905,7 @@
 
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-compat.js"></script>
+<script src="../js/gsap.min.js"></script>
 <script>
 const firebaseConfig = {
   apiKey: 'AIzaSyBaFx1ZYKzEKfQLKbnD9YE_X_EJnFXrxOE',
@@ -994,7 +964,7 @@ const I18N = {
     orderNow:"立即下单", orderNowSub:"不再犹豫！", ordering:"下单中…",
     addedToCart:"已加入购物车！", back:"返回",
     addOnSuccess:"加单成功", orderPlaced:"已下单", waitConfirm:"请稍候，服务员马上确认～",
-    kitchenSentTitle:"订单已送进厨房", kitchenSentHint:"大厨已经开炒，请耐心等候上菜～",
+    kitchenSentTitle:"订单已送进厨房", kitchenSentHint:"您的菜品正在精心准备中，请耐心等候上菜～",
     orderRemovedNotice:"这笔订单已被工作人员删除，如有疑问请联系服务员～",
     continueOrdering:"继续点单", myOrder:"我的订单", removeHint:"如需退菜，请联系服务员哦～",
     loading:"加载中…", noOrderYet:"还没有点菜，去菜单看看吧～", backToMenu:"返回菜单",
@@ -1031,7 +1001,7 @@ const I18N = {
     orderNow:'立即下單', orderNowSub:'不再猶豫！', ordering:'下單中…',
     addedToCart:'已加入購物車！', back:'返回',
     addOnSuccess:'加單成功', orderPlaced:'已下單', waitConfirm:'請稍候，服務員馬上確認～',
-    kitchenSentTitle:'訂單已送進廚房', kitchenSentHint:'大廚已經開炒，請耐心等候上菜～',
+    kitchenSentTitle:'訂單已送進廚房', kitchenSentHint:'您的菜品正在精心準備中，請耐心等候上菜～',
     orderRemovedNotice:'這筆訂單已被工作人員刪除，如有疑問請聯繫服務員～',
     continueOrdering:'繼續點單', myOrder:'我的訂單', removeHint:'如需退菜，請聯繫服務員哦～',
     loading:'加載中…', noOrderYet:'還沒有點菜，去菜單看看吧～', backToMenu:'返回菜單',
@@ -1068,7 +1038,7 @@ const I18N = {
     orderNow:"Order Now", orderNowSub:"No more hesitating!", ordering:"Ordering…",
     addedToCart:"Added to cart!", back:"Back",
     addOnSuccess:"Add-on Placed", orderPlaced:"Order Placed", waitConfirm:"Please wait, staff will confirm shortly~",
-    kitchenSentTitle:"Sent to the Kitchen", kitchenSentHint:"The chef is already cooking — thanks for your patience~",
+    kitchenSentTitle:"Sent to the Kitchen", kitchenSentHint:"Your dishes are being carefully prepared — thanks for your patience~",
     orderRemovedNotice:"This order was removed by staff. Please ask your waiter if you have questions~",
     continueOrdering:"Continue Ordering", myOrder:"My Order", removeHint:"To remove an item, please contact staff~",
     loading:"Loading…", noOrderYet:"No items yet — check out the menu~", backToMenu:"Back to Menu",
@@ -1105,7 +1075,7 @@ const I18N = {
     orderNow:"Ordina Ora", orderNowSub:"Non esitare più!", ordering:"Ordinazione in corso…",
     addedToCart:"Aggiunto al carrello!", back:"Indietro",
     addOnSuccess:"Aggiunta Effettuata", orderPlaced:"Ordine Effettuato", waitConfirm:"Attendere, lo staff confermerà a breve~",
-    kitchenSentTitle:"Inviato in Cucina", kitchenSentHint:"Lo chef sta già cucinando, grazie per la pazienza~",
+    kitchenSentTitle:"Inviato in Cucina", kitchenSentHint:"I tuoi piatti sono in preparazione con cura, grazie per la pazienza~",
     orderRemovedNotice:"Questo ordine è stato rimosso dallo staff. Per domande, contatta il cameriere~",
     continueOrdering:"Continua a Ordinare", myOrder:"Il Mio Ordine", removeHint:"Per rimuovere un piatto, contattare lo staff~",
     loading:"Caricamento…", noOrderYet:"Nessun piatto ancora — dai un'occhiata al menu~", backToMenu:"Torna al Menu",
@@ -1142,7 +1112,7 @@ const I18N = {
     orderNow:"Commander", orderNowSub:"N'hésitez plus !", ordering:"Commande en cours…",
     addedToCart:"Ajouté au panier !", back:"Retour",
     addOnSuccess:"Ajout Effectué", orderPlaced:"Commande Passée", waitConfirm:"Veuillez patienter, le personnel confirmera bientôt~",
-    kitchenSentTitle:"Envoyée en Cuisine", kitchenSentHint:"Le chef cuisine déjà, merci de patienter~",
+    kitchenSentTitle:"Envoyée en Cuisine", kitchenSentHint:"Vos plats sont en cours de préparation avec soin, merci de patienter~",
     orderRemovedNotice:"Cette commande a été supprimée par le personnel. Contactez votre serveur pour toute question~",
     continueOrdering:"Continuer à Commander", myOrder:"Ma Commande", removeHint:"Pour retirer un plat, veuillez contacter le personnel~",
     loading:"Chargement…", noOrderYet:"Aucun plat pour l'instant — jetez un œil au menu~", backToMenu:"Retour au Menu",
@@ -1179,7 +1149,7 @@ const I18N = {
     orderNow:"Pedir Ahora", orderNowSub:"¡No lo dudes más!", ordering:"Pidiendo…",
     addedToCart:"¡Añadido al carrito!", back:"Atrás",
     addOnSuccess:"Pedido Adicional Realizado", orderPlaced:"Pedido Realizado", waitConfirm:"Espere, el personal confirmará en breve~",
-    kitchenSentTitle:"Enviado a la Cocina", kitchenSentHint:"El chef ya está cocinando, gracias por tu paciencia~",
+    kitchenSentTitle:"Enviado a la Cocina", kitchenSentHint:"Tus platos se están preparando con esmero, gracias por tu paciencia~",
     orderRemovedNotice:"Este pedido fue eliminado por el personal. Si tienes dudas, consulta al camarero~",
     continueOrdering:"Seguir Pidiendo", myOrder:"Mi Pedido", removeHint:"Para quitar un plato, por favor contacte al personal~",
     loading:"Cargando…", noOrderYet:"Aún no hay platos — eche un vistazo al menú~", backToMenu:"Volver al Menú",
@@ -1604,46 +1574,46 @@ const DISH_DATA = [
 {"id": "lpFriedDoughSticks", "img": "../image/菜品/油条.webp", "category": "lunchPieces", "sub": "lunchVeg", "price": 1.89, "unit": "piece", "allergens": ["1"], "i18n": {"zh": {"name": "油条（午市）", "tag": ""}, "zhHant": {"name": "油條（午市）", "tag": ""}, "en": {"name": "Fried Dough Sticks (Lunch)", "tag": ""}, "it": {"name": "Bastoncini di Pasta Fritta (Pranzo)", "tag": ""}, "fr": {"name": "Bâtonnets de Pâte Frite (Déjeuner)", "tag": ""}, "es": {"name": "Palitos de Masa Frita (Almuerzo)", "tag": ""}}},
 {"id": "lpRiceCake", "img": "../image/菜品/年糕.webp", "category": "lunchPieces", "sub": "lunchVeg", "price": 1.19, "unit": "piece", "allergens": [], "i18n": {"zh": {"name": "年糕（午市）", "tag": ""}, "zhHant": {"name": "年糕（午市）", "tag": ""}, "en": {"name": "Rice Cake (Lunch)", "tag": ""}, "it": {"name": "Torta di Riso (Pranzo)", "tag": ""}, "fr": {"name": "Gâteau de Riz (Déjeuner)", "tag": ""}, "es": {"name": "Pastel de Arroz (Almuerzo)", "tag": ""}}},
 // ---- 酒水 Wine & Beverages ----
-{"id": "wineMurariPinotGrigio", "category": "wine", "sub": "wineWhite", "sizes": [{"key": "glass", "price": 7.9}, {"key": "bottle", "price": 28}], "allergens": ["10"], "i18n": {"zh": {"name": "Murari Pinot Grigio 卡斯特拉尼灰皮诺", "tag": "意大利·威尼托"}, "zhHant": {"name": "Murari Pinot Grigio 卡斯特拉尼灰皮諾", "tag": "義大利·威尼托"}, "en": {"name": "Murari Pinot Grigio", "tag": "Veneto, Italy"}, "it": {"name": "Murari Pinot Grigio", "tag": "Veneto, Italia"}, "fr": {"name": "Murari Pinot Grigio", "tag": "Vénétie, Italie"}, "es": {"name": "Murari Pinot Grigio", "tag": "Véneto, Italia"}}},
-{"id": "wineBouchardSauvignonBlanc", "category": "wine", "sub": "wineWhite", "sizes": [{"key": "glass", "price": 8.5}, {"key": "bottle", "price": 32}], "allergens": ["10"], "i18n": {"zh": {"name": "Bouchard Aine & Fils Sauvignon Blanc 长相思", "tag": "法国·朗格多克"}, "zhHant": {"name": "Bouchard Aine & Fils Sauvignon Blanc 長相思", "tag": "法國·朗格多克"}, "en": {"name": "Bouchard Aine & Fils Sauvignon Blanc", "tag": "Languedoc, France"}, "it": {"name": "Bouchard Aine & Fils Sauvignon Blanc", "tag": "Linguadoca, Francia"}, "fr": {"name": "Bouchard Aine & Fils Sauvignon Blanc", "tag": "Languedoc, France"}, "es": {"name": "Bouchard Aine & Fils Sauvignon Blanc", "tag": "Languedoc, Francia"}}},
-{"id": "winePeterRiesling", "category": "wine", "sub": "wineWhite", "sizes": [{"key": "glass", "price": 9.9}, {"key": "bottle", "price": 36}], "allergens": ["10"], "i18n": {"zh": {"name": "Peter & Peter Riesling", "tag": "德国·摩泽尔"}, "zhHant": {"name": "Peter & Peter Riesling", "tag": "德國·摩澤爾"}, "en": {"name": "Peter & Peter Riesling", "tag": "Mosel, Germany"}, "it": {"name": "Peter & Peter Riesling", "tag": "Mosella, Germania"}, "fr": {"name": "Peter & Peter Riesling", "tag": "Moselle, Allemagne"}, "es": {"name": "Peter & Peter Riesling", "tag": "Mosela, Alemania"}}},
-{"id": "wineNauMaiSauvignonBlanc", "category": "wine", "sub": "wineWhite", "sizes": [{"key": "bottle", "price": 39}], "allergens": ["10"], "i18n": {"zh": {"name": "Nau Mai Sauvignon Blanc", "tag": "新西兰·马尔堡"}, "zhHant": {"name": "Nau Mai Sauvignon Blanc", "tag": "紐西蘭·馬爾堡"}, "en": {"name": "Nau Mai Sauvignon Blanc", "tag": "Marlborough, New Zealand"}, "it": {"name": "Nau Mai Sauvignon Blanc", "tag": "Marlborough, Nuova Zelanda"}, "fr": {"name": "Nau Mai Sauvignon Blanc", "tag": "Marlborough, Nouvelle-Zélande"}, "es": {"name": "Nau Mai Sauvignon Blanc", "tag": "Marlborough, Nueva Zelanda"}}},
-{"id": "wineCasalVentozelaAlvarinho", "category": "wine", "sub": "wineWhite", "sizes": [{"key": "bottle", "price": 45}], "allergens": ["10"], "i18n": {"zh": {"name": "Casal de Ventozela Alvarinho 阿瓦里诺", "tag": "葡萄牙·绿酒产区"}, "zhHant": {"name": "Casal de Ventozela Alvarinho 阿瓦里諾", "tag": "葡萄牙·綠酒產區"}, "en": {"name": "Casal de Ventozela Alvarinho", "tag": "Vinho Verde, Portugal"}, "it": {"name": "Casal de Ventozela Alvarinho", "tag": "Vinho Verde, Portogallo"}, "fr": {"name": "Casal de Ventozela Alvarinho", "tag": "Vinho Verde, Portugal"}, "es": {"name": "Casal de Ventozela Alvarinho", "tag": "Vinho Verde, Portugal"}}},
-{"id": "wineDomaneWachauGruner", "category": "wine", "sub": "wineWhite", "sizes": [{"key": "bottle", "price": 49}], "allergens": ["10"], "i18n": {"zh": {"name": "Domäne Wachau Grüner Veltliner Federspiel", "tag": "奥地利·瓦豪"}, "zhHant": {"name": "Domäne Wachau Grüner Veltliner Federspiel", "tag": "奧地利·瓦豪"}, "en": {"name": "Domäne Wachau Grüner Veltliner Federspiel", "tag": "Wachau, Austria"}, "it": {"name": "Domäne Wachau Grüner Veltliner Federspiel", "tag": "Wachau, Austria"}, "fr": {"name": "Domäne Wachau Grüner Veltliner Federspiel", "tag": "Wachau, Autriche"}, "es": {"name": "Domäne Wachau Grüner Veltliner Federspiel", "tag": "Wachau, Austria"}}},
-{"id": "wineLouisJadotChardonnay", "category": "wine", "sub": "wineWhite", "sizes": [{"key": "bottle", "price": 65}], "allergens": ["10"], "i18n": {"zh": {"name": "Louis Jadot Bourgogne Chardonnay 'Couvent des Jacobins' 勃艮第霞多丽", "tag": "法国·勃艮第"}, "zhHant": {"name": "Louis Jadot Bourgogne Chardonnay 'Couvent des Jacobins' 勃艮第霞多麗", "tag": "法國·勃艮第"}, "en": {"name": "Louis Jadot Bourgogne Chardonnay 'Couvent des Jacobins'", "tag": "Burgundy, France"}, "it": {"name": "Louis Jadot Bourgogne Chardonnay 'Couvent des Jacobins'", "tag": "Borgogna, Francia"}, "fr": {"name": "Louis Jadot Bourgogne Chardonnay « Couvent des Jacobins »", "tag": "Bourgogne, France"}, "es": {"name": "Louis Jadot Bourgogne Chardonnay 'Couvent des Jacobins'", "tag": "Borgoña, Francia"}}},
-{"id": "wineMarquisGoulaineSancerre", "category": "wine", "sub": "wineWhite", "sizes": [{"key": "bottle", "price": 79}], "allergens": ["10"], "i18n": {"zh": {"name": "Marquis de Goulaine Sancerre 'Les Lorys' 桑塞尔", "tag": "法国·卢瓦尔河谷"}, "zhHant": {"name": "Marquis de Goulaine Sancerre 'Les Lorys' 桑塞爾", "tag": "法國·盧瓦爾河谷"}, "en": {"name": "Marquis de Goulaine Sancerre 'Les Lorys'", "tag": "Loire Valley, France"}, "it": {"name": "Marquis de Goulaine Sancerre 'Les Lorys'", "tag": "Valle della Loira, Francia"}, "fr": {"name": "Marquis de Goulaine Sancerre « Les Lorys »", "tag": "Vallée de la Loire, France"}, "es": {"name": "Marquis de Goulaine Sancerre 'Les Lorys'", "tag": "Valle del Loira, Francia"}}},
-{"id": "wineOrquestraTempranillo", "category": "wine", "sub": "wineRed", "sizes": [{"key": "glass", "price": 7.9}, {"key": "bottle", "price": 28}], "allergens": ["10"], "i18n": {"zh": {"name": "Orquestra Tempranillo 丹魄乐团", "tag": "西班牙·拉曼恰"}, "zhHant": {"name": "Orquestra Tempranillo 丹魄樂團", "tag": "西班牙·拉曼恰"}, "en": {"name": "Orquestra Tempranillo", "tag": "La Mancha, Spain"}, "it": {"name": "Orquestra Tempranillo", "tag": "La Mancha, Spagna"}, "fr": {"name": "Orquestra Tempranillo", "tag": "La Manche, Espagne"}, "es": {"name": "Orquestra Tempranillo", "tag": "La Mancha, España"}}},
-{"id": "wineReserveAubeSyrahMerlot", "category": "wine", "sub": "wineRed", "sizes": [{"key": "glass", "price": 8.5}, {"key": "bottle", "price": 32}], "allergens": ["10"], "i18n": {"zh": {"name": "Reserve de L'Aube Syrah Merlot 奥布西拉梅洛珍藏", "tag": "法国·朗格多克"}, "zhHant": {"name": "Reserve de L'Aube Syrah Merlot 奧布西拉梅洛珍藏", "tag": "法國·朗格多克"}, "en": {"name": "Reserve de L'Aube Syrah Merlot", "tag": "Languedoc, France"}, "it": {"name": "Reserve de L'Aube Syrah Merlot", "tag": "Linguadoca, Francia"}, "fr": {"name": "Réserve de L'Aube Syrah Merlot", "tag": "Languedoc, France"}, "es": {"name": "Reserve de L'Aube Syrah Merlot", "tag": "Languedoc, Francia"}}},
-{"id": "wineChateauGrandVallons", "category": "wine", "sub": "wineRed", "sizes": [{"key": "glass", "price": 10.95}, {"key": "bottle", "price": 39}], "allergens": ["10"], "i18n": {"zh": {"name": "Château Les Grand Vallons 波尔多-城堡", "tag": "法国·波尔多丘布拉伊"}, "zhHant": {"name": "Château Les Grand Vallons 波爾多-城堡", "tag": "法國·波爾多丘布拉伊"}, "en": {"name": "Château Les Grand Vallons", "tag": "Blaye, Côtes de Bordeaux, France"}, "it": {"name": "Château Les Grand Vallons", "tag": "Blaye, Côtes de Bordeaux, Francia"}, "fr": {"name": "Château Les Grand Vallons", "tag": "Blaye, Côtes de Bordeaux, France"}, "es": {"name": "Château Les Grand Vallons", "tag": "Blaye, Côtes de Bordeaux, Francia"}}},
-{"id": "wineFincaMonicaCrianza", "category": "wine", "sub": "wineRed", "sizes": [{"key": "bottle", "price": 42}], "allergens": ["10"], "i18n": {"zh": {"name": "Finca Mónica Crianza", "tag": "西班牙·里奥哈"}, "zhHant": {"name": "Finca Mónica Crianza", "tag": "西班牙·里奧哈"}, "en": {"name": "Finca Mónica Crianza", "tag": "Rioja, Spain"}, "it": {"name": "Finca Mónica Crianza", "tag": "Rioja, Spagna"}, "fr": {"name": "Finca Mónica Crianza", "tag": "Rioja, Espagne"}, "es": {"name": "Finca Mónica Crianza", "tag": "Rioja, España"}}},
-{"id": "wineFinDelMundoMalbec", "category": "wine", "sub": "wineRed", "sizes": [{"key": "bottle", "price": 45}], "allergens": ["10"], "i18n": {"zh": {"name": "Fin del Mundo Reserva Malbec 珍藏马尔贝克", "tag": "阿根廷·巴塔哥尼亚"}, "zhHant": {"name": "Fin del Mundo Reserva Malbec 珍藏馬爾貝克", "tag": "阿根廷·巴塔哥尼亞"}, "en": {"name": "Fin del Mundo Reserva Malbec", "tag": "Patagonia, Argentina"}, "it": {"name": "Fin del Mundo Reserva Malbec", "tag": "Patagonia, Argentina"}, "fr": {"name": "Fin del Mundo Reserva Malbec", "tag": "Patagonie, Argentine"}, "es": {"name": "Fin del Mundo Reserva Malbec", "tag": "Patagonia, Argentina"}}},
-{"id": "wineSuraniPrimitivo", "category": "wine", "sub": "wineRed", "sizes": [{"key": "bottle", "price": 49}], "allergens": ["10"], "i18n": {"zh": {"name": "Surani Primitivo di Manduria", "tag": "意大利·普利亚"}, "zhHant": {"name": "Surani Primitivo di Manduria", "tag": "義大利·普利亞"}, "en": {"name": "Surani Primitivo di Manduria", "tag": "Puglia, Italy"}, "it": {"name": "Surani Primitivo di Manduria", "tag": "Puglia, Italia"}, "fr": {"name": "Surani Primitivo di Manduria", "tag": "Pouilles, Italie"}, "es": {"name": "Surani Primitivo di Manduria", "tag": "Apulia, Italia"}}},
-{"id": "wineLouisJadotPinotNoir", "category": "wine", "sub": "wineRed", "sizes": [{"key": "bottle", "price": 69}], "allergens": ["10"], "i18n": {"zh": {"name": "Louis Jadot Bourgogne Pinot Noir 'Couvent des Jacobins' 勃艮第黑皮诺", "tag": "法国·勃艮第"}, "zhHant": {"name": "Louis Jadot Bourgogne Pinot Noir 'Couvent des Jacobins' 勃艮第黑皮諾", "tag": "法國·勃艮第"}, "en": {"name": "Louis Jadot Bourgogne Pinot Noir 'Couvent des Jacobins'", "tag": "Burgundy, France"}, "it": {"name": "Louis Jadot Bourgogne Pinot Noir 'Couvent des Jacobins'", "tag": "Borgogna, Francia"}, "fr": {"name": "Louis Jadot Bourgogne Pinot Noir « Couvent des Jacobins »", "tag": "Bourgogne, France"}, "es": {"name": "Louis Jadot Bourgogne Pinot Noir 'Couvent des Jacobins'", "tag": "Borgoña, Francia"}}},
-{"id": "wineHautsLynchMoussas", "category": "wine", "sub": "wineRed", "sizes": [{"key": "bottle", "price": 89}], "allergens": ["10"], "i18n": {"zh": {"name": "Les Hauts de Lynch Moussas 上梦多克", "tag": "法国·波尔多上梅多克"}, "zhHant": {"name": "Les Hauts de Lynch Moussas 上夢多克", "tag": "法國·波爾多上梅多克"}, "en": {"name": "Les Hauts de Lynch Moussas", "tag": "Haut-Médoc, Bordeaux, France"}, "it": {"name": "Les Hauts de Lynch Moussas", "tag": "Haut-Médoc, Bordeaux, Francia"}, "fr": {"name": "Les Hauts de Lynch Moussas", "tag": "Haut-Médoc, Bordeaux, France"}, "es": {"name": "Les Hauts de Lynch Moussas", "tag": "Haut-Médoc, Burdeos, Francia"}}},
-{"id": "wineColombetteGrenacheRose", "category": "wine", "sub": "wineRose", "sizes": [{"key": "glass", "price": 8}, {"key": "bottle", "price": 29}], "allergens": ["10"], "i18n": {"zh": {"name": "Domaine La Colombette Grenache Rosé 歌海娜玫瑰庄", "tag": "法国·朗格多克"}, "zhHant": {"name": "Domaine La Colombette Grenache Rosé 歌海娜玫瑰莊", "tag": "法國·朗格多克"}, "en": {"name": "Domaine La Colombette Grenache Rosé", "tag": "Languedoc, France"}, "it": {"name": "Domaine La Colombette Grenache Rosé", "tag": "Linguadoca, Francia"}, "fr": {"name": "Domaine La Colombette Grenache Rosé", "tag": "Languedoc, France"}, "es": {"name": "Domaine La Colombette Grenache Rosé", "tag": "Languedoc, Francia"}}},
-{"id": "wineBerneRomanceRose", "category": "wine", "sub": "wineRose", "sizes": [{"key": "glass", "price": 10.95}, {"key": "bottle", "price": 39}], "allergens": ["10"], "i18n": {"zh": {"name": "Château de Berne Romance Rosé 普罗旺斯玫瑰", "tag": "法国·普罗旺斯"}, "zhHant": {"name": "Château de Berne Romance Rosé 普羅旺斯玫瑰", "tag": "法國·普羅旺斯"}, "en": {"name": "Château de Berne Romance Rosé", "tag": "Provence, France"}, "it": {"name": "Château de Berne Romance Rosé", "tag": "Provenza, Francia"}, "fr": {"name": "Château de Berne Romance Rosé", "tag": "Provence, France"}, "es": {"name": "Château de Berne Romance Rosé", "tag": "Provenza, Francia"}}},
-{"id": "wineSerenaProsecco", "category": "wine", "sub": "wineSparkling", "price": 9.95, "allergens": ["10"], "i18n": {"zh": {"name": "Serena Prosecco Frizzante 罗普罗蜜克(单人装20cl)", "tag": ""}, "zhHant": {"name": "Serena Prosecco Frizzante 羅普羅蜜克(單人裝20cl)", "tag": ""}, "en": {"name": "Serena Prosecco Frizzante (Single Serve 20cl)", "tag": ""}, "it": {"name": "Serena Prosecco Frizzante (Formato Singolo 20cl)", "tag": ""}, "fr": {"name": "Serena Prosecco Frizzante (Format Individuel 20cl)", "tag": ""}, "es": {"name": "Serena Prosecco Frizzante (Formato Individual 20cl)", "tag": ""}}},
-{"id": "wineMontegrandeFrizzante", "category": "wine", "sub": "wineSparkling", "price": 29, "allergens": ["10"], "i18n": {"zh": {"name": "Montegrande Bianco Frizzante 蒙特格兰德(瓶)", "tag": ""}, "zhHant": {"name": "Montegrande Bianco Frizzante 蒙特格蘭德(瓶)", "tag": ""}, "en": {"name": "Montegrande Bianco Frizzante (Bottle)", "tag": ""}, "it": {"name": "Montegrande Bianco Frizzante (Bottiglia)", "tag": ""}, "fr": {"name": "Montegrande Bianco Frizzante (Bouteille)", "tag": ""}, "es": {"name": "Montegrande Bianco Frizzante (Botella)", "tag": ""}}},
-{"id": "wineChampagneTheophile", "category": "wine", "sub": "wineSparkling", "price": 89, "allergens": ["10"], "i18n": {"zh": {"name": "Champagne Theophile Brut NV 香槟(瓶)", "tag": ""}, "zhHant": {"name": "Champagne Theophile Brut NV 香檳(瓶)", "tag": ""}, "en": {"name": "Champagne Theophile Brut NV (Bottle)", "tag": ""}, "it": {"name": "Champagne Theophile Brut NV (Bottiglia)", "tag": ""}, "fr": {"name": "Champagne Theophile Brut NV (Bouteille)", "tag": ""}, "es": {"name": "Champagne Theophile Brut NV (Botella)", "tag": ""}}},
-{"id": "wineCola", "category": "wine", "sub": "wineSoft", "price": 3.8, "allergens": [], "i18n": {"zh": {"name": "可乐/无糖可乐/健怡可乐 330ml", "tag": ""}, "zhHant": {"name": "可樂/無糖可樂/健怡可樂 330ml", "tag": ""}, "en": {"name": "Coke / Diet Coke / Coke Zero 330ml", "tag": ""}, "it": {"name": "Coca-Cola / Coca-Cola Light / Coca-Cola Zero 330ml", "tag": ""}, "fr": {"name": "Coca-Cola / Coca-Cola Light / Coca-Cola Zero 330ml", "tag": ""}, "es": {"name": "Coca-Cola / Coca-Cola Light / Coca-Cola Zero 330ml", "tag": ""}}},
-{"id": "wineSevenUp", "category": "wine", "sub": "wineSoft", "price": 3.8, "allergens": [], "i18n": {"zh": {"name": "七喜/无糖七喜 300ml", "tag": ""}, "zhHant": {"name": "七喜/無糖七喜 300ml", "tag": ""}, "en": {"name": "7 Up / Diet 7 Up 300ml", "tag": ""}, "it": {"name": "7 Up / 7 Up Senza Zucchero 300ml", "tag": ""}, "fr": {"name": "7 Up / 7 Up Sans Sucre 300ml", "tag": ""}, "es": {"name": "7 Up / 7 Up Sin Azúcar 300ml", "tag": ""}}},
-{"id": "wineFanta", "category": "wine", "sub": "wineSoft", "price": 3.8, "allergens": [], "i18n": {"zh": {"name": "芬达 Fanta 300ml", "tag": ""}, "zhHant": {"name": "芬達 Fanta 300ml", "tag": ""}, "en": {"name": "Fanta 300ml", "tag": ""}, "it": {"name": "Fanta 300ml", "tag": ""}, "fr": {"name": "Fanta 300ml", "tag": ""}, "es": {"name": "Fanta 300ml", "tag": ""}}},
-{"id": "wineJdb", "category": "wine", "sub": "wineSoft", "price": 3.8, "allergens": [], "i18n": {"zh": {"name": "加多宝 Jiaduobao", "tag": ""}, "zhHant": {"name": "加多寶 Jiaduobao", "tag": ""}, "en": {"name": "Jiaduobao", "tag": ""}, "it": {"name": "Jiaduobao", "tag": ""}, "fr": {"name": "Jiaduobao", "tag": ""}, "es": {"name": "Jiaduobao", "tag": ""}}},
-{"id": "wineAloeRegular", "category": "wine", "sub": "wineSoft", "price": 3.8, "allergens": [], "i18n": {"zh": {"name": "芦荟汁 Aloe Juice", "tag": "常规"}, "zhHant": {"name": "蘆薈汁 Aloe Juice", "tag": "常規"}, "en": {"name": "Aloe Juice (Regular)", "tag": ""}, "it": {"name": "Succo di Aloe (Normale)", "tag": ""}, "fr": {"name": "Jus d'Aloe Vera (Normal)", "tag": ""}, "es": {"name": "Zumo de Aloe Vera (Normal)", "tag": ""}}},
-{"id": "wineAloeLarge", "category": "wine", "sub": "wineSoft", "price": 9.0, "allergens": [], "i18n": {"zh": {"name": "芦荟汁(大) Aloe Juice", "tag": "大杯"}, "zhHant": {"name": "蘆薈汁(大) Aloe Juice", "tag": "大杯"}, "en": {"name": "Aloe Juice (Large)", "tag": ""}, "it": {"name": "Succo di Aloe (Grande)", "tag": ""}, "fr": {"name": "Jus d'Aloe Vera (Grand)", "tag": ""}, "es": {"name": "Zumo de Aloe Vera (Grande)", "tag": ""}}},
-{"id": "wineSoyDrink", "category": "wine", "sub": "wineSoft", "price": 4.6, "allergens": ["4"], "i18n": {"zh": {"name": "维他豆奶(小) Soy Drink", "tag": ""}, "zhHant": {"name": "維他豆奶(小) Soy Drink", "tag": ""}, "en": {"name": "Vita Soy Drink (Small)", "tag": ""}, "it": {"name": "Bevanda di Soia Vita (Piccola)", "tag": ""}, "fr": {"name": "Boisson au Soja Vita (Petite)", "tag": ""}, "es": {"name": "Bebida de Soja Vita (Pequeña)", "tag": ""}}},
-{"id": "wineCoconutJuice", "category": "wine", "sub": "wineSoft", "price": 4.6, "allergens": [], "i18n": {"zh": {"name": "椰树牌椰汁", "tag": ""}, "zhHant": {"name": "椰樹牌椰汁", "tag": ""}, "en": {"name": "Coconut Juice", "tag": ""}, "it": {"name": "Succo di Cocco", "tag": ""}, "fr": {"name": "Jus de Coco", "tag": ""}, "es": {"name": "Zumo de Coco", "tag": ""}}},
-{"id": "wineWaterSmall", "category": "wine", "sub": "wineSoft", "price": 3.8, "allergens": [], "i18n": {"zh": {"name": "小纯净水/小气泡水 330ml", "tag": ""}, "zhHant": {"name": "小純淨水/小氣泡水 330ml", "tag": ""}, "en": {"name": "Still / Sparkling Water (Small) 330ml", "tag": ""}, "it": {"name": "Acqua Naturale / Frizzante (Piccola) 330ml", "tag": ""}, "fr": {"name": "Eau Plate / Pétillante (Petite) 330ml", "tag": ""}, "es": {"name": "Agua Sin Gas / Con Gas (Pequeña) 330ml", "tag": ""}}},
-{"id": "wineWaterLarge", "category": "wine", "sub": "wineSoft", "price": 6.0, "allergens": [], "i18n": {"zh": {"name": "大纯净水/大气泡水 750ml", "tag": ""}, "zhHant": {"name": "大純淨水/大氣泡水 750ml", "tag": ""}, "en": {"name": "Still / Sparkling Water (Large) 750ml", "tag": ""}, "it": {"name": "Acqua Naturale / Frizzante (Grande) 750ml", "tag": ""}, "fr": {"name": "Eau Plate / Pétillante (Grande) 750ml", "tag": ""}, "es": {"name": "Agua Sin Gas / Con Gas (Grande) 750ml", "tag": ""}}},
-{"id": "wineAppleJuice", "category": "wine", "sub": "wineJuice", "sizes": [{"key": "glass", "price": 2.8}, {"key": "bottle", "price": 8.8}], "allergens": [], "i18n": {"zh": {"name": "苹果汁", "tag": ""}, "zhHant": {"name": "蘋果汁", "tag": ""}, "en": {"name": "Apple Juice", "tag": ""}, "it": {"name": "Succo di Mela", "tag": ""}, "fr": {"name": "Jus de Pomme", "tag": ""}, "es": {"name": "Zumo de Manzana", "tag": ""}}},
-{"id": "wineOrangeJuice", "category": "wine", "sub": "wineJuice", "sizes": [{"key": "glass", "price": 2.8}, {"key": "bottle", "price": 8.8}], "allergens": [], "i18n": {"zh": {"name": "橙汁", "tag": ""}, "zhHant": {"name": "橙汁", "tag": ""}, "en": {"name": "Orange Juice", "tag": ""}, "it": {"name": "Succo d'Arancia", "tag": ""}, "fr": {"name": "Jus d'Orange", "tag": ""}, "es": {"name": "Zumo de Naranja", "tag": ""}}},
-{"id": "wineCranberryJuice", "category": "wine", "sub": "wineJuice", "sizes": [{"key": "glass", "price": 2.8}, {"key": "bottle", "price": 8.8}], "allergens": [], "i18n": {"zh": {"name": "蔓越莓汁", "tag": ""}, "zhHant": {"name": "蔓越莓汁", "tag": ""}, "en": {"name": "Cranberry Juice", "tag": ""}, "it": {"name": "Succo di Mirtillo Rosso", "tag": ""}, "fr": {"name": "Jus de Canneberge", "tag": ""}, "es": {"name": "Zumo de Arándano Rojo", "tag": ""}}},
-{"id": "wineTsingtao", "category": "wine", "sub": "wineBeer", "price": 5.95, "allergens": ["1"], "i18n": {"zh": {"name": "青岛啤酒 330ml", "tag": ""}, "zhHant": {"name": "青島啤酒 330ml", "tag": ""}, "en": {"name": "Tsingtao Beer 330ml", "tag": ""}, "it": {"name": "Birra Tsingtao 330ml", "tag": ""}, "fr": {"name": "Bière Tsingtao 330ml", "tag": ""}, "es": {"name": "Cerveza Tsingtao 330ml", "tag": ""}}},
-{"id": "wineAsahi", "category": "wine", "sub": "wineBeer", "price": 5.95, "allergens": ["1"], "i18n": {"zh": {"name": "朝日啤酒 330ml", "tag": ""}, "zhHant": {"name": "朝日啤酒 330ml", "tag": ""}, "en": {"name": "Asahi Beer 330ml", "tag": ""}, "it": {"name": "Birra Asahi 330ml", "tag": ""}, "fr": {"name": "Bière Asahi 330ml", "tag": ""}, "es": {"name": "Cerveza Asahi 330ml", "tag": ""}}},
-{"id": "wineHeineken", "category": "wine", "sub": "wineBeer", "price": 5.95, "allergens": ["1"], "i18n": {"zh": {"name": "喜力啤酒 330ml", "tag": ""}, "zhHant": {"name": "喜力啤酒 330ml", "tag": ""}, "en": {"name": "Heineken 330ml", "tag": ""}, "it": {"name": "Heineken 330ml", "tag": ""}, "fr": {"name": "Heineken 330ml", "tag": ""}, "es": {"name": "Heineken 330ml", "tag": ""}}},
-{"id": "wineHeineken00", "category": "wine", "sub": "wineBeer", "price": 5.5, "allergens": ["1"], "i18n": {"zh": {"name": "喜力0.0 330ml", "tag": ""}, "zhHant": {"name": "喜力0.0 330ml", "tag": ""}, "en": {"name": "Heineken 0.0 330ml", "tag": ""}, "it": {"name": "Heineken 0.0 330ml", "tag": ""}, "fr": {"name": "Heineken 0.0 330ml", "tag": ""}, "es": {"name": "Heineken 0.0 330ml", "tag": ""}}},
-{"id": "wineGuinness", "category": "wine", "sub": "wineBeer", "price": 7.95, "allergens": ["1"], "i18n": {"zh": {"name": "健力士 500ml", "tag": ""}, "zhHant": {"name": "健力士 500ml", "tag": ""}, "en": {"name": "Guinness 500ml", "tag": ""}, "it": {"name": "Guinness 500ml", "tag": ""}, "fr": {"name": "Guinness 500ml", "tag": ""}, "es": {"name": "Guinness 500ml", "tag": ""}}},
-{"id": "wineGuinness00", "category": "wine", "sub": "wineBeer", "price": 7.5, "allergens": ["1"], "i18n": {"zh": {"name": "健力士0.0 500ml", "tag": ""}, "zhHant": {"name": "健力士0.0 500ml", "tag": ""}, "en": {"name": "Guinness 0.0 500ml", "tag": ""}, "it": {"name": "Guinness 0.0 500ml", "tag": ""}, "fr": {"name": "Guinness 0.0 500ml", "tag": ""}, "es": {"name": "Guinness 0.0 500ml", "tag": ""}}},
+{"id": "wineMurariPinotGrigio", "img": "../image/菜品/wines.webp", "category": "wine", "sub": "wineWhite", "sizes": [{"key": "glass", "price": 7.9}, {"key": "bottle", "price": 28}], "allergens": ["10"], "i18n": {"zh": {"name": "Murari Pinot Grigio 卡斯特拉尼灰皮诺", "tag": "意大利·威尼托"}, "zhHant": {"name": "Murari Pinot Grigio 卡斯特拉尼灰皮諾", "tag": "義大利·威尼托"}, "en": {"name": "Murari Pinot Grigio", "tag": "Veneto, Italy"}, "it": {"name": "Murari Pinot Grigio", "tag": "Veneto, Italia"}, "fr": {"name": "Murari Pinot Grigio", "tag": "Vénétie, Italie"}, "es": {"name": "Murari Pinot Grigio", "tag": "Véneto, Italia"}}},
+{"id": "wineBouchardSauvignonBlanc", "img": "../image/菜品/wines.webp", "category": "wine", "sub": "wineWhite", "sizes": [{"key": "glass", "price": 8.5}, {"key": "bottle", "price": 32}], "allergens": ["10"], "i18n": {"zh": {"name": "Bouchard Aine & Fils Sauvignon Blanc 长相思", "tag": "法国·朗格多克"}, "zhHant": {"name": "Bouchard Aine & Fils Sauvignon Blanc 長相思", "tag": "法國·朗格多克"}, "en": {"name": "Bouchard Aine & Fils Sauvignon Blanc", "tag": "Languedoc, France"}, "it": {"name": "Bouchard Aine & Fils Sauvignon Blanc", "tag": "Linguadoca, Francia"}, "fr": {"name": "Bouchard Aine & Fils Sauvignon Blanc", "tag": "Languedoc, France"}, "es": {"name": "Bouchard Aine & Fils Sauvignon Blanc", "tag": "Languedoc, Francia"}}},
+{"id": "winePeterRiesling", "img": "../image/菜品/wines.webp", "category": "wine", "sub": "wineWhite", "sizes": [{"key": "glass", "price": 9.9}, {"key": "bottle", "price": 36}], "allergens": ["10"], "i18n": {"zh": {"name": "Peter & Peter Riesling", "tag": "德国·摩泽尔"}, "zhHant": {"name": "Peter & Peter Riesling", "tag": "德國·摩澤爾"}, "en": {"name": "Peter & Peter Riesling", "tag": "Mosel, Germany"}, "it": {"name": "Peter & Peter Riesling", "tag": "Mosella, Germania"}, "fr": {"name": "Peter & Peter Riesling", "tag": "Moselle, Allemagne"}, "es": {"name": "Peter & Peter Riesling", "tag": "Mosela, Alemania"}}},
+{"id": "wineNauMaiSauvignonBlanc", "img": "../image/菜品/wines.webp", "category": "wine", "sub": "wineWhite", "sizes": [{"key": "bottle", "price": 39}], "allergens": ["10"], "i18n": {"zh": {"name": "Nau Mai Sauvignon Blanc", "tag": "新西兰·马尔堡"}, "zhHant": {"name": "Nau Mai Sauvignon Blanc", "tag": "紐西蘭·馬爾堡"}, "en": {"name": "Nau Mai Sauvignon Blanc", "tag": "Marlborough, New Zealand"}, "it": {"name": "Nau Mai Sauvignon Blanc", "tag": "Marlborough, Nuova Zelanda"}, "fr": {"name": "Nau Mai Sauvignon Blanc", "tag": "Marlborough, Nouvelle-Zélande"}, "es": {"name": "Nau Mai Sauvignon Blanc", "tag": "Marlborough, Nueva Zelanda"}}},
+{"id": "wineCasalVentozelaAlvarinho", "img": "../image/菜品/wines.webp", "category": "wine", "sub": "wineWhite", "sizes": [{"key": "bottle", "price": 45}], "allergens": ["10"], "i18n": {"zh": {"name": "Casal de Ventozela Alvarinho 阿瓦里诺", "tag": "葡萄牙·绿酒产区"}, "zhHant": {"name": "Casal de Ventozela Alvarinho 阿瓦里諾", "tag": "葡萄牙·綠酒產區"}, "en": {"name": "Casal de Ventozela Alvarinho", "tag": "Vinho Verde, Portugal"}, "it": {"name": "Casal de Ventozela Alvarinho", "tag": "Vinho Verde, Portogallo"}, "fr": {"name": "Casal de Ventozela Alvarinho", "tag": "Vinho Verde, Portugal"}, "es": {"name": "Casal de Ventozela Alvarinho", "tag": "Vinho Verde, Portugal"}}},
+{"id": "wineDomaneWachauGruner", "img": "../image/菜品/wines.webp", "category": "wine", "sub": "wineWhite", "sizes": [{"key": "bottle", "price": 49}], "allergens": ["10"], "i18n": {"zh": {"name": "Domäne Wachau Grüner Veltliner Federspiel", "tag": "奥地利·瓦豪"}, "zhHant": {"name": "Domäne Wachau Grüner Veltliner Federspiel", "tag": "奧地利·瓦豪"}, "en": {"name": "Domäne Wachau Grüner Veltliner Federspiel", "tag": "Wachau, Austria"}, "it": {"name": "Domäne Wachau Grüner Veltliner Federspiel", "tag": "Wachau, Austria"}, "fr": {"name": "Domäne Wachau Grüner Veltliner Federspiel", "tag": "Wachau, Autriche"}, "es": {"name": "Domäne Wachau Grüner Veltliner Federspiel", "tag": "Wachau, Austria"}}},
+{"id": "wineLouisJadotChardonnay", "img": "../image/菜品/wines.webp", "category": "wine", "sub": "wineWhite", "sizes": [{"key": "bottle", "price": 65}], "allergens": ["10"], "i18n": {"zh": {"name": "Louis Jadot Bourgogne Chardonnay 'Couvent des Jacobins' 勃艮第霞多丽", "tag": "法国·勃艮第"}, "zhHant": {"name": "Louis Jadot Bourgogne Chardonnay 'Couvent des Jacobins' 勃艮第霞多麗", "tag": "法國·勃艮第"}, "en": {"name": "Louis Jadot Bourgogne Chardonnay 'Couvent des Jacobins'", "tag": "Burgundy, France"}, "it": {"name": "Louis Jadot Bourgogne Chardonnay 'Couvent des Jacobins'", "tag": "Borgogna, Francia"}, "fr": {"name": "Louis Jadot Bourgogne Chardonnay « Couvent des Jacobins »", "tag": "Bourgogne, France"}, "es": {"name": "Louis Jadot Bourgogne Chardonnay 'Couvent des Jacobins'", "tag": "Borgoña, Francia"}}},
+{"id": "wineMarquisGoulaineSancerre", "img": "../image/菜品/wines.webp", "category": "wine", "sub": "wineWhite", "sizes": [{"key": "bottle", "price": 79}], "allergens": ["10"], "i18n": {"zh": {"name": "Marquis de Goulaine Sancerre 'Les Lorys' 桑塞尔", "tag": "法国·卢瓦尔河谷"}, "zhHant": {"name": "Marquis de Goulaine Sancerre 'Les Lorys' 桑塞爾", "tag": "法國·盧瓦爾河谷"}, "en": {"name": "Marquis de Goulaine Sancerre 'Les Lorys'", "tag": "Loire Valley, France"}, "it": {"name": "Marquis de Goulaine Sancerre 'Les Lorys'", "tag": "Valle della Loira, Francia"}, "fr": {"name": "Marquis de Goulaine Sancerre « Les Lorys »", "tag": "Vallée de la Loire, France"}, "es": {"name": "Marquis de Goulaine Sancerre 'Les Lorys'", "tag": "Valle del Loira, Francia"}}},
+{"id": "wineOrquestraTempranillo", "img": "../image/菜品/wines.webp", "category": "wine", "sub": "wineRed", "sizes": [{"key": "glass", "price": 7.9}, {"key": "bottle", "price": 28}], "allergens": ["10"], "i18n": {"zh": {"name": "Orquestra Tempranillo 丹魄乐团", "tag": "西班牙·拉曼恰"}, "zhHant": {"name": "Orquestra Tempranillo 丹魄樂團", "tag": "西班牙·拉曼恰"}, "en": {"name": "Orquestra Tempranillo", "tag": "La Mancha, Spain"}, "it": {"name": "Orquestra Tempranillo", "tag": "La Mancha, Spagna"}, "fr": {"name": "Orquestra Tempranillo", "tag": "La Manche, Espagne"}, "es": {"name": "Orquestra Tempranillo", "tag": "La Mancha, España"}}},
+{"id": "wineReserveAubeSyrahMerlot", "img": "../image/菜品/wines.webp", "category": "wine", "sub": "wineRed", "sizes": [{"key": "glass", "price": 8.5}, {"key": "bottle", "price": 32}], "allergens": ["10"], "i18n": {"zh": {"name": "Reserve de L'Aube Syrah Merlot 奥布西拉梅洛珍藏", "tag": "法国·朗格多克"}, "zhHant": {"name": "Reserve de L'Aube Syrah Merlot 奧布西拉梅洛珍藏", "tag": "法國·朗格多克"}, "en": {"name": "Reserve de L'Aube Syrah Merlot", "tag": "Languedoc, France"}, "it": {"name": "Reserve de L'Aube Syrah Merlot", "tag": "Linguadoca, Francia"}, "fr": {"name": "Réserve de L'Aube Syrah Merlot", "tag": "Languedoc, France"}, "es": {"name": "Reserve de L'Aube Syrah Merlot", "tag": "Languedoc, Francia"}}},
+{"id": "wineChateauGrandVallons", "img": "../image/菜品/wines.webp", "category": "wine", "sub": "wineRed", "sizes": [{"key": "glass", "price": 10.95}, {"key": "bottle", "price": 39}], "allergens": ["10"], "i18n": {"zh": {"name": "Château Les Grand Vallons 波尔多-城堡", "tag": "法国·波尔多丘布拉伊"}, "zhHant": {"name": "Château Les Grand Vallons 波爾多-城堡", "tag": "法國·波爾多丘布拉伊"}, "en": {"name": "Château Les Grand Vallons", "tag": "Blaye, Côtes de Bordeaux, France"}, "it": {"name": "Château Les Grand Vallons", "tag": "Blaye, Côtes de Bordeaux, Francia"}, "fr": {"name": "Château Les Grand Vallons", "tag": "Blaye, Côtes de Bordeaux, France"}, "es": {"name": "Château Les Grand Vallons", "tag": "Blaye, Côtes de Bordeaux, Francia"}}},
+{"id": "wineFincaMonicaCrianza", "img": "../image/菜品/wines.webp", "category": "wine", "sub": "wineRed", "sizes": [{"key": "bottle", "price": 42}], "allergens": ["10"], "i18n": {"zh": {"name": "Finca Mónica Crianza", "tag": "西班牙·里奥哈"}, "zhHant": {"name": "Finca Mónica Crianza", "tag": "西班牙·里奧哈"}, "en": {"name": "Finca Mónica Crianza", "tag": "Rioja, Spain"}, "it": {"name": "Finca Mónica Crianza", "tag": "Rioja, Spagna"}, "fr": {"name": "Finca Mónica Crianza", "tag": "Rioja, Espagne"}, "es": {"name": "Finca Mónica Crianza", "tag": "Rioja, España"}}},
+{"id": "wineFinDelMundoMalbec", "img": "../image/菜品/wines.webp", "category": "wine", "sub": "wineRed", "sizes": [{"key": "bottle", "price": 45}], "allergens": ["10"], "i18n": {"zh": {"name": "Fin del Mundo Reserva Malbec 珍藏马尔贝克", "tag": "阿根廷·巴塔哥尼亚"}, "zhHant": {"name": "Fin del Mundo Reserva Malbec 珍藏馬爾貝克", "tag": "阿根廷·巴塔哥尼亞"}, "en": {"name": "Fin del Mundo Reserva Malbec", "tag": "Patagonia, Argentina"}, "it": {"name": "Fin del Mundo Reserva Malbec", "tag": "Patagonia, Argentina"}, "fr": {"name": "Fin del Mundo Reserva Malbec", "tag": "Patagonie, Argentine"}, "es": {"name": "Fin del Mundo Reserva Malbec", "tag": "Patagonia, Argentina"}}},
+{"id": "wineSuraniPrimitivo", "img": "../image/菜品/wines.webp", "category": "wine", "sub": "wineRed", "sizes": [{"key": "bottle", "price": 49}], "allergens": ["10"], "i18n": {"zh": {"name": "Surani Primitivo di Manduria", "tag": "意大利·普利亚"}, "zhHant": {"name": "Surani Primitivo di Manduria", "tag": "義大利·普利亞"}, "en": {"name": "Surani Primitivo di Manduria", "tag": "Puglia, Italy"}, "it": {"name": "Surani Primitivo di Manduria", "tag": "Puglia, Italia"}, "fr": {"name": "Surani Primitivo di Manduria", "tag": "Pouilles, Italie"}, "es": {"name": "Surani Primitivo di Manduria", "tag": "Apulia, Italia"}}},
+{"id": "wineLouisJadotPinotNoir", "img": "../image/菜品/wines.webp", "category": "wine", "sub": "wineRed", "sizes": [{"key": "bottle", "price": 69}], "allergens": ["10"], "i18n": {"zh": {"name": "Louis Jadot Bourgogne Pinot Noir 'Couvent des Jacobins' 勃艮第黑皮诺", "tag": "法国·勃艮第"}, "zhHant": {"name": "Louis Jadot Bourgogne Pinot Noir 'Couvent des Jacobins' 勃艮第黑皮諾", "tag": "法國·勃艮第"}, "en": {"name": "Louis Jadot Bourgogne Pinot Noir 'Couvent des Jacobins'", "tag": "Burgundy, France"}, "it": {"name": "Louis Jadot Bourgogne Pinot Noir 'Couvent des Jacobins'", "tag": "Borgogna, Francia"}, "fr": {"name": "Louis Jadot Bourgogne Pinot Noir « Couvent des Jacobins »", "tag": "Bourgogne, France"}, "es": {"name": "Louis Jadot Bourgogne Pinot Noir 'Couvent des Jacobins'", "tag": "Borgoña, Francia"}}},
+{"id": "wineHautsLynchMoussas", "img": "../image/菜品/wines.webp", "category": "wine", "sub": "wineRed", "sizes": [{"key": "bottle", "price": 89}], "allergens": ["10"], "i18n": {"zh": {"name": "Les Hauts de Lynch Moussas 上梦多克", "tag": "法国·波尔多上梅多克"}, "zhHant": {"name": "Les Hauts de Lynch Moussas 上夢多克", "tag": "法國·波爾多上梅多克"}, "en": {"name": "Les Hauts de Lynch Moussas", "tag": "Haut-Médoc, Bordeaux, France"}, "it": {"name": "Les Hauts de Lynch Moussas", "tag": "Haut-Médoc, Bordeaux, Francia"}, "fr": {"name": "Les Hauts de Lynch Moussas", "tag": "Haut-Médoc, Bordeaux, France"}, "es": {"name": "Les Hauts de Lynch Moussas", "tag": "Haut-Médoc, Burdeos, Francia"}}},
+{"id": "wineColombetteGrenacheRose", "img": "../image/菜品/wines.webp", "category": "wine", "sub": "wineRose", "sizes": [{"key": "glass", "price": 8}, {"key": "bottle", "price": 29}], "allergens": ["10"], "i18n": {"zh": {"name": "Domaine La Colombette Grenache Rosé 歌海娜玫瑰庄", "tag": "法国·朗格多克"}, "zhHant": {"name": "Domaine La Colombette Grenache Rosé 歌海娜玫瑰莊", "tag": "法國·朗格多克"}, "en": {"name": "Domaine La Colombette Grenache Rosé", "tag": "Languedoc, France"}, "it": {"name": "Domaine La Colombette Grenache Rosé", "tag": "Linguadoca, Francia"}, "fr": {"name": "Domaine La Colombette Grenache Rosé", "tag": "Languedoc, France"}, "es": {"name": "Domaine La Colombette Grenache Rosé", "tag": "Languedoc, Francia"}}},
+{"id": "wineBerneRomanceRose", "img": "../image/菜品/wines.webp", "category": "wine", "sub": "wineRose", "sizes": [{"key": "glass", "price": 10.95}, {"key": "bottle", "price": 39}], "allergens": ["10"], "i18n": {"zh": {"name": "Château de Berne Romance Rosé 普罗旺斯玫瑰", "tag": "法国·普罗旺斯"}, "zhHant": {"name": "Château de Berne Romance Rosé 普羅旺斯玫瑰", "tag": "法國·普羅旺斯"}, "en": {"name": "Château de Berne Romance Rosé", "tag": "Provence, France"}, "it": {"name": "Château de Berne Romance Rosé", "tag": "Provenza, Francia"}, "fr": {"name": "Château de Berne Romance Rosé", "tag": "Provence, France"}, "es": {"name": "Château de Berne Romance Rosé", "tag": "Provenza, Francia"}}},
+{"id": "wineSerenaProsecco", "img": "../image/菜品/wines.webp", "category": "wine", "sub": "wineSparkling", "price": 9.95, "allergens": ["10"], "i18n": {"zh": {"name": "Serena Prosecco Frizzante 罗普罗蜜克(单人装20cl)", "tag": ""}, "zhHant": {"name": "Serena Prosecco Frizzante 羅普羅蜜克(單人裝20cl)", "tag": ""}, "en": {"name": "Serena Prosecco Frizzante (Single Serve 20cl)", "tag": ""}, "it": {"name": "Serena Prosecco Frizzante (Formato Singolo 20cl)", "tag": ""}, "fr": {"name": "Serena Prosecco Frizzante (Format Individuel 20cl)", "tag": ""}, "es": {"name": "Serena Prosecco Frizzante (Formato Individual 20cl)", "tag": ""}}},
+{"id": "wineMontegrandeFrizzante", "img": "../image/菜品/wines.webp", "category": "wine", "sub": "wineSparkling", "price": 29, "allergens": ["10"], "i18n": {"zh": {"name": "Montegrande Bianco Frizzante 蒙特格兰德(瓶)", "tag": ""}, "zhHant": {"name": "Montegrande Bianco Frizzante 蒙特格蘭德(瓶)", "tag": ""}, "en": {"name": "Montegrande Bianco Frizzante (Bottle)", "tag": ""}, "it": {"name": "Montegrande Bianco Frizzante (Bottiglia)", "tag": ""}, "fr": {"name": "Montegrande Bianco Frizzante (Bouteille)", "tag": ""}, "es": {"name": "Montegrande Bianco Frizzante (Botella)", "tag": ""}}},
+{"id": "wineChampagneTheophile", "img": "../image/菜品/wines.webp", "category": "wine", "sub": "wineSparkling", "price": 89, "allergens": ["10"], "i18n": {"zh": {"name": "Champagne Theophile Brut NV 香槟(瓶)", "tag": ""}, "zhHant": {"name": "Champagne Theophile Brut NV 香檳(瓶)", "tag": ""}, "en": {"name": "Champagne Theophile Brut NV (Bottle)", "tag": ""}, "it": {"name": "Champagne Theophile Brut NV (Bottiglia)", "tag": ""}, "fr": {"name": "Champagne Theophile Brut NV (Bouteille)", "tag": ""}, "es": {"name": "Champagne Theophile Brut NV (Botella)", "tag": ""}}},
+{"id": "wineCola", "img": "../image/菜品/soft drinks.webp", "category": "wine", "sub": "wineSoft", "price": 3.8, "allergens": [], "i18n": {"zh": {"name": "可乐/无糖可乐/健怡可乐 330ml", "tag": ""}, "zhHant": {"name": "可樂/無糖可樂/健怡可樂 330ml", "tag": ""}, "en": {"name": "Coke / Diet Coke / Coke Zero 330ml", "tag": ""}, "it": {"name": "Coca-Cola / Coca-Cola Light / Coca-Cola Zero 330ml", "tag": ""}, "fr": {"name": "Coca-Cola / Coca-Cola Light / Coca-Cola Zero 330ml", "tag": ""}, "es": {"name": "Coca-Cola / Coca-Cola Light / Coca-Cola Zero 330ml", "tag": ""}}},
+{"id": "wineSevenUp", "img": "../image/菜品/soft drinks.webp", "category": "wine", "sub": "wineSoft", "price": 3.8, "allergens": [], "i18n": {"zh": {"name": "七喜/无糖七喜 300ml", "tag": ""}, "zhHant": {"name": "七喜/無糖七喜 300ml", "tag": ""}, "en": {"name": "7 Up / Diet 7 Up 300ml", "tag": ""}, "it": {"name": "7 Up / 7 Up Senza Zucchero 300ml", "tag": ""}, "fr": {"name": "7 Up / 7 Up Sans Sucre 300ml", "tag": ""}, "es": {"name": "7 Up / 7 Up Sin Azúcar 300ml", "tag": ""}}},
+{"id": "wineFanta", "img": "../image/菜品/soft drinks.webp", "category": "wine", "sub": "wineSoft", "price": 3.8, "allergens": [], "i18n": {"zh": {"name": "芬达 Fanta 300ml", "tag": ""}, "zhHant": {"name": "芬達 Fanta 300ml", "tag": ""}, "en": {"name": "Fanta 300ml", "tag": ""}, "it": {"name": "Fanta 300ml", "tag": ""}, "fr": {"name": "Fanta 300ml", "tag": ""}, "es": {"name": "Fanta 300ml", "tag": ""}}},
+{"id": "wineJdb", "img": "../image/菜品/soft drinks.webp", "category": "wine", "sub": "wineSoft", "price": 3.8, "allergens": [], "i18n": {"zh": {"name": "加多宝 Jiaduobao", "tag": ""}, "zhHant": {"name": "加多寶 Jiaduobao", "tag": ""}, "en": {"name": "Jiaduobao", "tag": ""}, "it": {"name": "Jiaduobao", "tag": ""}, "fr": {"name": "Jiaduobao", "tag": ""}, "es": {"name": "Jiaduobao", "tag": ""}}},
+{"id": "wineAloeRegular", "img": "../image/菜品/soft drinks.webp", "category": "wine", "sub": "wineSoft", "price": 3.8, "allergens": [], "i18n": {"zh": {"name": "芦荟汁 Aloe Juice", "tag": "常规"}, "zhHant": {"name": "蘆薈汁 Aloe Juice", "tag": "常規"}, "en": {"name": "Aloe Juice (Regular)", "tag": ""}, "it": {"name": "Succo di Aloe (Normale)", "tag": ""}, "fr": {"name": "Jus d'Aloe Vera (Normal)", "tag": ""}, "es": {"name": "Zumo de Aloe Vera (Normal)", "tag": ""}}},
+{"id": "wineAloeLarge", "img": "../image/菜品/soft drinks.webp", "category": "wine", "sub": "wineSoft", "price": 9.0, "allergens": [], "i18n": {"zh": {"name": "芦荟汁(大) Aloe Juice", "tag": "大杯"}, "zhHant": {"name": "蘆薈汁(大) Aloe Juice", "tag": "大杯"}, "en": {"name": "Aloe Juice (Large)", "tag": ""}, "it": {"name": "Succo di Aloe (Grande)", "tag": ""}, "fr": {"name": "Jus d'Aloe Vera (Grand)", "tag": ""}, "es": {"name": "Zumo de Aloe Vera (Grande)", "tag": ""}}},
+{"id": "wineSoyDrink", "img": "../image/菜品/soft drinks.webp", "category": "wine", "sub": "wineSoft", "price": 4.6, "allergens": ["4"], "i18n": {"zh": {"name": "维他豆奶(小) Soy Drink", "tag": ""}, "zhHant": {"name": "維他豆奶(小) Soy Drink", "tag": ""}, "en": {"name": "Vita Soy Drink (Small)", "tag": ""}, "it": {"name": "Bevanda di Soia Vita (Piccola)", "tag": ""}, "fr": {"name": "Boisson au Soja Vita (Petite)", "tag": ""}, "es": {"name": "Bebida de Soja Vita (Pequeña)", "tag": ""}}},
+{"id": "wineCoconutJuice", "img": "../image/菜品/soft drinks.webp", "category": "wine", "sub": "wineSoft", "price": 4.6, "allergens": [], "i18n": {"zh": {"name": "椰树牌椰汁", "tag": ""}, "zhHant": {"name": "椰樹牌椰汁", "tag": ""}, "en": {"name": "Coconut Juice", "tag": ""}, "it": {"name": "Succo di Cocco", "tag": ""}, "fr": {"name": "Jus de Coco", "tag": ""}, "es": {"name": "Zumo de Coco", "tag": ""}}},
+{"id": "wineWaterSmall", "img": "../image/菜品/soft drinks.webp", "category": "wine", "sub": "wineSoft", "price": 3.8, "allergens": [], "i18n": {"zh": {"name": "小纯净水/小气泡水 330ml", "tag": ""}, "zhHant": {"name": "小純淨水/小氣泡水 330ml", "tag": ""}, "en": {"name": "Still / Sparkling Water (Small) 330ml", "tag": ""}, "it": {"name": "Acqua Naturale / Frizzante (Piccola) 330ml", "tag": ""}, "fr": {"name": "Eau Plate / Pétillante (Petite) 330ml", "tag": ""}, "es": {"name": "Agua Sin Gas / Con Gas (Pequeña) 330ml", "tag": ""}}},
+{"id": "wineWaterLarge", "img": "../image/菜品/soft drinks.webp", "category": "wine", "sub": "wineSoft", "price": 6.0, "allergens": [], "i18n": {"zh": {"name": "大纯净水/大气泡水 750ml", "tag": ""}, "zhHant": {"name": "大純淨水/大氣泡水 750ml", "tag": ""}, "en": {"name": "Still / Sparkling Water (Large) 750ml", "tag": ""}, "it": {"name": "Acqua Naturale / Frizzante (Grande) 750ml", "tag": ""}, "fr": {"name": "Eau Plate / Pétillante (Grande) 750ml", "tag": ""}, "es": {"name": "Agua Sin Gas / Con Gas (Grande) 750ml", "tag": ""}}},
+{"id": "wineAppleJuice", "img": "../image/菜品/果汁.webp", "category": "wine", "sub": "wineJuice", "sizes": [{"key": "glass", "price": 2.8}, {"key": "bottle", "price": 8.8}], "allergens": [], "i18n": {"zh": {"name": "苹果汁", "tag": ""}, "zhHant": {"name": "蘋果汁", "tag": ""}, "en": {"name": "Apple Juice", "tag": ""}, "it": {"name": "Succo di Mela", "tag": ""}, "fr": {"name": "Jus de Pomme", "tag": ""}, "es": {"name": "Zumo de Manzana", "tag": ""}}},
+{"id": "wineOrangeJuice", "img": "../image/菜品/果汁.webp", "category": "wine", "sub": "wineJuice", "sizes": [{"key": "glass", "price": 2.8}, {"key": "bottle", "price": 8.8}], "allergens": [], "i18n": {"zh": {"name": "橙汁", "tag": ""}, "zhHant": {"name": "橙汁", "tag": ""}, "en": {"name": "Orange Juice", "tag": ""}, "it": {"name": "Succo d'Arancia", "tag": ""}, "fr": {"name": "Jus d'Orange", "tag": ""}, "es": {"name": "Zumo de Naranja", "tag": ""}}},
+{"id": "wineCranberryJuice", "img": "../image/菜品/果汁.webp", "category": "wine", "sub": "wineJuice", "sizes": [{"key": "glass", "price": 2.8}, {"key": "bottle", "price": 8.8}], "allergens": [], "i18n": {"zh": {"name": "蔓越莓汁", "tag": ""}, "zhHant": {"name": "蔓越莓汁", "tag": ""}, "en": {"name": "Cranberry Juice", "tag": ""}, "it": {"name": "Succo di Mirtillo Rosso", "tag": ""}, "fr": {"name": "Jus de Canneberge", "tag": ""}, "es": {"name": "Zumo de Arándano Rojo", "tag": ""}}},
+{"id": "wineTsingtao", "img": "../image/菜品/beers.webp", "category": "wine", "sub": "wineBeer", "price": 5.95, "allergens": ["1"], "i18n": {"zh": {"name": "青岛啤酒 330ml", "tag": ""}, "zhHant": {"name": "青島啤酒 330ml", "tag": ""}, "en": {"name": "Tsingtao Beer 330ml", "tag": ""}, "it": {"name": "Birra Tsingtao 330ml", "tag": ""}, "fr": {"name": "Bière Tsingtao 330ml", "tag": ""}, "es": {"name": "Cerveza Tsingtao 330ml", "tag": ""}}},
+{"id": "wineAsahi", "img": "../image/菜品/beers.webp", "category": "wine", "sub": "wineBeer", "price": 5.95, "allergens": ["1"], "i18n": {"zh": {"name": "朝日啤酒 330ml", "tag": ""}, "zhHant": {"name": "朝日啤酒 330ml", "tag": ""}, "en": {"name": "Asahi Beer 330ml", "tag": ""}, "it": {"name": "Birra Asahi 330ml", "tag": ""}, "fr": {"name": "Bière Asahi 330ml", "tag": ""}, "es": {"name": "Cerveza Asahi 330ml", "tag": ""}}},
+{"id": "wineHeineken", "img": "../image/菜品/beers.webp", "category": "wine", "sub": "wineBeer", "price": 5.95, "allergens": ["1"], "i18n": {"zh": {"name": "喜力啤酒 330ml", "tag": ""}, "zhHant": {"name": "喜力啤酒 330ml", "tag": ""}, "en": {"name": "Heineken 330ml", "tag": ""}, "it": {"name": "Heineken 330ml", "tag": ""}, "fr": {"name": "Heineken 330ml", "tag": ""}, "es": {"name": "Heineken 330ml", "tag": ""}}},
+{"id": "wineHeineken00", "img": "../image/菜品/beers.webp", "category": "wine", "sub": "wineBeer", "price": 5.5, "allergens": ["1"], "i18n": {"zh": {"name": "喜力0.0 330ml", "tag": ""}, "zhHant": {"name": "喜力0.0 330ml", "tag": ""}, "en": {"name": "Heineken 0.0 330ml", "tag": ""}, "it": {"name": "Heineken 0.0 330ml", "tag": ""}, "fr": {"name": "Heineken 0.0 330ml", "tag": ""}, "es": {"name": "Heineken 0.0 330ml", "tag": ""}}},
+{"id": "wineGuinness", "img": "../image/菜品/beers.webp", "category": "wine", "sub": "wineBeer", "price": 7.95, "allergens": ["1"], "i18n": {"zh": {"name": "健力士 500ml", "tag": ""}, "zhHant": {"name": "健力士 500ml", "tag": ""}, "en": {"name": "Guinness 500ml", "tag": ""}, "it": {"name": "Guinness 500ml", "tag": ""}, "fr": {"name": "Guinness 500ml", "tag": ""}, "es": {"name": "Guinness 500ml", "tag": ""}}},
+{"id": "wineGuinness00", "img": "../image/菜品/beers.webp", "category": "wine", "sub": "wineBeer", "price": 7.5, "allergens": ["1"], "i18n": {"zh": {"name": "健力士0.0 500ml", "tag": ""}, "zhHant": {"name": "健力士0.0 500ml", "tag": ""}, "en": {"name": "Guinness 0.0 500ml", "tag": ""}, "it": {"name": "Guinness 0.0 500ml", "tag": ""}, "fr": {"name": "Guinness 0.0 500ml", "tag": ""}, "es": {"name": "Guinness 0.0 500ml", "tag": ""}}},
 ];
 
 // 用常识从中文配料/菜名里判断：这道菜是否可调辣度
@@ -1999,8 +1969,13 @@ function finishAddOn(){
 function updateItemUI(id){
   if(state.screen !== 'menu'){ render(); return; }
 
-  const body = document.querySelector(`.dish-card[data-id="${id}"] .dish-body`);
-  if(body) body.innerHTML = dishBodyHTML(MENU_BY_ID[id]);
+  const card = document.querySelector(`.dish-card[data-id="${id}"]`);
+  if(card){
+    const body = card.querySelector('.dish-body');
+    if(body) body.innerHTML = dishBodyHTML(MENU_BY_ID[id]);
+    const extendSlot = card.querySelector('.dish-extend-slot');
+    if(extendSlot) extendSlot.innerHTML = dishExtendHTML(MENU_BY_ID[id]);
+  }
 
   if(state.cartPopupOpen){
     const body = document.getElementById('cart-side-body');
@@ -2208,38 +2183,69 @@ function goToMyOrder(){
   render();
 }
 
-function celebrateAddToCart(){
+// Removes any in-flight toast, killing its GSAP tweens first so a rapid
+// double-tap on + doesn't leave an orphaned timeline running against a
+// detached element.
+function clearHotpotToast(){
   const existing = document.querySelector('.hotpot-toast');
-  if(existing) existing.remove();
+  if(existing){
+    gsap.killTweensOf(existing.querySelectorAll('*'));
+    gsap.killTweensOf(existing);
+    existing.remove();
+  }
+}
+
+function celebrateAddToCart(){
+  clearHotpotToast();
 
   const toast = document.createElement('div');
   toast.className = 'hotpot-toast';
   toast.innerHTML = `
-    <div class="hotpot-pot">
-      <svg viewBox="0 0 120 90" width="112" height="84">
-        <path d="M10 32 Q10 80 60 80 Q110 80 110 32 L100 32 Q100 70 60 70 Q20 70 20 32 Z" fill="#8A2A12"/>
-        <ellipse cx="60" cy="32" rx="50" ry="13" fill="#C9502E"/>
-        <ellipse cx="60" cy="32" rx="50" ry="13" fill="none" stroke="#7A2A14" stroke-width="2.5"/>
-        <ellipse cx="60" cy="32" rx="42" ry="9" fill="#96371D"/>
-        <rect x="-2" y="27" width="16" height="8" rx="4" fill="#8A2A12"/>
-        <rect x="106" y="27" width="16" height="8" rx="4" fill="#8A2A12"/>
-      </svg>
-      <span class="hotpot-steam s1">~</span>
-      <span class="hotpot-steam s2">~</span>
-      <span class="hotpot-dumpling">🥟</span>
-      <span class="hotpot-splash">💦</span>
-    </div>
+    <svg class="fx-check" viewBox="0 0 64 64" width="56" height="56" aria-hidden="true">
+      <circle class="fx-check-pulse" cx="32" cy="32" r="24" fill="none" stroke="var(--jade)" stroke-width="2"/>
+      <circle class="fx-check-circle" cx="32" cy="32" r="22" fill="var(--jade)"/>
+      <path class="fx-check-mark" d="M21 33 L28.5 40.5 L44 23" fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
     <p class="hotpot-caption">${t('addedToCart')}</p>
   `;
   document.body.appendChild(toast);
-  toast.addEventListener('animationend', (ev)=>{
-    if(ev.target === toast) toast.remove();
-  });
+
+  const circle = toast.querySelector('.fx-check-circle');
+  const pulse = toast.querySelector('.fx-check-pulse');
+  const mark = toast.querySelector('.fx-check-mark');
+  const caption = toast.querySelector('.hotpot-caption');
+  const cleanup = () => toast.remove();
+
+  const markLen = mark.getTotalLength();
+  gsap.set(mark, { strokeDasharray: markLen, strokeDashoffset: markLen });
+
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    gsap.set(toast, { xPercent: -50, autoAlpha: 1 });
+    gsap.set(mark, { strokeDashoffset: 0 });
+    gsap.set(pulse, { autoAlpha: 0 });
+    gsap.set(caption, { autoAlpha: 1 });
+    gsap.delayedCall(1.1, () => gsap.to(toast, { autoAlpha: 0, duration: 0.3, onComplete: cleanup }));
+    return;
+  }
+
+  gsap.set(toast, { xPercent: -50, autoAlpha: 0, y: 8, scale: 0.9 });
+  gsap.set(circle, { transformOrigin: '50% 50%', scale: 0 });
+  gsap.set(pulse, { transformOrigin: '50% 50%', scale: 0.6, autoAlpha: 0 });
+  gsap.set(caption, { autoAlpha: 0, y: 6 });
+
+  // Circle pops in, the checkmark draws itself stroke-by-stroke, one pulse
+  // ring confirms it — a compact status badge, not a scene.
+  gsap.timeline({ onComplete: cleanup })
+    .to(toast, { autoAlpha: 1, y: 0, scale: 1, duration: 0.25, ease: 'power2.out' }, 0)
+    .to(circle, { scale: 1, duration: 0.32, ease: 'back.out(2.2)' }, 0.05)
+    .to(mark, { strokeDashoffset: 0, duration: 0.28, ease: 'power2.out' }, 0.32)
+    .fromTo(pulse, { autoAlpha: 0.55, scale: 0.7 }, { autoAlpha: 0, scale: 1.5, duration: 0.55, ease: 'power1.out' }, 0.34)
+    .to(caption, { autoAlpha: 1, y: 0, duration: 0.25, ease: 'power2.out' }, 0.42)
+    .to(toast, { autoAlpha: 0, y: -6, scale: 0.95, duration: 0.3, ease: 'power1.in' }, '+=0.5');
 }
 
 function celebrateCallWaiter(){
-  const existing = document.querySelector('.hotpot-toast');
-  if(existing) existing.remove();
+  clearHotpotToast();
 
   const toast = document.createElement('div');
   toast.className = 'hotpot-toast';
@@ -2248,9 +2254,31 @@ function celebrateCallWaiter(){
     <p class="hotpot-caption">${t('waiterCalled')}</p>
   `;
   document.body.appendChild(toast);
-  toast.addEventListener('animationend', (ev)=>{
-    if(ev.target === toast) toast.remove();
-  });
+
+  const bell = toast.querySelector('.call-toast-bell');
+  const caption = toast.querySelector('.hotpot-caption');
+  const cleanup = () => toast.remove();
+
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    gsap.set(toast, { xPercent: -50, autoAlpha: 1 });
+    gsap.set(caption, { autoAlpha: 1 });
+    gsap.delayedCall(1.3, () => gsap.to(toast, { autoAlpha: 0, duration: 0.3, onComplete: cleanup }));
+    return;
+  }
+
+  gsap.set(toast, { xPercent: -50, autoAlpha: 0, y: 10, scale: 0.92 });
+  gsap.set(bell, { transformOrigin: '50% 0%' });
+  gsap.set(caption, { autoAlpha: 0, y: 6 });
+
+  gsap.timeline({ onComplete: cleanup })
+    .to(toast, { autoAlpha: 1, y: 0, scale: 1, duration: 0.3, ease: 'back.out(1.6)' }, 0)
+    .to(caption, { autoAlpha: 1, y: 0, duration: 0.3, ease: 'power2.out' }, 0.1)
+    .to(bell, { rotation: -22, duration: 0.13, ease: 'power1.out' }, 0.15)
+    .to(bell, { rotation: 18, duration: 0.13, ease: 'power1.inOut' })
+    .to(bell, { rotation: -13, duration: 0.12, ease: 'power1.inOut' })
+    .to(bell, { rotation: 8, duration: 0.12, ease: 'power1.inOut' })
+    .to(bell, { rotation: 0, duration: 0.3, ease: 'elastic.out(1, 0.4)' })
+    .to(toast, { autoAlpha: 0, y: -8, scale: 0.96, duration: 0.35, ease: 'power1.in' }, '+=0.7');
 }
 
 async function callWaiter(){
@@ -2643,10 +2671,17 @@ function lunchDrinkRowHTML(d, it){
 
 // Everything that only shows up once qty>0 (spice level, soup-base pick,
 // meat type, drink pick, cook method, options) lives in one "extension"
-// block so it visually unfurls below the actions row instead of jumping
-// the title/price/photo area the instant the + button is tapped.
-function dishExtendHTML(d, it, inAddOnMode, isLunchFlavorDish, isHotpotBowlSet, hasSoupBaseRow){
+// note below the card row — a divider, then an inset slip — instead of
+// stretching/recentering the row itself the instant the + button is tapped.
+// Self-contained (recomputes it/flags) so dishCardHTML and updateItemUI can
+// both call it without threading state through dishBodyHTML.
+function dishExtendHTML(d){
+  const inAddOnMode = isAddOnBrowsing(d);
+  const it = inAddOnMode ? getEffectiveItem(d) : getItem(d.id);
   if(it.qty<=0) return '';
+  const isLunchFlavorDish = LUNCH_FLAVOR_DISH_IDS.includes(d.id);
+  const isHotpotBowlSet = d.id === HOTPOT_BOWL_SET_ID;
+  const hasSoupBaseRow = SOUP_BASE_DISH_IDS.includes(d.id);
   const rows = `
     ${d.spicy && !isLunchFlavorDish && !inAddOnMode ? `
       <div class="spice-row">
@@ -2673,7 +2708,7 @@ function dishExtendHTML(d, it, inAddOnMode, isLunchFlavorDish, isHotpotBowlSet, 
           </button>`).join('')}
       </div>` : ''}
     ${d.options.length>0 && !inAddOnMode ? optionsRowHTML(d, it) : ''}`;
-  return rows.trim() ? `<div class="dish-extend">${rows}</div>` : '';
+  return rows.trim() ? `<div class="dish-extend"><div class="dish-extend-note">${rows}</div></div>` : '';
 }
 
 function dishBodyHTML(d){
@@ -2682,15 +2717,19 @@ function dishBodyHTML(d){
   const name = dishDisplayName(d, it);
   const tag = dishDisplayTag(d, it);
   const isLunchFlavorDish = LUNCH_FLAVOR_DISH_IDS.includes(d.id);
-  const isHotpotBowlSet = d.id === HOTPOT_BOWL_SET_ID;
-  const hasSoupBaseRow = SOUP_BASE_DISH_IDS.includes(d.id);
   const showAddExtraBtn = it.qty>0 && isLunchFlavorDish;
+  // Dishes with a spice-level picker (potBeefPork/potBeefMushroom/potBeefTomato)
+  // carry a static tag that just says "spice level selectable" — that's exactly
+  // what the spice-row's own pill labels say once revealed post-qty, so showing
+  // both makes the card wider/taller than plain soup-base cards for no reason.
+  // Drop the redundant tag and let the extend row speak for itself.
+  const hasDeferredSpiceTag = d.spicy && !isLunchFlavorDish && !inAddOnMode;
   return `
           <div class="dish-title-row">
             <h3 class="dish-name">${name}</h3>
             <span class="dish-price">${dishPriceLabel(d, it)}</span>
           </div>
-          ${tag ? `<p class="tag">${tag}</p>` : ''}
+          ${tag && !hasDeferredSpiceTag ? `<p class="tag">${tag}</p>` : ''}
           ${allergenChipsHTML(d.allergens)}
           ${d.sizes ? sizeRowHTML(d, it) : ''}
           <div class="dish-actions${showAddExtraBtn ? ' with-add-extra' : ''}">
@@ -2700,8 +2739,7 @@ function dishBodyHTML(d){
               <span class="qty">${it.qty}</span>
               <button class="stepper-add" onclick="changeQty('${d.id}',1)" aria-label="${t('increaseQty')}">+</button>
             </div>
-          </div>
-          ${dishExtendHTML(d, it, inAddOnMode, isLunchFlavorDish, isHotpotBowlSet, hasSoupBaseRow)}`;
+          </div>`;
 }
 
 // Photo wrapper is rendered once per card and never touched again by
@@ -2724,10 +2762,13 @@ function dishCardHTML(d){
   const noPhoto = d.category === 'wine';
   return `
       <div class="dish-card${soldOut ? ' sold-out' : ''}${noPhoto ? ' no-photo' : ''}" data-id="${d.id}">
-        ${noPhoto ? '' : `<div class="dish-photo-wrap">
-          <img class="dish-photo" src="${d.img}" alt="${name}" loading="lazy" decoding="async" onerror="this.style.display='none'">
-        </div>`}
-        <div class="dish-body">${soldOut ? soldOutBodyHTML(d) : dishBodyHTML(d)}</div>
+        <div class="dish-card-row">
+          ${noPhoto ? '' : `<div class="dish-photo-wrap">
+            <img class="dish-photo" src="${d.img}" alt="${name}" loading="lazy" decoding="async" onerror="this.style.display='none'">
+          </div>`}
+          <div class="dish-body">${soldOut ? soldOutBodyHTML(d) : dishBodyHTML(d)}</div>
+        </div>
+        <div class="dish-extend-slot">${soldOut ? '' : dishExtendHTML(d)}</div>
       </div>`;
 }
 
@@ -3048,11 +3089,10 @@ function pandaNavHTML(){
 function chefCookingHTML(){
   return `
     <div class="chef-cooking" aria-hidden="true">
-      <span class="chef-emoji">👨‍🍳</span>
-      <span class="chef-wok">🥘</span>
-      <span class="chef-ladle g3">🥄</span>
-      <span class="chef-ladle g2">🥄</span>
-      <span class="chef-ladle g1">🥄</span>
+      <span class="fx-cooking-ring r1"></span>
+      <span class="fx-cooking-ring r2"></span>
+      <span class="fx-cooking-ring r3"></span>
+      <span class="fx-cooking-dot"></span>
     </div>`;
 }
 
@@ -3093,6 +3133,76 @@ function confirmHTML(order){
     </div>`;
 }
 
+// Keyed by order.docId so a live Firestore update that re-renders the
+// confirm screen (e.g. someone else's item edited) doesn't re-slam the
+// stamp or restart the chef's steam every time — each plays once per order.
+const confirmAnimState = { stampDocId: null, chefDocId: null, chefTimeline: null, chefDotTween: null };
+
+function animateStamp(){
+  const el = document.querySelector('.stamp-ring');
+  if(!el) return;
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    gsap.set(el, { autoAlpha: 1, scale: 1, rotation: -8 });
+    return;
+  }
+  const restShadow = '0 0 0 1px rgba(184,64,42,.15), 0 10px 24px rgba(59,44,30,.28), 0 3px 6px rgba(184,64,42,.22)';
+  const impactShadow = '0 0 0 1px rgba(184,64,42,.3), 0 16px 30px rgba(59,44,30,.34), 0 0 22px rgba(184,64,42,.4)';
+  gsap.set(el, { autoAlpha: 0, scale: 2.1, y: -70, rotation: -8, transformOrigin: '50% 50%', boxShadow: restShadow });
+  gsap.timeline()
+    .to(el, { autoAlpha: 1, duration: 0.04 }, 0)
+    .to(el, { y: 0, scale: 1, duration: 0.3, ease: 'power4.in' }, 0)
+    .to(el, { scale: 1.08, rotation: -14, boxShadow: impactShadow, duration: 0.09, ease: 'power1.out' })
+    .to(el, { scale: 0.94, rotation: -4, duration: 0.12, ease: 'sine.inOut' })
+    .to(el, { scale: 1, rotation: -8, boxShadow: restShadow, duration: 0.4, ease: 'elastic.out(1, 0.45)' });
+}
+
+function animateChefSteam(){
+  const scene = document.querySelector('.chef-cooking');
+  if(!scene) return;
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const rings = scene.querySelectorAll('.fx-cooking-ring');
+  const dot = scene.querySelector('.fx-cooking-dot');
+  gsap.set(rings, { autoAlpha: 0, scale: 0.4, transformOrigin: '50% 50%' });
+  gsap.set(dot, { transformOrigin: '50% 50%', scale: 1 });
+  // A radar-ping "in progress" indicator: rings radiate out and fade on a
+  // loop, a solid center dot breathes independently — a status badge, not a
+  // scene, and it keeps reading as "live" for however long the kitchen takes.
+  const tl = gsap.timeline({ repeat: -1 });
+  rings.forEach((r, i) => {
+    tl.fromTo(r, { autoAlpha: 0.6, scale: 0.4 }, { autoAlpha: 0, scale: 2.6, duration: 1.6, ease: 'power1.out' }, i * 0.55);
+  });
+  confirmAnimState.chefTimeline = tl;
+  confirmAnimState.chefDotTween = gsap.to(dot, { scale: 1.15, duration: 0.8, ease: 'sine.inOut', repeat: -1, yoyo: true });
+}
+
+function playConfirmAnimations(){
+  const order = state.lastOrder;
+  if(!order) return;
+  const key = order.docId || 'local';
+  if(confirmAnimState.stampDocId !== key){
+    confirmAnimState.stampDocId = key;
+    animateStamp();
+  }
+  if(order.status === 'confirmed' && confirmAnimState.chefDocId !== key){
+    confirmAnimState.chefDocId = key;
+    animateChefSteam();
+  }
+}
+
+// The chef-steam loop runs forever (repeat:-1) — stop it once its elements
+// are torn out by a render() into a different screen, so it doesn't keep
+// ticking against a detached node.
+function stopConfirmAnimations(){
+  if(confirmAnimState.chefTimeline){
+    confirmAnimState.chefTimeline.kill();
+    confirmAnimState.chefTimeline = null;
+  }
+  if(confirmAnimState.chefDotTween){
+    confirmAnimState.chefDotTween.kill();
+    confirmAnimState.chefDotTween = null;
+  }
+}
+
 function render(){
   const app = document.getElementById('app');
   let screenHtml;
@@ -3114,6 +3224,7 @@ function render(){
   app.innerHTML = screenHtml + overlayHtml;
   document.body.classList.toggle('lang-zh-custom', state.lang === 'zh' && (state.screen === 'welcome' || state.screen === 'menu'));
   document.body.classList.toggle('lang-zh-hant', state.lang === 'zhHant');
+  document.body.classList.toggle('welcome-bg', state.screen === 'welcome');
   renderPandaNav();
   renderCartPopup();
 
@@ -3121,6 +3232,8 @@ function render(){
   else{ stopWelcomeCycle(); }
   if(state.screen === 'menu'){ startChefCarousel(); }
   else{ stopChefCarousel(); }
+  if(state.screen === 'confirm'){ playConfirmAnimations(); }
+  else{ stopConfirmAnimations(); }
 }
 
 if(state.table) watchTableOrders(state.table);

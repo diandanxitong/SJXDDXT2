@@ -272,22 +272,22 @@
   .dish-group-header:first-child{margin-top:0;}
   .dish-card{
     position:relative;overflow:hidden;
-    display:flex;align-items:flex-start;
+    display:flex;align-items:center;gap:10px;padding:10px;
     background:linear-gradient(160deg,var(--card) 0%,var(--bg-soft) 100%);
     border:1px solid var(--card-line);border-top:1px solid var(--gold-line);
     border-radius:var(--radius);
   }
   .dish-photo-wrap{
-    position:relative;width:104px;height:104px;flex-shrink:0;overflow:hidden;
+    position:relative;width:92px;height:92px;flex-shrink:0;overflow:hidden;
+    border-radius:calc(var(--radius) - 6px);
     background:linear-gradient(160deg,var(--bg-soft) 0%,var(--card) 100%);
     display:flex;align-items:center;justify-content:center;
   }
   .dish-photo-wrap::before{
-    content:"🍽";font-size:26px;opacity:.28;position:absolute;
+    content:"🍽";font-size:24px;opacity:.28;position:absolute;
   }
   .dish-photo{position:relative;z-index:1;width:100%;height:100%;object-fit:cover;display:block;}
-  .dish-body{flex:1;min-width:0;padding:11px 14px;}
-  .dish-card.no-photo .dish-body{padding:11px 15px;}
+  .dish-body{flex:1;min-width:0;}
   .dish-title-row{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
   .dish-name{font-size:14px;font-weight:900;letter-spacing:.01em;line-height:1.3;color:var(--text);}
   .dish-price{
@@ -388,6 +388,14 @@
   }
   .dish-card .stepper button{width:27px;height:27px;font-size:15px;}
   .dish-card .stepper .qty{width:24px;font-size:13.5px;}
+  .dish-extend{animation:dish-extend-in .3s cubic-bezier(.2,1,.3,1);}
+  @keyframes dish-extend-in{
+    from{opacity:0;transform:translateY(-8px);}
+    to{opacity:1;transform:translateY(0);}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .dish-extend{animation:none;}
+  }
   .spice-row{display:flex;gap:6px;margin-top:14px;padding-top:14px;border-top:1px dashed var(--card-line);}
   .spice-pill{
     flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
@@ -2633,6 +2641,41 @@ function lunchDrinkRowHTML(d, it){
   </div>`;
 }
 
+// Everything that only shows up once qty>0 (spice level, soup-base pick,
+// meat type, drink pick, cook method, options) lives in one "extension"
+// block so it visually unfurls below the actions row instead of jumping
+// the title/price/photo area the instant the + button is tapped.
+function dishExtendHTML(d, it, inAddOnMode, isLunchFlavorDish, isHotpotBowlSet, hasSoupBaseRow){
+  if(it.qty<=0) return '';
+  const rows = `
+    ${d.spicy && !isLunchFlavorDish && !inAddOnMode ? `
+      <div class="spice-row">
+        ${SPICE_LEVELS.map((lvl,i)=>`
+          <button class="spice-pill ${it.spice===lvl?'active':''}" onclick="setSpice('${d.id}','${lvl}')">
+            <span class="flames">${flameIcons(i+1)}</span><span class="spice-label">${tSpice(i)}</span>
+          </button>`).join('')}
+      </div>` : ''}
+    ${isHotpotBowlSet && !inAddOnMode ? hotpotBowlMeatRowHTML(d, it) : ''}
+    ${hasSoupBaseRow ? `
+      <div class="spice-row">
+        ${LUNCH_FLAVOR_SOUP_KEYS[d.id].map(key=>`
+          <button class="spice-pill ${it.soupBase===key?'active':''}" onclick="setSoupBase('${d.id}','${key}')">
+            <span class="spice-label">${tSoupBase(key)}</span>
+          </button>`).join('')}
+      </div>` : ''}
+    ${isLunchFlavorDish && !inAddOnMode ? lunchSpiceRowHTML(d, it) : ''}
+    ${isLunchFlavorDish && !inAddOnMode ? lunchDrinkRowHTML(d, it) : ''}
+    ${d.category==='dumplings' ? `
+      <div class="spice-row">
+        ${['steamed','panFried'].map(m=>`
+          <button class="spice-pill ${(it.cookMethod||'steamed')===m?'active':''}" onclick="setCookMethod('${d.id}','${m}')">
+            <span class="spice-label">${tCookMethod(m)}</span>
+          </button>`).join('')}
+      </div>` : ''}
+    ${d.options.length>0 && !inAddOnMode ? optionsRowHTML(d, it) : ''}`;
+  return rows.trim() ? `<div class="dish-extend">${rows}</div>` : '';
+}
+
 function dishBodyHTML(d){
   const inAddOnMode = isAddOnBrowsing(d);
   const it = inAddOnMode ? getEffectiveItem(d) : getItem(d.id);
@@ -2658,31 +2701,7 @@ function dishBodyHTML(d){
               <button class="stepper-add" onclick="changeQty('${d.id}',1)" aria-label="${t('increaseQty')}">+</button>
             </div>
           </div>
-          ${it.qty>0 && d.spicy && !isLunchFlavorDish && !inAddOnMode ? `
-            <div class="spice-row">
-              ${SPICE_LEVELS.map((lvl,i)=>`
-                <button class="spice-pill ${it.spice===lvl?'active':''}" onclick="setSpice('${d.id}','${lvl}')">
-                  <span class="flames">${flameIcons(i+1)}</span><span class="spice-label">${tSpice(i)}</span>
-                </button>`).join('')}
-            </div>` : ''}
-          ${it.qty>0 && isHotpotBowlSet && !inAddOnMode ? hotpotBowlMeatRowHTML(d, it) : ''}
-          ${it.qty>0 && hasSoupBaseRow ? `
-            <div class="spice-row">
-              ${LUNCH_FLAVOR_SOUP_KEYS[d.id].map(key=>`
-                <button class="spice-pill ${it.soupBase===key?'active':''}" onclick="setSoupBase('${d.id}','${key}')">
-                  <span class="spice-label">${tSoupBase(key)}</span>
-                </button>`).join('')}
-            </div>` : ''}
-          ${it.qty>0 && isLunchFlavorDish && !inAddOnMode ? lunchSpiceRowHTML(d, it) : ''}
-          ${it.qty>0 && isLunchFlavorDish && !inAddOnMode ? lunchDrinkRowHTML(d, it) : ''}
-          ${it.qty>0 && d.category==='dumplings' ? `
-            <div class="spice-row">
-              ${['steamed','panFried'].map(m=>`
-                <button class="spice-pill ${(it.cookMethod||'steamed')===m?'active':''}" onclick="setCookMethod('${d.id}','${m}')">
-                  <span class="spice-label">${tCookMethod(m)}</span>
-                </button>`).join('')}
-            </div>` : ''}
-          ${it.qty>0 && d.options.length>0 && !inAddOnMode ? optionsRowHTML(d, it) : ''}`;
+          ${dishExtendHTML(d, it, inAddOnMode, isLunchFlavorDish, isHotpotBowlSet, hasSoupBaseRow)}`;
 }
 
 // Photo wrapper is rendered once per card and never touched again by

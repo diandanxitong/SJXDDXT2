@@ -179,9 +179,11 @@
   /* ---------- chef's-special carousel (one photo, auto-advances every 3s) ---------- */
   .chef-carousel{padding:22px 0 6px;}
   .chef-slide{
-    position:relative;display:block;width:calc(100% - 96px);margin:0 48px;aspect-ratio:4/3;
-    border-radius:16px;overflow:hidden;border:1px solid var(--gold-line);
+    position:relative;display:block;width:calc(100% - 24px);margin:0 12px;aspect-ratio:3/1;
+    overflow:hidden;border:none;border-radius:0;
     background:var(--card);padding:0;cursor:pointer;font-family:inherit;
+    -webkit-mask-image:linear-gradient(90deg, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
+    mask-image:linear-gradient(90deg, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
   }
   .chef-slide-photo{
     width:100%;height:100%;object-fit:cover;display:block;
@@ -479,19 +481,21 @@
   }
   .cart-btn, .order-now-btn{
     min-width:0;border:none;cursor:pointer;font-family:inherit;
-    display:flex;align-items:center;justify-content:center;
-    padding:14px 8px;text-align:center;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+    padding:10px 8px;text-align:center;
   }
   .cart-btn{flex:2;background:none;color:var(--gold-ink);}
   .order-now-btn{
     flex:3;color:#fff;
     background:linear-gradient(160deg, rgba(150,55,29,.78) 0%, rgba(105,38,20,.78) 100%);
   }
+  .cart-btn .cart-btn-sub{color:var(--text-muted);}
   .cart-btn:disabled{color:var(--text-muted);cursor:not-allowed;}
   .order-now-btn:disabled{background:var(--card-line);color:var(--text-muted);cursor:not-allowed;box-shadow:none;}
   .cart-btn:not(:disabled):active{background:rgba(232,162,61,.16);}
   .order-now-btn:not(:disabled):active{background:linear-gradient(160deg, rgba(150,55,29,.92) 0%, rgba(105,38,20,.92) 100%);}
   .cart-btn-title, .order-now-title{font-size:16px;font-weight:900;letter-spacing:.02em;overflow-wrap:break-word;}
+  .cart-btn-sub, .order-now-sub{font-size:10px;font-weight:500;opacity:.85;overflow-wrap:break-word;}
 
   /* ---------- cart button: slim vertical tab docked to the right edge ---------- */
   .cart-side-fab{
@@ -968,8 +972,8 @@ const I18N = {
     tablePrefix:"桌 ", tableEyebrow:"桌号", changeTable:"切换桌号",
     menuTitle:"菜单", myPot:"我的", cart:"购物车", orderedItems:"已点菜品",
     addToCart:"加入购物车", addToCartSub:"小纠结？先丢进购物车！",
-    callWaiter:"呼叫服务员", calling:"呼叫中…", waiterCalled:"已呼叫服务员！",
-    orderNow:"立即下单", ordering:"下单中…",
+    callWaiter:"呼叫服务员", callWaiterSub:"随叫随到", calling:"呼叫中…", waiterCalled:"已呼叫服务员！",
+    orderNow:"立即下单", orderNowSub:"不再犹豫", ordering:"下单中…",
     addedToCart:"已加入购物车！", back:"返回",
     addOnSuccess:"加单成功", orderPlaced:"已下单", waitConfirm:"请稍候，服务员马上确认～",
     kitchenSentTitle:"订单已送进厨房", kitchenSentHint:"您的菜品正在精心准备中，请耐心等候上菜～",
@@ -1005,8 +1009,8 @@ const I18N = {
     tablePrefix:'桌 ', tableEyebrow:'桌號', changeTable:'切換桌號',
     menuTitle:'菜單', myPot:'我的', cart:'購物車', orderedItems:'已點菜品',
     addToCart:'加入購物車', addToCartSub:'小糾結？先丟進購物車！',
-    callWaiter:'呼叫服務員', calling:'呼叫中…', waiterCalled:'已呼叫服務員！',
-    orderNow:'立即下單', ordering:'下單中…',
+    callWaiter:'呼叫服務員', callWaiterSub:'隨叫隨到', calling:'呼叫中…', waiterCalled:'已呼叫服務員！',
+    orderNow:'立即下單', orderNowSub:'不再猶豫', ordering:'下單中…',
     addedToCart:'已加入購物車！', back:'返回',
     addOnSuccess:'加單成功', orderPlaced:'已下單', waitConfirm:'請稍候，服務員馬上確認～',
     kitchenSentTitle:'訂單已送進廚房', kitchenSentHint:'您的菜品正在精心準備中，請耐心等候上菜～',
@@ -1042,8 +1046,8 @@ const I18N = {
     tablePrefix:"Table ", tableEyebrow:"Table", changeTable:"Change Table",
     menuTitle:"Menu", myPot:"Mine", cart:"Cart", orderedItems:"Items Ordered",
     addToCart:"Add to Cart", addToCartSub:"Still deciding? Add it to your cart!",
-    callWaiter:"Call Waiter", calling:"Calling…", waiterCalled:"Waiter called!",
-    orderNow:"Order Now", ordering:"Ordering…",
+    callWaiter:"Call Waiter", callWaiterSub:"At Your Service", calling:"Calling…", waiterCalled:"Waiter called!",
+    orderNow:"Order Now", orderNowSub:"No Hesitation", ordering:"Ordering…",
     addedToCart:"Added to cart!", back:"Back",
     addOnSuccess:"Add-on Placed", orderPlaced:"Order Placed", waitConfirm:"Please wait, staff will confirm shortly~",
     kitchenSentTitle:"Sent to the Kitchen", kitchenSentHint:"Your dishes are being carefully prepared — thanks for your patience~",
@@ -1079,8 +1083,8 @@ const I18N = {
     tablePrefix:"Tavolo ", tableEyebrow:"Tavolo", changeTable:"Cambia Tavolo",
     menuTitle:"Menu", myPot:"Il Mio", cart:"Carrello", orderedItems:"Piatti Ordinati",
     addToCart:"Aggiungi al Carrello", addToCartSub:"Ancora indeciso? Mettilo nel carrello!",
-    callWaiter:"Chiama il Cameriere", calling:"Chiamata in corso…", waiterCalled:"Cameriere chiamato!",
-    orderNow:"Ordina Ora", ordering:"Ordinazione in corso…",
+    callWaiter:"Chiama il Cameriere", callWaiterSub:"Sempre al Tuo Servizio", calling:"Chiamata in corso…", waiterCalled:"Cameriere chiamato!",
+    orderNow:"Ordina Ora", orderNowSub:"Senza Esitazioni", ordering:"Ordinazione in corso…",
     addedToCart:"Aggiunto al carrello!", back:"Indietro",
     addOnSuccess:"Aggiunta Effettuata", orderPlaced:"Ordine Effettuato", waitConfirm:"Attendere, lo staff confermerà a breve~",
     kitchenSentTitle:"Inviato in Cucina", kitchenSentHint:"I tuoi piatti sono in preparazione con cura, grazie per la pazienza~",
@@ -1116,8 +1120,8 @@ const I18N = {
     tablePrefix:"Table ", tableEyebrow:"Table", changeTable:"Changer de Table",
     menuTitle:"Menu", myPot:"Le Mien", cart:"Panier", orderedItems:"Plats Commandés",
     addToCart:"Ajouter au Panier", addToCartSub:"Pas encore décidé ? Mettez-le dans le panier !",
-    callWaiter:"Appeler le Serveur", calling:"Appel en cours…", waiterCalled:"Serveur appelé !",
-    orderNow:"Commander", ordering:"Commande en cours…",
+    callWaiter:"Appeler le Serveur", callWaiterSub:"Toujours à Votre Service", calling:"Appel en cours…", waiterCalled:"Serveur appelé !",
+    orderNow:"Commander", orderNowSub:"Sans Hésitation", ordering:"Commande en cours…",
     addedToCart:"Ajouté au panier !", back:"Retour",
     addOnSuccess:"Ajout Effectué", orderPlaced:"Commande Passée", waitConfirm:"Veuillez patienter, le personnel confirmera bientôt~",
     kitchenSentTitle:"Envoyée en Cuisine", kitchenSentHint:"Vos plats sont en cours de préparation avec soin, merci de patienter~",
@@ -1153,8 +1157,8 @@ const I18N = {
     tablePrefix:"Mesa ", tableEyebrow:"Mesa", changeTable:"Cambiar Mesa",
     menuTitle:"Menú", myPot:"Mío", cart:"Carrito", orderedItems:"Platos Pedidos",
     addToCart:"Añadir al Carrito", addToCartSub:"¿Aún indeciso? ¡Añádelo al carrito!",
-    callWaiter:"Llamar al Camarero", calling:"Llamando…", waiterCalled:"¡Camarero llamado!",
-    orderNow:"Pedir Ahora", ordering:"Pidiendo…",
+    callWaiter:"Llamar al Camarero", callWaiterSub:"Siempre a tu Servicio", calling:"Llamando…", waiterCalled:"¡Camarero llamado!",
+    orderNow:"Pedir Ahora", orderNowSub:"Sin Dudarlo", ordering:"Pidiendo…",
     addedToCart:"¡Añadido al carrito!", back:"Atrás",
     addOnSuccess:"Pedido Adicional Realizado", orderPlaced:"Pedido Realizado", waitConfirm:"Espere, el personal confirmará en breve~",
     kitchenSentTitle:"Enviado a la Cocina", kitchenSentHint:"Tus platos se están preparando con esmero, gracias por tu paciencia~",
@@ -2847,9 +2851,11 @@ function menuHTML(){
         <div class="action-pill">
           <button class="cart-btn" onclick="callWaiter()" ${state.callingWaiter?'disabled':''}>
             <span class="cart-btn-title">${state.callingWaiter ? t('calling') : t('callWaiter')}</span>
+            <span class="cart-btn-sub">${t('callWaiterSub')}</span>
           </button>
           <button class="order-now-btn" onclick="goToOrderReview()" ${count===0?'disabled':''}>
             <span class="order-now-title">${t('orderNow')}</span>
+            <span class="order-now-sub">${t('orderNowSub')}</span>
           </button>
         </div>
       </div>

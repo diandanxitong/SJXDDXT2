@@ -440,16 +440,14 @@
   /* ---------- sticky bottom bar ---------- */
   .bottom-bar{
     position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;z-index:30;
-    /* frosted glass fade instead of a solid --bg block: rgba values mirror --bg (#F6EFE0) */
-    background:linear-gradient(180deg, rgba(246,239,224,0) 0%, rgba(246,239,224,.6) 30%, rgba(246,239,224,.6) 100%);
-    backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
     padding:20px 16px 26px;
   }
   .bottom-bar-inner{
     width:100%;max-width:448px;display:flex;align-items:stretch;gap:12px;
   }
   .submit-btn{
-    flex:1;background:linear-gradient(160deg,var(--ember) 0%,var(--ember-dark) 100%);
+    flex:1;background:linear-gradient(160deg,rgba(150,55,29,.72) 0%,rgba(105,38,20,.72) 100%);
+    backdrop-filter:blur(14px) saturate(160%);-webkit-backdrop-filter:blur(14px) saturate(160%);
     color:#fff;border:1px solid var(--gold-line);border-radius:14px;
     padding:14px 10px;font-size:15px;font-weight:700;cursor:pointer;
     font-family:'Noto Sans SC',sans-serif;
@@ -458,12 +456,15 @@
   .submit-btn:disabled{background:var(--card-line);color:var(--text-muted);cursor:not-allowed;box-shadow:none;border-color:var(--card-line);}
   .submit-btn:not(:disabled):active{background:var(--ember-dark);}
 
-  /* one unified pill spanning most of the screen width, slim, split unevenly into two actions */
+  /* one unified pill spanning most of the screen width, split unevenly into two actions;
+     fixed (not fully-round) radius so wrapping to extra lines in other languages just
+     lengthens the pill instead of making it look like it's ballooning wider */
   .action-pill-wrap{position:relative;width:84%;max-width:380px;min-width:280px;margin:0 auto;}
   .action-pill{
     position:relative;display:flex;align-items:stretch;
-    border-radius:999px;overflow:hidden;
-    background:var(--card);
+    border-radius:26px;overflow:hidden;
+    background:linear-gradient(160deg, rgba(253,251,245,.62) 0%, rgba(236,224,198,.62) 100%);
+    backdrop-filter:blur(14px) saturate(160%);-webkit-backdrop-filter:blur(14px) saturate(160%);
     border:1px solid var(--gold-line);
     box-shadow:0 12px 28px rgba(0,0,0,.45);
   }
@@ -482,12 +483,15 @@
     padding:10px 8px;text-align:center;
   }
   .cart-btn{flex:2;background:none;color:var(--gold-ink);}
-  .order-now-btn{flex:3;background:linear-gradient(160deg,var(--ember) 0%,var(--ember-dark) 100%);color:#fff;}
+  .order-now-btn{
+    flex:3;color:#fff;
+    background:linear-gradient(160deg, rgba(150,55,29,.78) 0%, rgba(105,38,20,.78) 100%);
+  }
   .cart-btn .cart-btn-sub{color:var(--text-muted);}
   .cart-btn:disabled{color:var(--text-muted);cursor:not-allowed;}
   .order-now-btn:disabled{background:var(--card-line);color:var(--text-muted);cursor:not-allowed;box-shadow:none;}
-  .cart-btn:not(:disabled):active{background:rgba(232,162,61,.1);}
-  .order-now-btn:not(:disabled):active{background:var(--ember-dark);}
+  .cart-btn:not(:disabled):active{background:rgba(232,162,61,.16);}
+  .order-now-btn:not(:disabled):active{background:linear-gradient(160deg, rgba(150,55,29,.92) 0%, rgba(105,38,20,.92) 100%);}
   .cart-btn-title, .order-now-title{font-size:16px;font-weight:900;letter-spacing:.02em;overflow-wrap:break-word;}
   .cart-btn-sub, .order-now-sub{font-size:10px;font-weight:500;opacity:.85;overflow-wrap:break-word;}
 

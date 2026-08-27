@@ -179,7 +179,7 @@
   /* ---------- chef's-special carousel (one photo, auto-advances every 3s) ---------- */
   .chef-carousel{padding:22px 0 6px;}
   .chef-slide{
-    position:relative;display:block;width:calc(100% - 48px);margin:0 24px;aspect-ratio:16/9;
+    position:relative;display:block;width:calc(100% - 96px);margin:0 48px;aspect-ratio:16/9;
     border-radius:16px;overflow:hidden;border:1px solid var(--gold-line);
     background:var(--card);padding:0;cursor:pointer;font-family:inherit;
   }
@@ -206,10 +206,12 @@
     width:84px;flex-shrink:0;display:flex;flex-direction:column;
     border-right:1px solid var(--card-line);
     position:sticky;top:0;align-self:flex-start;
-    max-height:100vh;overflow-y:auto;
+    max-height:100vh;max-height:100dvh;overflow-y:auto;
+    overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;
     scrollbar-width:none;
     padding:4px 0;
   }
+  .category-nav.latin{width:96px;}
   .category-nav::-webkit-scrollbar{display:none;}
   .cat-btn{
     position:relative;
@@ -218,6 +220,10 @@
     font-family:inherit;line-height:1.3;
     margin:2px 8px;border-radius:11px;
     overflow-wrap:break-word;word-break:break-word;hyphens:auto;
+  }
+  .cat-btn.latin{
+    font-size:11px;font-weight:700;line-height:1.22;letter-spacing:-.01em;
+    padding:10px 4px;hyphens:none;
   }
   .cat-btn.active{
     color:var(--gold-ink);
@@ -259,7 +265,7 @@
   .category-note .note-link{
     color:var(--gold-ink);font-weight:800;text-decoration:underline;text-underline-offset:2px;cursor:pointer;
   }
-  .dish-list{padding:0 0 0 16px;display:flex;flex-direction:column;gap:10px;}
+  .dish-list{padding:0 0 0 16px;display:flex;flex-direction:column;gap:8px;}
   .dish-group-header{
     font-size:13.5px;font-weight:800;letter-spacing:.04em;color:var(--gold-ink);
     padding:2px 2px 0;margin-top:2px;
@@ -267,7 +273,7 @@
   .dish-group-header:first-child{margin-top:0;}
   .dish-card{
     position:relative;overflow:hidden;
-    padding:10px;
+    padding:9px;
     background-image:
       url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><g fill='none' stroke='%23E8A23D' stroke-width='2' stroke-opacity='.16'><circle cx='50' cy='50' r='30'/><path d='M20 50 Q35 30 50 50 Q65 70 80 50'/><path d='M20 50 Q35 70 50 50 Q65 30 80 50'/></g></svg>"),
       linear-gradient(160deg,var(--card) 0%,var(--bg-soft) 100%);
@@ -281,7 +287,7 @@
      grow the card as tall as it wants without nudging the photo. */
   .dish-card-row{display:flex;align-items:flex-start;gap:10px;}
   .dish-photo-wrap{
-    position:relative;width:92px;height:92px;flex-shrink:0;overflow:hidden;
+    position:relative;width:84px;height:84px;flex-shrink:0;overflow:hidden;
     border-radius:calc(var(--radius) - 6px);
     background:linear-gradient(160deg,var(--bg-soft) 0%,var(--card) 100%);
     display:flex;align-items:center;justify-content:center;
@@ -300,14 +306,14 @@
     white-space:nowrap;padding:4px 10px 5px;border-radius:8px;margin-top:1px;
     box-shadow:0 2px 6px rgba(150,55,29,.35);
   }
-  .dish-body .tag{font-size:12.5px;color:var(--text-muted);margin-top:4px;line-height:1.45;overflow-wrap:break-word;}
+  .dish-body .tag{font-size:12.5px;color:var(--text-muted);margin-top:3px;line-height:1.4;overflow-wrap:break-word;}
   .dish-card.sold-out .dish-photo-wrap::after{
     content:"";position:absolute;inset:0;z-index:2;
     background:rgba(245,241,236,.6);
   }
   .dish-card.sold-out .dish-name{color:var(--text-muted);}
   .sold-out-msg{font-size:13px;font-weight:800;color:var(--gold-ink);text-align:center;margin-top:10px;}
-  .allergen-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px;}
+  .allergen-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;}
   .allergen-chip{
     font-size:10px;font-weight:800;letter-spacing:.02em;color:var(--text-muted);
     border:1px solid var(--card-line);border-radius:6px;padding:2px 6px;cursor:default;
@@ -330,7 +336,7 @@
     flex-shrink:0;font-weight:900;color:var(--gold-ink);font-size:11px;
     background:rgba(232,162,61,.14);border-radius:6px;padding:1px 6px;
   }
-  .size-row{display:flex;gap:6px;margin-top:12px;}
+  .size-row{display:flex;gap:6px;margin-top:10px;}
   .size-pill{
     flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
     padding:7px 4px;border-radius:10px;border:1px solid var(--card-line);
@@ -339,7 +345,7 @@
   .size-pill .size-label{font-weight:700;}
   .size-pill .size-price{font-size:11px;opacity:.85;}
   .size-pill.active{border-color:var(--cinnabar);color:var(--gold-ink);background:rgba(184,64,42,.16);}
-  .option-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;}
+  .option-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
   .option-chip{
     display:flex;align-items:center;gap:5px;
     padding:6px 10px;border-radius:20px;border:1px solid var(--card-line);
@@ -351,7 +357,7 @@
   }
   .option-chip.active{border-color:var(--jade);color:var(--text);background:rgba(47,122,94,.16);}
   .option-chip.active .option-check{background:var(--jade);border-color:var(--jade);color:#fff;}
-  .dish-actions{display:flex;justify-content:flex-end;align-items:center;margin-top:9px;padding-top:8px;border-top:1px dashed var(--card-line);}
+  .dish-actions{display:flex;justify-content:flex-end;align-items:center;margin-top:7px;padding-top:6px;border-top:1px dashed var(--card-line);}
   .dish-actions.with-add-extra{justify-content:space-between;}
   .add-extra-btn{
     background:none;border:1px solid var(--gold-line);color:var(--gold-ink);
@@ -2784,8 +2790,9 @@ function menuHTML(){
     return groupHeaderHTML + dishCardHTML(d);
   }).join('');
 
+  const isLatinLang = state.lang !== 'zh' && state.lang !== 'zhHant';
   const categoryNavHTML = viewCats.map(cat=>`
-    <button class="cat-btn ${activeCat===cat?'active':''}" data-cat="${cat}" onclick="setCategory('${cat}')">${tCat(cat)}</button>
+    <button class="cat-btn${isLatinLang?' latin':''} ${activeCat===cat?'active':''}" data-cat="${cat}" onclick="setCategory('${cat}')">${tCat(cat)}</button>
   `).join('');
 
   const menuViewToggleHTML = `
@@ -2818,7 +2825,7 @@ function menuHTML(){
     </div>
     ${menuViewToggleHTML}
     <div class="menu-body">
-      <nav class="category-nav">${categoryNavHTML}</nav>
+      <nav class="category-nav${isLatinLang?' latin':''}">${categoryNavHTML}</nav>
       <div class="dish-panel">
         ${categoryNoteHTML(activeCat)}
         ${addOnBannerHTML(activeCat)}

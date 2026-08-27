@@ -465,7 +465,7 @@
   .action-pill{
     position:relative;display:flex;align-items:stretch;
     border-radius:26px;overflow:hidden;
-    background:linear-gradient(160deg, rgba(253,251,245,.62) 0%, rgba(236,224,198,.62) 100%);
+    background:linear-gradient(160deg, rgba(253,251,245,.78) 0%, rgba(236,224,198,.78) 100%);
     backdrop-filter:blur(14px) saturate(160%);-webkit-backdrop-filter:blur(14px) saturate(160%);
     border:1px solid var(--gold-line);
     box-shadow:0 12px 28px rgba(0,0,0,.45);
@@ -484,18 +484,20 @@
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
     padding:10px 8px;text-align:center;
   }
-  .cart-btn{flex:2;background:none;color:var(--gold-ink);}
+  .cart-btn{flex:2;background:rgba(184,64,42,.1);color:var(--cinnabar);}
   .order-now-btn{
     flex:3;color:#fff;
-    background:linear-gradient(160deg, rgba(150,55,29,.78) 0%, rgba(105,38,20,.78) 100%);
+    background:linear-gradient(160deg, rgba(150,55,29,.86) 0%, rgba(105,38,20,.86) 100%);
   }
-  .cart-btn .cart-btn-sub{color:var(--text-muted);}
-  .cart-btn:disabled{color:var(--text-muted);cursor:not-allowed;}
+  .cart-btn-title{text-shadow:0 1px 1px rgba(255,255,255,.5);}
+  .order-now-title{text-shadow:0 1px 2px rgba(0,0,0,.4);}
+  .cart-btn .cart-btn-sub{color:var(--cinnabar);opacity:.8;}
+  .cart-btn:disabled{color:var(--text-muted);cursor:not-allowed;background:none;}
   .order-now-btn:disabled{background:var(--card-line);color:var(--text-muted);cursor:not-allowed;box-shadow:none;}
-  .cart-btn:not(:disabled):active{background:rgba(232,162,61,.16);}
-  .order-now-btn:not(:disabled):active{background:linear-gradient(160deg, rgba(150,55,29,.92) 0%, rgba(105,38,20,.92) 100%);}
+  .cart-btn:not(:disabled):active{background:rgba(184,64,42,.2);}
+  .order-now-btn:not(:disabled):active{background:linear-gradient(160deg, rgba(150,55,29,.96) 0%, rgba(105,38,20,.96) 100%);}
   .cart-btn-title, .order-now-title{font-size:16px;font-weight:900;letter-spacing:.02em;overflow-wrap:break-word;}
-  .cart-btn-sub, .order-now-sub{font-size:10px;font-weight:500;opacity:.85;overflow-wrap:break-word;}
+  .cart-btn-sub, .order-now-sub{font-size:10px;font-weight:700;opacity:.85;overflow-wrap:break-word;}
   .cart-btn.latin, .order-now-btn.latin{padding:9px 6px;}
   .cart-btn.latin .cart-btn-title, .order-now-btn.latin .order-now-title{font-size:13px;letter-spacing:0;line-height:1.15;}
   .cart-btn.latin .cart-btn-sub, .order-now-btn.latin .order-now-sub{font-size:9px;line-height:1.15;}

@@ -660,7 +660,7 @@ function render(){
     app.innerHTML = '';
   }else if(records.length === 0){
     document.getElementById('recordCountHint').textContent = '';
-    app.innerHTML = `<p class="empty-hint">今天还没有桌子结账离开，盘点记录会在员工点"顾客已离开，移除看板"后自动生成。</p>`;
+    app.innerHTML = `<p class="empty-hint">今天还没有桌子结账离开，盘点记录会在员工点"顾客已经结账离开，移出看板"后自动生成。</p>`;
   }else{
     const groups = groupByTable(records);
     document.getElementById('recordCountHint').textContent = `今日共 ${groups.length} 桌 · ${records.length} 笔结账`;

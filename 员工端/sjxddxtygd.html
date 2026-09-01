@@ -211,7 +211,7 @@
 </style>
 </head>
 <body>
-<div class="warn-banner">顾客未离开时禁止点击移除看板！！！！！！</div>
+<div class="warn-banner">顾客未结账离开时禁止点击移出看板！！！！！！</div>
 <nav class="top-nav">
   <a class="control-btn" href="../index.html">← 控制系统</a>
 </nav>
@@ -440,7 +440,7 @@ async function archiveOrder(keys){
   }catch(e){ /* onSnapshot 会在下一次推送时自动纠正 */ }
 }
 
-// “顾客已离开，移除看板”会误删还在用餐的桌，先弹窗二次确认
+// “顾客已经结账离开，移出看板”会误删还在用餐的桌，先弹窗二次确认
 let confirmKeys = null;
 let confirmTable = null;
 
@@ -504,9 +504,9 @@ function renderConfirmModal(){
   el.innerHTML = `
     <div class="confirm-overlay">
       <div class="confirm-box">
-        <p class="confirm-question">确认顾客已离开？</p>
+        <p class="confirm-question">确认顾客已经结账离开？</p>
         <div class="confirm-actions">
-          <button class="confirm-cancel-btn" onclick="cancelLeave()">取消移除看板</button>
+          <button class="confirm-cancel-btn" onclick="cancelLeave()">取消移出看板</button>
           <button class="confirm-yes-btn" onclick="confirmLeaveYes()">确认已离开</button>
         </div>
       </div>
@@ -757,7 +757,7 @@ function cardHTML(group){
   const anyPending = pendingKeys.length > 0;
   const actionBtn = !hasRealContent ? '' : (anyPending
     ? `<button class="confirm-btn" data-keys="${pendingKeys.join(',')}" onclick="confirmToKitchen(this.dataset.keys.split(','))">🍳 确认，送入厨房</button>`
-    : `<button class="done-btn" data-keys="${realBatch.map(o=>o.key).join(',')}" onclick="confirmLeave(this.dataset.keys.split(','), '${group.table}')">✓ 顾客已离开，移除看板</button>`);
+    : `<button class="done-btn" data-keys="${realBatch.map(o=>o.key).join(',')}" onclick="confirmLeave(this.dataset.keys.split(','), '${group.table}')">✓ 顾客已经结账离开，移出看板</button>`);
   return `
     <div class="order-card ${level}">
       <div class="card-top">

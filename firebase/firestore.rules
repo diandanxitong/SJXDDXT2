@@ -88,8 +88,11 @@ service cloud.firestore {
                     && request.resource.data.seq > 0;
     }
 
-    // 今日盘点：每次结账生成一条不可变的当日流水记录（桌号/菜品/营业额），
-    // 用于"今日盘点"页面的列表和"生成报告"汇总——只允许创建，不允许改/删，保证账目可信
+    // 今日盘点：每次结账生成一条流水记录（桌号/菜品/营业额），用于"今日盘点"页面的
+    // 列表、"生成报告"汇总，以及"历史盘点"页面按周/月/季度/年查营业额——这些记录长期
+    // 保留，不会自动清理。允许 delete 是为了配合"今日盘点"页右上角的"确认清除"（勾选
+    // 单条记录 + 管理员账号密码才能删）；和这套系统其它 collection 一样，用户名/密码
+    // 只是前端一道软性关卡，没有真正的账号体系，规则本身没法校验"谁在删"。
     match /dailyOrders/{recordId} {
       allow read: if true;
       allow create: if request.resource.data.keys().hasOnly(['seq', 'date', 'table', 'items', 'revenue', 'archivedAt'])
@@ -108,6 +111,7 @@ service cloud.firestore {
                     && request.resource.data.revenue < 100000
                     && request.resource.data.archivedAt is number
                     && math.abs(request.time.toMillis() - request.resource.data.archivedAt) < 10 * 60 * 1000;
+      allow delete: if true;
     }
 
     // 员工操作日志：单品删除/整单删除都要求先填操作人姓名，这里记一条审计记录，

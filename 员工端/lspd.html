@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>历史盘点</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Archivo+Black&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#121012;
+    --card:#1C191A;
+    --line:#332E2C;
+    --text:#F5F1EC;
+    --text-muted:#8E8883;
+    --warn:#E8A23D;
+    --urgent:#D2502F;
+    --ok:#5FBE8A;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    background:var(--bg);color:var(--text);
+    font-family:'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif;
+    min-height:100vh;padding:22px 26px 60px;
+  }
+  .top-nav{margin-bottom:16px;display:flex;gap:10px;flex-wrap:wrap;}
+  .control-btn{
+    display:inline-flex;align-items:center;gap:6px;text-decoration:none;
+    background:var(--card);border:1px solid var(--line);color:var(--text-muted);
+    font-size:13px;font-weight:700;padding:8px 14px;border-radius:20px;
+    font-family:inherit;cursor:pointer;
+  }
+  .control-btn:hover{color:var(--text);border-color:var(--text-muted);}
+
+  header{margin-bottom:18px;}
+  header h1{font-family:'Archivo Black',sans-serif;font-size:22px;letter-spacing:.02em;}
+
+  .revenue-banner{
+    background:linear-gradient(160deg,var(--card) 0%,var(--bg) 100%);
+    border:1px solid var(--line);border-radius:16px;
+    padding:20px 24px;margin-bottom:20px;
+    display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px;
+  }
+  .revenue-label{font-size:14px;font-weight:700;color:var(--text-muted);}
+  .revenue-amount{font-family:'Archivo Black',sans-serif;font-size:34px;color:var(--ok);letter-spacing:.01em;}
+  .revenue-sub{font-size:12.5px;color:var(--text-muted);width:100%;}
+
+  .period-tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+  .period-tab{
+    font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;
+    padding:9px 18px;border-radius:20px;
+    background:var(--card);border:1px solid var(--line);color:var(--text-muted);
+  }
+  .period-tab:hover{color:var(--text);border-color:var(--text-muted);}
+  .period-tab.active{background:rgba(232,162,61,.16);border-color:var(--warn);color:var(--warn);}
+
+  .period-list{list-style:none;display:flex;flex-direction:column;gap:10px;max-width:640px;}
+  .period-card{
+    background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+  }
+  .period-card-main{display:flex;flex-direction:column;gap:4px;}
+  .period-card-label{font-size:15px;font-weight:900;}
+  .period-card-meta{font-size:12.5px;color:var(--text-muted);}
+  .period-card-revenue{font-family:'Archivo Black',sans-serif;font-size:20px;color:var(--ok);white-space:nowrap;}
+
+  .empty-hint{color:var(--text-muted);font-size:14px;padding:20px 2px;}
+</style>
+</head>
+<body>
+<nav class="top-nav">
+  <a class="control-btn" href="sjxddxtygd.html">← 接单看板</a>
+  <a class="control-btn" href="jrpd.html">📊 今日盘点</a>
+</nav>
+<header>
+  <h1>历史盘点</h1>
+</header>
+<div class="revenue-banner">
+  <span class="revenue-label">历史累计营业额</span>
+  <span class="revenue-amount" id="totalRevenue">€0.00</span>
+  <span class="revenue-sub" id="totalHint"></span>
+</div>
+<div class="period-tabs" id="period-tabs"></div>
+<div id="app"></div>
+
+<script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: 'AIzaSyBaFx1ZYKzEKfQLKbnD9YE_X_EJnFXrxOE',
+  authDomain: 'sjxddxt.firebaseapp.com',
+  projectId: 'sjxddxt',
+  storageBucket: 'sjxddxt.firebasestorage.app',
+  messagingSenderId: '56738241418',
+  appId: '1:56738241418:web:1ea87e2445e9d09e3d8673',
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+db.settings({ experimentalAutoDetectLongPolling: true });
+// 不按日期过滤——“今日盘点”结账时写进 dailyOrders 的每一条流水都会长期留着，
+// 这里读全部记录，按周/月/季度/年重新分组，就是“历史盘点”
+const dailyOrdersRef = db.collection('dailyOrders');
+
+function pad(n){ return String(n).padStart(2, '0'); }
+function formatPrice(v){ return '€' + v.toFixed(2); }
+
+function parseDateKey(dateStr){
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+function formatShortDate(d){ return `${d.getMonth() + 1}月${d.getDate()}日`; }
+
+// ISO 周：周一为一周的开始，跨年边界按"该周星期四落在哪一年"归属，
+// 避免 12月/1月 交界的那一周被拆成两半
+function isoWeekInfo(dateStr){
+  const d = parseDateKey(dateStr);
+  const target = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const dayNr = (target.getDay() + 6) % 7; // 周一=0 .. 周日=6
+  target.setDate(target.getDate() - dayNr + 3); // 挪到本周的星期四
+  const firstThursday = new Date(target.getFullYear(), 0, 4);
+  const firstDayNr = (firstThursday.getDay() + 6) % 7;
+  firstThursday.setDate(firstThursday.getDate() - firstDayNr + 3);
+  const week = 1 + Math.round((target - firstThursday) / (7 * 24 * 3600 * 1000));
+  return { year: target.getFullYear(), week };
+}
+function mondayOfWeek(dateStr){
+  const d = parseDateKey(dateStr);
+  const dayNr = (d.getDay() + 6) % 7;
+  d.setDate(d.getDate() - dayNr);
+  return d;
+}
+
+const PERIOD_KEY_FNS = {
+  week: dateStr => { const { year, week } = isoWeekInfo(dateStr); return `${year}-W${pad(week)}`; },
+  month: dateStr => dateStr.slice(0, 7),
+  quarter: dateStr => { const [y, m] = dateStr.split('-').map(Number); return `${y}-Q${Math.ceil(m / 3)}`; },
+  year: dateStr => dateStr.slice(0, 4),
+};
+const PERIOD_TAB_LABELS = { week: '按周', month: '按月', quarter: '按季度', year: '按年' };
+
+function periodLabel(kind, key, dates){
+  if(kind === 'week'){
+    const firstDate = Array.from(dates).sort()[0];
+    const monday = mondayOfWeek(firstDate);
+    const sunday = new Date(monday); sunday.setDate(sunday.getDate() + 6);
+    const weekNum = key.split('-W')[1];
+    return `${monday.getFullYear()}年 第${weekNum}周（${formatShortDate(monday)} - ${formatShortDate(sunday)}）`;
+  }
+  if(kind === 'month'){
+    const [y, m] = key.split('-');
+    return `${y}年${parseInt(m, 10)}月`;
+  }
+  if(kind === 'quarter'){
+    const [y, q] = key.split('-Q');
+    return `${y}年 第${q}季度`;
+  }
+  return `${key}年`;
+}
+
+let records = [];
+let loaded = false;
+let periodKind = 'month';
+
+dailyOrdersRef.onSnapshot(snap => {
+  records = snap.docs.map(d => d.data());
+  loaded = true;
+  render();
+}, err => {});
+
+function totalRevenue(){
+  return records.reduce((s, r) => s + (r.revenue || 0), 0);
+}
+
+function groupByPeriod(kind){
+  const keyFn = PERIOD_KEY_FNS[kind];
+  const map = new Map();
+  records.forEach(r => {
+    const key = keyFn(r.date);
+    if(!map.has(key)) map.set(key, { key, revenue: 0, orders: 0, dates: new Set() });
+    const bucket = map.get(key);
+    bucket.revenue += r.revenue || 0;
+    bucket.orders += 1;
+    bucket.dates.add(r.date);
+  });
+  return Array.from(map.values())
+    .map(b => ({ key: b.key, revenue: b.revenue, orders: b.orders, days: b.dates.size, label: periodLabel(kind, b.key, b.dates) }))
+    .sort((a, b) => b.key.localeCompare(a.key));
+}
+
+function setPeriodKind(kind){
+  periodKind = kind;
+  render();
+}
+
+function periodTabsHTML(){
+  return Object.keys(PERIOD_TAB_LABELS).map(kind => `
+    <button class="period-tab ${periodKind === kind ? 'active' : ''}" onclick="setPeriodKind('${kind}')">${PERIOD_TAB_LABELS[kind]}</button>`).join('');
+}
+
+function periodCardHTML(b){
+  return `
+    <li class="period-card">
+      <div class="period-card-main">
+        <span class="period-card-label">${b.label}</span>
+        <span class="period-card-meta">${b.days} 天营业 · ${b.orders} 笔结账</span>
+      </div>
+      <span class="period-card-revenue">${formatPrice(b.revenue)}</span>
+    </li>`;
+}
+
+function render(){
+  document.getElementById('totalRevenue').textContent = formatPrice(totalRevenue());
+  document.getElementById('period-tabs').innerHTML = periodTabsHTML();
+
+  const app = document.getElementById('app');
+  if(!loaded){
+    document.getElementById('totalHint').textContent = '';
+    app.innerHTML = '';
+    return;
+  }
+  if(records.length === 0){
+    document.getElementById('totalHint').textContent = '';
+    app.innerHTML = `<p class="empty-hint">还没有历史盘点数据——每天在接单看板点"顾客已离开，移除看板"后，流水会自动记进来。</p>`;
+    return;
+  }
+  const dayCount = new Set(records.map(r => r.date)).size;
+  document.getElementById('totalHint').textContent = `共 ${dayCount} 天营业数据 · ${records.length} 笔结账`;
+
+  const buckets = groupByPeriod(periodKind);
+  app.innerHTML = `<ul class="period-list">${buckets.map(periodCardHTML).join('')}</ul>`;
+}
+
+render();
+</script>
+</body>
+</html>

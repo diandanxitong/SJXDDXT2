@@ -25,7 +25,7 @@
     font-family:'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif;
     min-height:100vh;padding:22px 26px 60px;
   }
-  .top-nav{margin-bottom:16px;}
+  .top-nav{margin-bottom:16px;display:flex;gap:10px;flex-wrap:wrap;}
   .control-btn{
     display:inline-flex;align-items:center;gap:6px;text-decoration:none;
     background:var(--card);border:1px solid var(--line);color:var(--text-muted);
@@ -36,12 +36,34 @@
 
   header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:14px;}
   header h1{font-family:'Archivo Black',sans-serif;font-size:22px;letter-spacing:.02em;}
+  .header-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
   .report-btn{
     font-family:inherit;font-size:15px;font-weight:900;cursor:pointer;
     padding:13px 22px;border-radius:12px;white-space:nowrap;
     background:rgba(95,190,138,.16);border:1.5px solid var(--ok);color:var(--ok);
   }
   .report-btn:hover{background:rgba(95,190,138,.26);}
+  .clear-btn{
+    font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;
+    padding:12px 18px;border-radius:12px;white-space:nowrap;
+    background:none;border:1px solid rgba(210,80,47,.5);color:var(--urgent);
+  }
+  .clear-btn:hover{background:rgba(210,80,47,.12);}
+  .clear-btn:disabled{opacity:.4;cursor:default;background:none;}
+  .select-count{font-size:13px;color:var(--text-muted);white-space:nowrap;}
+  .cancel-select-btn{
+    font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;
+    padding:12px 18px;border-radius:12px;white-space:nowrap;
+    background:none;border:1px solid var(--line);color:var(--text-muted);
+  }
+  .cancel-select-btn:hover{color:var(--text);border-color:var(--text-muted);}
+  .confirm-clear-btn{
+    font-family:inherit;font-size:13.5px;font-weight:900;cursor:pointer;
+    padding:12px 18px;border-radius:12px;white-space:nowrap;
+    background:rgba(210,80,47,.16);border:1.5px solid var(--urgent);color:var(--urgent);
+  }
+  .confirm-clear-btn:hover{background:rgba(210,80,47,.26);}
+  .confirm-clear-btn:disabled{opacity:.4;cursor:default;background:rgba(210,80,47,.16);}
 
   .revenue-banner{
     background:linear-gradient(160deg,var(--card) 0%,var(--bg) 100%);
@@ -64,6 +86,9 @@
     background:var(--card);border:1px solid var(--line);border-radius:10px;
     padding:12px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
   }
+  .record-row.selectable{cursor:pointer;}
+  .record-row.selected{border-color:var(--urgent);background:rgba(210,80,47,.08);}
+  .record-checkbox{width:18px;height:18px;flex-shrink:0;accent-color:var(--urgent);cursor:pointer;}
   .record-seq{font-family:'Archivo Black',sans-serif;font-size:13px;color:var(--warn);white-space:nowrap;}
   .record-time{font-size:12px;color:var(--text-muted);white-space:nowrap;}
   .record-items{font-size:12px;color:var(--text-muted);flex:1;min-width:120px;}
@@ -109,15 +134,34 @@
     background:none;border:1px solid var(--line);color:var(--text-muted);
   }
   .modal-close-btn:hover{border-color:var(--text-muted);color:var(--text);}
+
+  .auth-modal-box{max-width:320px;text-align:center;}
+  .confirm-question{font-size:16px;font-weight:900;margin-bottom:10px;}
+  .confirm-sub{font-size:13px;color:var(--text-muted);margin-bottom:20px;line-height:1.5;}
+  .login-input{
+    width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;
+    color:var(--text);font-family:inherit;font-size:14px;padding:12px 14px;margin-bottom:12px;
+  }
+  .login-input:focus{outline:none;border-color:var(--warn);}
+  .login-error{font-size:12.5px;color:var(--urgent);margin-bottom:12px;}
+  .confirm-actions{display:flex;gap:10px;}
+  .confirm-cancel-btn, .confirm-yes-btn{
+    flex:1;padding:12px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;
+  }
+  .confirm-cancel-btn{background:none;border:1px solid var(--line);color:var(--text-muted);}
+  .confirm-cancel-btn:hover{border-color:var(--text-muted);color:var(--text);}
+  .confirm-yes-btn{background:rgba(210,80,47,.18);border:1px solid var(--urgent);color:var(--urgent);}
+  .confirm-yes-btn:hover{background:rgba(210,80,47,.28);}
 </style>
 </head>
 <body>
 <nav class="top-nav">
   <a class="control-btn" href="sjxddxtygd.html">← 接单看板</a>
+  <a class="control-btn" href="lspd.html">📅 历史盘点</a>
 </nav>
 <header>
   <h1>今日盘点</h1>
-  <button class="report-btn" onclick="openReport()">📊 生成报告</button>
+  <div class="header-actions" id="header-actions"></div>
 </header>
 <div class="revenue-banner">
   <span class="revenue-label">当天所有桌总营业额</span>
@@ -387,15 +431,76 @@ const NAME_TO_CATEGORY = {
   "健力士0.0 500ml":"wine",
 };
 
+// 注意：跟"员工操作日志"页一样，这只是前端的一道软性关卡——这套系统没有真正的
+// 账号体系，Firestore 规则也没法按用户名密码限制删除。技术上懂一点的人可以绕过
+// 这道校验直接调 Firestore API 删记录。真要做到只有管理员能删，需要接入
+// Firebase Authentication 才行。
+const ADMIN_USER = 'admingk';
+const ADMIN_PASS = '321';
+
 let records = [];
 let loaded = false;
 let reportOpen = false;
+let selectMode = false;
+let selectedIds = new Set();
+let authModalOpen = false;
+let authError = '';
 
 dailyOrdersRef.where('date', '==', todayKey()).onSnapshot(snap => {
-  records = snap.docs.map(d => d.data()).sort((a,b) => a.seq - b.seq);
+  records = snap.docs.map(d => Object.assign({ id: d.id }, d.data())).sort((a,b) => a.seq - b.seq);
   loaded = true;
   render();
 }, err => {});
+
+// “清除”：进入勾选模式，不需要管理员账号——账号密码只在真正提交删除的那一步才校验
+function toggleSelectMode(){
+  selectMode = !selectMode;
+  selectedIds = new Set();
+  render();
+}
+function toggleSelectRecord(id){
+  if(selectedIds.has(id)) selectedIds.delete(id); else selectedIds.add(id);
+  render();
+}
+
+function openDeleteAuth(){
+  if(selectedIds.size === 0) return;
+  authError = '';
+  authModalOpen = true;
+  renderModal();
+}
+function closeDeleteAuth(){
+  authModalOpen = false;
+  renderModal();
+}
+
+function handleDeleteAuthSubmit(){
+  const user = (document.getElementById('auth-user').value || '').trim();
+  const pass = document.getElementById('auth-pass').value || '';
+  if(user === ADMIN_USER && pass === ADMIN_PASS){
+    confirmDeleteSelected();
+  }else{
+    authError = '用户名或密码错误';
+    renderModal();
+  }
+}
+
+// 只删勾选的那几条——不是清空当天全部盘点，用来纠正误记的流水
+async function confirmDeleteSelected(){
+  const ids = Array.from(selectedIds);
+  authModalOpen = false;
+  selectMode = false;
+  selectedIds = new Set();
+  renderModal();
+  render();
+  try{
+    for(let i = 0; i < ids.length; i += 400){
+      const batch = db.batch();
+      ids.slice(i, i + 400).forEach(id => batch.delete(dailyOrdersRef.doc(id)));
+      await batch.commit();
+    }
+  }catch(e){ /* 网络问题的话，onSnapshot 下次推送会看到还剩多少没删掉，可以再选一次重删 */ }
+}
 
 function totalRevenue(){
   return records.reduce((s, r) => s + (r.revenue || 0), 0);
@@ -436,13 +541,28 @@ function closeReport(){
 
 function recordRowHTML(r){
   const itemSummary = (r.items || []).map(it => `${it.name}×${it.qty}`).join('、');
+  const selected = selectedIds.has(r.id);
   return `
-    <li class="record-row">
+    <li class="record-row ${selectMode ? 'selectable' : ''} ${selected ? 'selected' : ''}"
+        ${selectMode ? `onclick="toggleSelectRecord('${r.id}')"` : ''}>
+      ${selectMode ? `<input type="checkbox" class="record-checkbox" ${selected?'checked':''} onclick="event.stopPropagation();toggleSelectRecord('${r.id}')">` : ''}
       <span class="record-seq">#${String(r.seq).padStart(3,'0')}</span>
       <span class="record-time">${formatTime(r.archivedAt)}</span>
       <span class="record-items">${itemSummary}</span>
       <span class="record-revenue">${formatPrice(r.revenue || 0)}</span>
     </li>`;
+}
+
+function headerActionsHTML(){
+  if(selectMode){
+    return `
+      <span class="select-count">已选 ${selectedIds.size} 条</span>
+      <button class="cancel-select-btn" onclick="toggleSelectMode()">取消</button>
+      <button class="confirm-clear-btn" onclick="openDeleteAuth()" ${selectedIds.size===0?'disabled':''}>确认清除</button>`;
+  }
+  return `
+    <button class="clear-btn" onclick="toggleSelectMode()" ${records.length===0?'disabled':''}>🗑 清除</button>
+    <button class="report-btn" onclick="openReport()">📊 生成报告</button>`;
 }
 
 // 按桌号分组：桌1只展示桌1的记录，桌与桌之间用分割线隔开（见 .table-group 的 border-bottom）
@@ -478,6 +598,27 @@ function tableGroupHTML(g){
 
 function renderModal(){
   const root = document.getElementById('modal-root');
+  if(authModalOpen){
+    root.innerHTML = `
+      <div class="modal-overlay" onclick="if(event.target===this) closeDeleteAuth()">
+        <div class="modal-box auth-modal-box">
+          <p class="confirm-question">确认删除选中的 ${selectedIds.size} 条记录？</p>
+          <p class="confirm-sub">需要管理员账号确认，删除后无法恢复，且不会再出现在"历史盘点"里。</p>
+          <input type="text" id="auth-user" class="login-input" placeholder="用户名" autocomplete="off"
+                 onkeydown="if(event.key==='Enter') document.getElementById('auth-pass').focus()">
+          <input type="password" id="auth-pass" class="login-input" placeholder="密码" autocomplete="off"
+                 onkeydown="if(event.key==='Enter') handleDeleteAuthSubmit()">
+          ${authError ? `<p class="login-error">${authError}</p>` : ''}
+          <div class="confirm-actions">
+            <button class="confirm-cancel-btn" onclick="closeDeleteAuth()">取消</button>
+            <button class="confirm-yes-btn" onclick="handleDeleteAuthSubmit()">确认删除</button>
+          </div>
+        </div>
+      </div>`;
+    const userInput = document.getElementById('auth-user');
+    if(userInput) userInput.focus();
+    return;
+  }
   if(!reportOpen){ root.innerHTML = ''; return; }
   const categories = topDishesByCategory(3);
   const rankMedals = ['🥇','🥈','🥉'];
@@ -511,6 +652,7 @@ function renderModal(){
 
 function render(){
   document.getElementById('totalRevenue').textContent = formatPrice(totalRevenue());
+  document.getElementById('header-actions').innerHTML = headerActionsHTML();
 
   const app = document.getElementById('app');
   if(!loaded){

@@ -132,6 +132,18 @@ service cloud.firestore {
       allow delete: if true;
     }
 
+    // 关闭系统：接单看板的"关闭系统"按钮（密码校验只在前端做）写这一个文档，
+    // 扫码点单端实时监听 disabled 字段，为 true 时整站切换成"暂停服务"提示页。
+    // 没有登录态，只能靠形状校验兜底。
+    match /systemStatus/{docId} {
+      allow read: if true;
+      allow write: if docId == 'main'
+                    && request.resource.data.keys().hasOnly(['disabled', 'updatedAt'])
+                    && request.resource.data.disabled is bool
+                    && request.resource.data.updatedAt is number
+                    && math.abs(request.time.toMillis() - request.resource.data.updatedAt) < 10 * 60 * 1000;
+    }
+
     // 兜底：其他任何 collection 一律拒绝，避免规则之外的路径被意外读写
     match /{document=**} {
       allow read, write: if false;

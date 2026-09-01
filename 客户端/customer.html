@@ -501,6 +501,8 @@
   .cart-btn.latin, .order-now-btn.latin{padding:9px 6px;}
   .cart-btn.latin .cart-btn-title, .order-now-btn.latin .order-now-title{font-size:13px;letter-spacing:0;line-height:1.15;}
   .cart-btn.latin .cart-btn-sub, .order-now-btn.latin .order-now-sub{font-size:9px;line-height:1.15;}
+  .cart-btn.latin.lang-en .cart-btn-title, .order-now-btn.latin.lang-en .order-now-title{font-size:16px;letter-spacing:.02em;line-height:1.15;}
+  .cart-btn.latin.lang-en .cart-btn-sub, .order-now-btn.latin.lang-en .order-now-sub{font-size:10px;line-height:1.15;}
 
   /* ---------- cart button: slim vertical tab docked to the right edge ---------- */
   .cart-side-fab{
@@ -697,6 +699,18 @@
   .welcome-word.in{opacity:1;transform:translateY(0);}
   .welcome-word.swap{opacity:0;transform:translateY(6px);transition:opacity .38s ease, transform .38s ease;}
 
+  /* ---------- maintenance / system paused ---------- */
+  .maintenance-msg{
+    margin:26px 0 0;min-height:2.8em;max-width:320px;
+    opacity:1;transform:translateY(0);
+    font-family:'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif;
+    font-weight:600;font-size:clamp(16px,4.4vw,19px);line-height:1.55;
+    letter-spacing:.01em;color:var(--text);
+    text-shadow:0 1px 2px rgba(239,224,190,.6);
+    transition:opacity .38s ease, transform .38s ease;
+  }
+  .maintenance-msg.swap{opacity:0;transform:translateY(6px);}
+
   .welcome-divider{
     width:64%;height:1px;margin:22px 0 20px;
     background:linear-gradient(90deg, transparent, var(--gold-deep) 50%, transparent);
@@ -766,7 +780,7 @@
   .lang-panel button.active .lang-check{opacity:1;}
 
   @media (prefers-reduced-motion: reduce){
-    .welcome-leaf,.welcome-word,.welcome-divider,.welcome-wordmark,.welcome-kicker,.welcome-btn-wrap{
+    .welcome-leaf,.welcome-word,.welcome-divider,.welcome-wordmark,.welcome-kicker,.welcome-btn-wrap,.maintenance-msg{
       transition:none !important;
     }
   }
@@ -959,6 +973,16 @@ menuStatusRef.onSnapshot(snap => {
   render();
 }, err => {});
 
+// 接单看板上的"关闭系统"：员工输入密码后写这个文档，扫码端实时监听到 disabled:true
+// 就整站切换成"暂停服务"提示页，不管顾客当时停在哪个界面上
+const systemStatusRef = db.collection('systemStatus').doc('main');
+let systemDisabled = false;
+systemStatusRef.onSnapshot(snap => {
+  const data = snap.data();
+  systemDisabled = !!(data && data.disabled);
+  render();
+}, err => {});
+
 const LANG_ORDER = ['zh','zhHant','en','it','fr','es'];
 const LANG_META = {
   zh:{ native:'中文', greeting:'欢迎光临' },
@@ -967,6 +991,15 @@ const LANG_META = {
   it:{ native:'Italiano', greeting:'Benvenuti' },
   fr:{ native:'Français', greeting:'Bienvenue' },
   es:{ native:'Español', greeting:'Bienvenido' },
+};
+
+const MAINTENANCE_MSG = {
+  zh:'抱歉，暂停服务，我们正在修复',
+  zhHant:'抱歉，暫停服務，我們正在修復',
+  en:"Sorry, service is paused. We're fixing it.",
+  it:'Siamo spiacenti, il servizio è sospeso. Stiamo risolvendo il problema.',
+  fr:"Désolé, le service est suspendu. Nous réglons le problème.",
+  es:'Lo sentimos, el servicio está en pausa. Lo estamos solucionando.',
 };
 
 const I18N = {
@@ -2854,11 +2887,11 @@ function menuHTML(){
     <div class="bottom-bar">
       <div class="action-pill-wrap">
         <div class="action-pill">
-          <button class="cart-btn${isLatinLang?' latin':''}" onclick="callWaiter()" ${state.callingWaiter?'disabled':''}>
+          <button class="cart-btn${isLatinLang?' latin':''}${state.lang==='en'?' lang-en':''}" onclick="callWaiter()" ${state.callingWaiter?'disabled':''}>
             <span class="cart-btn-title">${state.callingWaiter ? t('calling') : t('callWaiter')}</span>
             <span class="cart-btn-sub">${t('callWaiterSub')}</span>
           </button>
-          <button class="order-now-btn${isLatinLang?' latin':''}" onclick="goToOrderReview()" ${count===0?'disabled':''}>
+          <button class="order-now-btn${isLatinLang?' latin':''}${state.lang==='en'?' lang-en':''}" onclick="goToOrderReview()" ${count===0?'disabled':''}>
             <span class="order-now-title">${t('orderNow')}</span>
             <span class="order-now-sub">${t('orderNowSub')}</span>
           </button>
@@ -3221,8 +3254,54 @@ function stopConfirmAnimations(){
   }
 }
 
+function maintenanceHTML(){
+  return `
+    <div class="welcome-screen">
+      <div class="welcome-inner">
+        <div class="welcome-leaf in">
+          <img src="../image/LOGO/logo.webp" alt="SJX Cheng Du Hotpot"/>
+        </div>
+        <p class="maintenance-msg" id="maintenance-msg">${MAINTENANCE_MSG[LANG_ORDER[0]]}</p>
+      </div>
+    </div>`;
+}
+
+let maintenanceTimer = null;
+function stopMaintenanceCycle(){
+  if(maintenanceTimer){ clearInterval(maintenanceTimer); maintenanceTimer = null; }
+}
+function mountMaintenanceScreen(){
+  if(maintenanceTimer) return;
+  let idx = 0;
+  maintenanceTimer = setInterval(()=>{
+    const el = document.getElementById('maintenance-msg');
+    if(!el) return;
+    el.classList.add('swap');
+    setTimeout(()=>{
+      idx = (idx + 1) % LANG_ORDER.length;
+      el.textContent = MAINTENANCE_MSG[LANG_ORDER[idx]];
+      el.classList.remove('swap');
+    }, 400);
+  }, 2800);
+}
+
 function render(){
   const app = document.getElementById('app');
+
+  if(systemDisabled){
+    app.innerHTML = maintenanceHTML();
+    document.body.classList.remove('lang-zh-custom', 'lang-zh-hant');
+    document.body.classList.add('welcome-bg');
+    document.getElementById('panda-nav').innerHTML = '';
+    document.getElementById('cart-popup-root').innerHTML = '';
+    stopWelcomeCycle();
+    stopChefCarousel();
+    stopConfirmAnimations();
+    mountMaintenanceScreen();
+    return;
+  }
+  stopMaintenanceCycle();
+
   let screenHtml;
   if(state.screen === 'welcome'){ screenHtml = welcomeHTML(); }
   else if(state.screen === 'pick'){ screenHtml = tablePickHTML(); }

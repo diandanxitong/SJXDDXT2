@@ -52,6 +52,22 @@
   }
   .daily-report-entry-btn:hover{background:rgba(95,190,138,.26);color:#5FBE8A;border-color:#5FBE8A;}
   .admin-log-entry-btn{font-weight:900;}
+  .system-toggle-btn{
+    background:rgba(210,80,47,.16);border-color:var(--urgent);color:var(--urgent);font-weight:900;
+  }
+  .system-toggle-btn:hover{background:rgba(210,80,47,.26);color:var(--urgent);border-color:var(--urgent);}
+  .system-toggle-btn.is-disabled{
+    background:rgba(95,190,138,.16);border-color:#5FBE8A;color:#5FBE8A;
+  }
+  .system-toggle-btn.is-disabled:hover{background:rgba(95,190,138,.26);color:#5FBE8A;border-color:#5FBE8A;}
+
+  .password-input{
+    width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;
+    color:var(--text);font-family:inherit;font-size:16px;letter-spacing:.08em;padding:11px 14px;margin-bottom:8px;
+    text-align:center;
+  }
+  .password-input:focus{outline:none;border-color:var(--urgent);}
+  .password-error{font-size:12.5px;color:var(--urgent);margin:-2px 0 12px;min-height:1.2em;}
 
   header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:10px;}
   header h1{font-family:'Archivo Black',sans-serif;font-size:22px;letter-spacing:.02em;}
@@ -206,6 +222,7 @@
     <a class="control-btn daily-report-entry-btn" href="jrpd.html">📊 今日盘点</a>
     <a class="control-btn admin-log-entry-btn" href="ygczrz.html">🗒 员工操作日志</a>
     <button class="control-btn" id="sound-toggle" onclick="unlockAudio()">🔊 开启提示音</button>
+    <button class="control-btn system-toggle-btn" id="system-toggle-btn" onclick="openSystemModal()">⛔ 关闭系统</button>
     <span class="status" id="status">加载中…</span>
     <span class="count-pill">待处理 <b id="count">0</b> 桌</span>
   </div>
@@ -213,6 +230,7 @@
 <div id="app"></div>
 <div id="confirm-modal"></div>
 <div id="delete-modal"></div>
+<div id="system-modal"></div>
 
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-compat.js"></script>
@@ -229,6 +247,88 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 db.settings({ experimentalAutoDetectLongPolling: true });
 const ordersRef = db.collection('orders');
+
+// "关闭系统"：写这个文档，扫码点单端 (customer.html) 实时监听到 disabled:true 后
+// 整站切换成"暂停服务"提示页。按钮需要输入密码才能切换，密码只在前端做简单校验，
+// 用来防止顾客/路人误触，不是真正的权限系统。
+const systemStatusRef = db.collection('systemStatus').doc('main');
+const SYSTEM_PASSWORD = 'SJX168';
+let systemDisabled = false;
+let systemModalOpen = false;
+let systemPasswordValue = '';
+let systemPasswordError = '';
+
+systemStatusRef.onSnapshot(snap => {
+  const data = snap.data();
+  systemDisabled = !!(data && data.disabled);
+  updateSystemToggleBtn();
+}, err => {});
+
+function updateSystemToggleBtn(){
+  const btn = document.getElementById('system-toggle-btn');
+  if(!btn) return;
+  btn.classList.toggle('is-disabled', systemDisabled);
+  btn.textContent = systemDisabled ? '🔓 重新开启系统' : '⛔ 关闭系统';
+}
+
+function openSystemModal(){
+  systemModalOpen = true;
+  systemPasswordValue = '';
+  systemPasswordError = '';
+  renderSystemModal();
+}
+
+function closeSystemModal(){
+  systemModalOpen = false;
+  renderSystemModal();
+}
+
+function updateSystemPassword(v){
+  systemPasswordValue = v;
+}
+
+function confirmSystemToggle(){
+  if(systemPasswordValue !== SYSTEM_PASSWORD){
+    systemPasswordValue = '';
+    systemPasswordError = '密码错误，请重新输入';
+    renderSystemModal();
+    return;
+  }
+  const next = !systemDisabled;
+  systemModalOpen = false;
+  systemPasswordValue = '';
+  systemPasswordError = '';
+  systemDisabled = next;
+  updateSystemToggleBtn();
+  renderSystemModal();
+  systemStatusRef.set({ disabled: next, updatedAt: Date.now() }, { merge: true }).catch(()=>{});
+}
+
+function renderSystemModal(){
+  const el = document.getElementById('system-modal');
+  if(!systemModalOpen){ el.innerHTML = ''; return; }
+  const question = systemDisabled ? '确认重新开启系统？' : '确认关闭系统？';
+  const detail = systemDisabled
+    ? '开启后，顾客扫码将恢复正常点单页面。'
+    : '关闭后，所有桌的顾客扫码只会看到"暂停服务"提示，无法点单，请谨慎操作。';
+  el.innerHTML = `
+    <div class="confirm-overlay">
+      <div class="confirm-box">
+        <p class="confirm-question">${question}</p>
+        <p class="delete-modal-detail">${detail}</p>
+        <input type="password" class="password-input" id="system-password-input" placeholder="请输入密码"
+               oninput="updateSystemPassword(this.value)"
+               onkeydown="if(event.key==='Enter') confirmSystemToggle()" autocomplete="off">
+        <p class="password-error">${systemPasswordError}</p>
+        <div class="confirm-actions">
+          <button class="confirm-cancel-btn" onclick="closeSystemModal()">取消</button>
+          <button class="confirm-yes-btn" onclick="confirmSystemToggle()">确认</button>
+        </div>
+      </div>
+    </div>`;
+  const input = document.getElementById('system-password-input');
+  if(input) input.focus();
+}
 
 let orders = [];   // { key, table, items, createdAt, nickname, partySize, status }
 let loaded = false;

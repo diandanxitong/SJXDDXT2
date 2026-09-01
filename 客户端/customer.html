@@ -818,10 +818,21 @@
     background:var(--card);border:1px solid var(--gold-line);border-radius:20px;
     box-shadow:0 20px 50px rgba(0,0,0,.6);padding:20px;
   }
+  .upsell-header{position:relative;display:flex;align-items:center;justify-content:center;margin-bottom:16px;}
   .upsell-title{
     text-align:center;font-family:var(--brush);font-size:21px;font-weight:400;
-    color:var(--gold-ink);margin-bottom:16px;
+    color:var(--gold-ink);margin-bottom:0;
   }
+  .upsell-shuffle-btn{
+    position:absolute;right:0;top:50%;transform:translateY(-50%);
+    display:flex;align-items:center;gap:4px;
+    border:1px solid var(--card-line);border-radius:999px;background:var(--bg-soft);
+    color:var(--text-muted);font-size:11.5px;font-weight:700;padding:6px 10px;
+    cursor:pointer;font-family:inherit;
+  }
+  .upsell-shuffle-btn:hover{color:var(--gold-ink);border-color:var(--gold-line);}
+  .upsell-shuffle-icon{display:inline-block;font-size:13px;transition:transform .35s ease;}
+  .upsell-shuffle-btn.spinning .upsell-shuffle-icon{transform:rotate(360deg);}
   .upsell-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
   .upsell-tile{
     display:flex;flex-direction:column;align-items:center;gap:4px;
@@ -1022,8 +1033,8 @@ const I18N = {
     orderFailed:"下单失败，请重试一次，或直接告诉服务员～",
     languageLabel:"语言", closeMenu:"关闭菜单", decreaseQty:"减少数量", increaseQty:"增加数量",
     allergensBtn:"过敏原", allergensModalTitle:"过敏原说明", allergenTapHint:"点击查看过敏原", totalLabel:"合计", perPersonSuffix:" /人",
-    orderReviewTitle:"确认订单", nicknamePlaceholder:"如果愿意，请留下昵称，不强迫", partySizeLabel:"请选择您的就餐人数",
-    upsellTitle:"忘了点什么？", addToOrderBtn:"加入到当前订单", laterBtn:"以后再说",
+    orderReviewTitle:"确认订单", nicknamePlaceholder:"如果愿意请留下昵称哦~", partySizeLabel:"请选择您的就餐人数",
+    upsellTitle:"忘了点什么？", shuffleUpsellBtn:"换一批", addToOrderBtn:"加入到当前订单", laterBtn:"以后再说",
     categories:{ soupBase:"锅底", houseSpecial:"招牌必点", seafood:"海鲜", premiumBeef:"精品肉类", meatballs:"丸子", mushrooms:"菌菇", vegetables:"素菜", snacks:"凉菜/小吃", desserts:"甜品", drinks:"果香鲜饮", wine:"酒水", lunchSet:"午市套餐", hotpotBowl:"冒菜", riceNoodles:"火锅米线", miniHotpot:"迷你火锅", lunchPieces:"加菜" },
     spice:["微辣","中辣","特辣"],
     soldOutMsg:"暂时售罄，抱歉！",
@@ -1059,8 +1070,8 @@ const I18N = {
     orderFailed:'下單失敗，請重試一次，或直接告訴服務員～',
     languageLabel:'語言', closeMenu:'關閉菜單', decreaseQty:'減少數量', increaseQty:'增加數量',
     allergensBtn:'過敏原', allergensModalTitle:'過敏原說明', allergenTapHint:'點擊查看過敏原', totalLabel:'合計', perPersonSuffix:' /人',
-    orderReviewTitle:'確認訂單', nicknamePlaceholder:'如果願意，請留下暱稱，不強迫', partySizeLabel:'請選擇您的就餐人數',
-    upsellTitle:'忘了點什麼？', addToOrderBtn:'加入到當前訂單', laterBtn:'以後再說',
+    orderReviewTitle:'確認訂單', nicknamePlaceholder:'如果願意請留下暱稱哦~', partySizeLabel:'請選擇您的就餐人數',
+    upsellTitle:'忘了點什麼？', shuffleUpsellBtn:'換一批', addToOrderBtn:'加入到當前訂單', laterBtn:'以後再說',
     categories:{ soupBase:'鍋底', houseSpecial:'招牌必點', seafood:'海鮮', premiumBeef:'精品肉類', meatballs:'丸子', mushrooms:'菌菇', vegetables:'素菜', snacks:'涼菜/小吃', desserts:'甜品', drinks:'果香鮮飲', wine:'酒水', lunchSet:'午市套餐', hotpotBowl:'冒菜', riceNoodles:'火鍋米線', miniHotpot:'迷你火鍋', lunchPieces:'加菜' },
     spice:['微辣','中辣','特辣'],
     soldOutMsg:'暫時售罄，抱歉！',
@@ -1096,8 +1107,8 @@ const I18N = {
     orderFailed:"Order failed, please try again or let staff know~",
     languageLabel:"Language", closeMenu:"Close menu", decreaseQty:"Decrease quantity", increaseQty:"Increase quantity",
     allergensBtn:"Allergens", allergensModalTitle:"Allergen Guide", allergenTapHint:"Tap to view allergen", totalLabel:"Total", perPersonSuffix:" / person",
-    orderReviewTitle:"Confirm Order", nicknamePlaceholder:"Leave a nickname if you'd like, no pressure", partySizeLabel:"Select your party size",
-    upsellTitle:"Forgot Something?", addToOrderBtn:"Add to Order", laterBtn:"Later",
+    orderReviewTitle:"Confirm Order", nicknamePlaceholder:"Got a nickname? Totally optional~", partySizeLabel:"Select your party size",
+    upsellTitle:"Forgot Something?", shuffleUpsellBtn:"Shuffle", addToOrderBtn:"Add to Order", laterBtn:"Later",
     categories:{ soupBase:"Soup Base", houseSpecial:"Signature Must-Haves", seafood:"Seafood", premiumBeef:"Premium Meats", meatballs:"Meatballs", mushrooms:"Mushrooms", vegetables:"Vegetables", snacks:"Snacks", desserts:"Desserts", drinks:"Handmade Fresh Juice Drinks", wine:"Wine & Beverages", lunchSet:"Lunch Set", hotpotBowl:"Hotpot Bowl", riceNoodles:"Rice Noodles", miniHotpot:"Mini Hotpot", lunchPieces:"Add-Ons" },
     spice:["Mild","Medium","Extra Spicy"],
     soldOutMsg:"Sorry, temporarily sold out~",
@@ -1133,8 +1144,8 @@ const I18N = {
     orderFailed:"Ordine non riuscito, riprova o avvisa lo staff~",
     languageLabel:"Lingua", closeMenu:"Chiudi menu", decreaseQty:"Diminuisci quantità", increaseQty:"Aumenta quantità",
     allergensBtn:"Allergeni", allergensModalTitle:"Guida agli Allergeni", allergenTapHint:"Tocca per vedere l'allergene", totalLabel:"Totale", perPersonSuffix:" / persona",
-    orderReviewTitle:"Conferma Ordine", nicknamePlaceholder:"Lascia un nome se vuoi, nessun obbligo", partySizeLabel:"Seleziona il numero di persone",
-    upsellTitle:"Hai Dimenticato Qualcosa?", addToOrderBtn:"Aggiungi all'Ordine", laterBtn:"Più Tardi",
+    orderReviewTitle:"Conferma Ordine", nicknamePlaceholder:"Un nickname a piacere~ nessun obbligo", partySizeLabel:"Seleziona il numero di persone",
+    upsellTitle:"Hai Dimenticato Qualcosa?", shuffleUpsellBtn:"Cambia", addToOrderBtn:"Aggiungi all'Ordine", laterBtn:"Più Tardi",
     categories:{ soupBase:"Base Zuppa", houseSpecial:"Specialità Imperdibili", seafood:"Frutti di Mare", premiumBeef:"Carni Pregiate", meatballs:"Polpette", mushrooms:"Funghi", vegetables:"Verdure", snacks:"Snack", desserts:"Dessert", drinks:"Bevande Fresche Artigianali", wine:"Vini e Bevande", lunchSet:"Menu Pranzo", hotpotBowl:"Ciotola Hotpot", riceNoodles:"Noodles di Riso", miniHotpot:"Mini Hotpot", lunchPieces:"Extra" },
     spice:["Poco Piccante","Piccante","Molto Piccante"],
     soldOutMsg:"Siamo spiacenti, momentaneamente esaurito~",
@@ -1170,8 +1181,8 @@ const I18N = {
     orderFailed:"Échec de la commande, veuillez réessayer ou prévenir le personnel~",
     languageLabel:"Langue", closeMenu:"Fermer le menu", decreaseQty:"Diminuer la quantité", increaseQty:"Augmenter la quantité",
     allergensBtn:"Allergènes", allergensModalTitle:"Guide des Allergènes", allergenTapHint:"Touchez pour voir l'allergène", totalLabel:"Total", perPersonSuffix:" / personne",
-    orderReviewTitle:"Confirmer la Commande", nicknamePlaceholder:"Laissez un surnom si vous voulez, sans obligation", partySizeLabel:"Sélectionnez le nombre de convives",
-    upsellTitle:"Vous Avez Oublié Quelque Chose ?", addToOrderBtn:"Ajouter à la Commande", laterBtn:"Plus Tard",
+    orderReviewTitle:"Confirmer la Commande", nicknamePlaceholder:"Un surnom si tu veux~ rien d'obligatoire", partySizeLabel:"Sélectionnez le nombre de convives",
+    upsellTitle:"Vous Avez Oublié Quelque Chose ?", shuffleUpsellBtn:"Changer", addToOrderBtn:"Ajouter à la Commande", laterBtn:"Plus Tard",
     categories:{ soupBase:"Base de Bouillon", houseSpecial:"Incontournables Signature", seafood:"Fruits de Mer", premiumBeef:"Viandes Premium", meatballs:"Boulettes", mushrooms:"Champignons", vegetables:"Légumes", snacks:"En-cas", desserts:"Desserts", drinks:"Boissons Fraîches Artisanales", wine:"Vins et Boissons", lunchSet:"Menu Déjeuner", hotpotBowl:"Bol Hotpot", riceNoodles:"Nouilles de Riz", miniHotpot:"Mini Hotpot", lunchPieces:"Suppléments" },
     spice:["Peu Épicé","Épicé","Très Épicé"],
     soldOutMsg:"Désolé, temporairement épuisé~",
@@ -1207,8 +1218,8 @@ const I18N = {
     orderFailed:"Error al pedir, inténtalo de nuevo o avisa al personal~",
     languageLabel:"Idioma", closeMenu:"Cerrar menú", decreaseQty:"Disminuir cantidad", increaseQty:"Aumentar cantidad",
     allergensBtn:"Alérgenos", allergensModalTitle:"Guía de Alérgenos", allergenTapHint:"Toca para ver el alérgeno", totalLabel:"Total", perPersonSuffix:" / persona",
-    orderReviewTitle:"Confirmar Pedido", nicknamePlaceholder:"Deja un apodo si quieres, sin obligación", partySizeLabel:"Selecciona tu número de comensales",
-    upsellTitle:"¿Olvidaste Algo?", addToOrderBtn:"Añadir al Pedido", laterBtn:"Más Tarde",
+    orderReviewTitle:"Confirmar Pedido", nicknamePlaceholder:"Ponte un apodo si quieres~ sin presión", partySizeLabel:"Selecciona tu número de comensales",
+    upsellTitle:"¿Olvidaste Algo?", shuffleUpsellBtn:"Cambiar", addToOrderBtn:"Añadir al Pedido", laterBtn:"Más Tarde",
     categories:{ soupBase:"Base de Sopa", houseSpecial:"Imprescindibles de la Casa", seafood:"Marisco", premiumBeef:"Carnes Premium", meatballs:"Albóndigas", mushrooms:"Setas", vegetables:"Verduras", snacks:"Aperitivos", desserts:"Postres", drinks:"Bebidas Frescas Artesanales", wine:"Vinos y Bebidas", lunchSet:"Menú de Almuerzo", hotpotBowl:"Bol de Hotpot", riceNoodles:"Fideos de Arroz", miniHotpot:"Mini Hotpot", lunchPieces:"Extras" },
     spice:["Poco Picante","Picante","Muy Picante"],
     soldOutMsg:"Lo sentimos, agotado temporalmente~",
@@ -2398,11 +2409,15 @@ function handlePlaceOrderClick(){
   }
 }
 
-function openUpsell(){
-  // 只有午市套餐本身含一杯饮品，点了套餐的顾客下单前就不用再推饮品或酒水；
-  // 单点的冒菜/火锅米线不含饮品，仍然可以推，甜品则始终可以推
+// 只有午市套餐本身含一杯饮品，点了套餐的顾客下单前就不用再推饮品或酒水；
+// 单点的冒菜/火锅米线不含饮品，仍然可以推，甜品则始终可以推
+function upsellPool(){
   const hasLunchSetWithDrink = LUNCH_SET_DISH_IDS.some(id => getItem(id).qty > 0);
-  const pool = MENU.filter(d => (d.category === 'desserts' || ((d.category === 'drinks' || d.category === 'wine') && !hasLunchSetWithDrink)) && !isSoldOut(d.id));
+  return MENU.filter(d => (d.category === 'desserts' || ((d.category === 'drinks' || d.category === 'wine') && !hasLunchSetWithDrink)) && !isSoldOut(d.id));
+}
+
+function openUpsell(){
+  const pool = upsellPool();
   if(pool.length === 0){
     state.upsellShown = true;
     submitOrder();
@@ -2412,6 +2427,23 @@ function openUpsell(){
   state.upsellSelected = {};
   state.upsellOpen = true;
   render();
+}
+
+// “换一批”：换成另外 4 个随机推荐，规则跟打开弹窗时一样（点了含饮品的午市套餐就不会换出酒水/饮料）。
+// 只重画格子本身，弹窗其余部分（标题、按钮）不用跟着重建。
+function shuffleUpsell(event){
+  const pool = upsellPool();
+  if(pool.length === 0) return;
+  state.upsellItems = shuffle(pool.map(d => d.id)).slice(0, 4);
+  state.upsellSelected = {};
+  const grid = document.querySelector('.upsell-grid');
+  if(grid) grid.innerHTML = upsellTilesHTML();
+  const btn = event && event.currentTarget;
+  if(btn){
+    btn.classList.remove('spinning');
+    void btn.offsetWidth;
+    btn.classList.add('spinning');
+  }
 }
 
 // Patches just the tapped tile's selected state instead of a full render(),
@@ -3101,30 +3133,38 @@ function orderReviewHTML(){
 
 function upsellModalHTML(){
   if(!state.upsellOpen) return '';
-  const items = state.upsellItems.map(id => MENU_BY_ID[id]).filter(Boolean);
   return `
     <button class="lang-switcher-overlay" aria-label="${t('upsellTitle')}"></button>
     <div class="upsell-modal">
-      <p class="upsell-title">${t('upsellTitle')}</p>
-      <div class="upsell-grid">
-        ${items.map(d=>{
-          const selected = !!state.upsellSelected[d.id];
-          return `
-          <button class="upsell-tile ${selected?'selected':''}" data-id="${d.id}" onclick="toggleUpsellItem('${d.id}')">
-            <span class="upsell-photo-wrap">
-              <img class="upsell-photo" src="${d.img}" alt="${tDish(d.id,'name')}" loading="lazy">
-              <span class="upsell-check">✓</span>
-            </span>
-            <span class="upsell-name">${tDish(d.id,'name')}</span>
-            <span class="upsell-price">${formatPrice(dishUnitPrice(d, {}))}</span>
-          </button>`;
-        }).join('')}
+      <div class="upsell-header">
+        <p class="upsell-title">${t('upsellTitle')}</p>
+        <button class="upsell-shuffle-btn" onclick="shuffleUpsell(event)">
+          <span class="upsell-shuffle-icon">↻</span>${t('shuffleUpsellBtn')}
+        </button>
       </div>
+      <div class="upsell-grid">${upsellTilesHTML()}</div>
       <div class="upsell-actions">
         <button class="upsell-add-btn" onclick="confirmUpsellAdd()">${t('addToOrderBtn')}</button>
         <button class="upsell-later-btn" onclick="skipUpsell()">${t('laterBtn')}</button>
       </div>
     </div>`;
+}
+
+// Shared by the modal's initial render and shuffleUpsell()'s grid-only repaint.
+function upsellTilesHTML(){
+  const items = state.upsellItems.map(id => MENU_BY_ID[id]).filter(Boolean);
+  return items.map(d=>{
+    const selected = !!state.upsellSelected[d.id];
+    return `
+    <button class="upsell-tile ${selected?'selected':''}" data-id="${d.id}" onclick="toggleUpsellItem('${d.id}')">
+      <span class="upsell-photo-wrap">
+        <img class="upsell-photo" src="${d.img}" alt="${tDish(d.id,'name')}" loading="lazy">
+        <span class="upsell-check">✓</span>
+      </span>
+      <span class="upsell-name">${tDish(d.id,'name')}</span>
+      <span class="upsell-price">${formatPrice(dishUnitPrice(d, {}))}</span>
+    </button>`;
+  }).join('');
 }
 
 function pandaNavHTML(){

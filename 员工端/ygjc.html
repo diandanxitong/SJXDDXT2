@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>员工加菜</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Archivo+Black&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#121012;
+    --card:#1C191A;
+    --line:#332E2C;
+    --text:#F5F1EC;
+    --text-muted:#8E8883;
+    --warn:#E8A23D;
+    --urgent:#D2502F;
+    --ok:#5FBE8A;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    background:var(--bg);color:var(--text);
+    font-family:'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif;
+    min-height:100vh;padding:22px 26px 60px;
+  }
+  .top-nav{margin-bottom:16px;}
+  .control-btn{
+    display:inline-flex;align-items:center;gap:6px;text-decoration:none;
+    background:var(--card);border:1px solid var(--line);color:var(--text-muted);
+    font-size:13px;font-weight:700;padding:8px 14px;border-radius:20px;
+    font-family:inherit;cursor:pointer;
+  }
+  .control-btn:hover{color:var(--text);border-color:var(--text-muted);}
+
+  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:14px;}
+  .title-block{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+  header h1{font-family:'Archivo Black',sans-serif;font-size:22px;letter-spacing:.02em;}
+  .status-pill{
+    background:var(--card);border:1px solid var(--line);border-radius:20px;
+    padding:6px 16px;font-size:13px;color:var(--text-muted);
+  }
+  .status-pill b{color:var(--warn);font-size:15px;}
+
+  .header-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  .sel-count{font-size:13px;color:var(--text-muted);white-space:nowrap;}
+  .sel-count b{color:var(--text);}
+  .action-btn{
+    font-family:inherit;font-size:15px;font-weight:900;cursor:pointer;
+    padding:13px 22px;border-radius:12px;white-space:nowrap;
+  }
+  .action-btn:disabled{opacity:.4;cursor:default;}
+  .add-btn{background:rgba(95,190,138,.16);border:1.5px solid var(--ok);color:var(--ok);}
+  .add-btn:not(:disabled):hover{background:rgba(95,190,138,.26);}
+
+  .search-bar{position:relative;margin-bottom:18px;max-width:420px;}
+  .search-bar input{
+    width:100%;background:var(--card);border:1px solid var(--line);border-radius:20px;
+    color:var(--text);font-family:inherit;font-size:14px;padding:10px 38px 10px 16px;
+  }
+  .search-bar input::placeholder{color:var(--text-muted);}
+  .search-bar input:focus{outline:none;border-color:var(--ok);}
+  .search-clear-btn{
+    position:absolute;right:6px;top:50%;transform:translateY(-50%);
+    width:26px;height:26px;border-radius:50%;border:none;background:none;
+    color:var(--text-muted);font-size:16px;cursor:pointer;display:none;
+    align-items:center;justify-content:center;
+  }
+  .search-clear-btn.visible{display:flex;}
+  .search-clear-btn:hover{color:var(--text);}
+  .no-results{color:var(--text-muted);font-size:14px;padding:10px 2px;}
+
+  .cat-section{margin-bottom:22px;}
+  .cat-section h2{font-size:14px;font-weight:900;color:var(--ok);letter-spacing:.03em;margin-bottom:10px;padding-left:2px;}
+  .dish-list{list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px;}
+  .dish-row{
+    background:var(--card);border:1px solid var(--line);border-radius:10px;
+  }
+  .dish-row.checked{border-color:var(--ok);background:rgba(95,190,138,.08);}
+  .dish-row label{
+    display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;
+  }
+  .dish-row input[type="checkbox"]{width:18px;height:18px;flex-shrink:0;accent-color:var(--ok);cursor:pointer;}
+  .dish-row-name{font-size:14px;font-weight:700;flex:1;line-height:1.35;}
+  .dish-row-price{font-size:12.5px;color:var(--text-muted);font-weight:700;white-space:nowrap;margin-left:6px;}
+  .sold-out-badge{
+    font-size:11px;font-weight:700;color:var(--urgent);border:1px solid rgba(210,80,47,.5);
+    border-radius:20px;padding:2px 9px;white-space:nowrap;
+  }
+  .size-picker{display:flex;gap:6px;flex-wrap:wrap;padding:0 14px 12px;}
+  .size-opt-btn{
+    font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;
+    padding:6px 12px;border-radius:20px;background:none;border:1px solid var(--line);color:var(--text-muted);
+  }
+  .size-opt-btn.active{background:rgba(95,190,138,.18);border-color:var(--ok);color:var(--ok);}
+
+  .modal-overlay{
+    position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.65);
+    display:flex;align-items:center;justify-content:center;padding:20px;
+  }
+  .modal-box{
+    background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:24px 22px 22px;max-width:420px;width:100%;
+  }
+  .modal-dish-list{
+    list-style:none;max-height:260px;overflow-y:auto;
+    display:flex;flex-direction:column;gap:6px;margin-bottom:16px;
+  }
+  .modal-dish-list li{
+    font-size:14px;font-weight:700;background:rgba(255,255,255,.04);
+    border-radius:8px;padding:8px 12px;display:flex;justify-content:space-between;gap:10px;
+  }
+  .modal-dish-list li span:last-child{color:var(--text-muted);font-weight:700;white-space:nowrap;}
+  .modal-note{
+    font-size:13px;color:var(--text-muted);line-height:1.5;
+    background:rgba(255,255,255,.04);border-radius:10px;padding:10px 12px;margin-bottom:18px;
+  }
+  .modal-actions{display:flex;gap:10px;}
+  .modal-cancel-btn, .modal-confirm-btn{
+    flex:1;padding:12px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;
+  }
+  .modal-cancel-btn{background:none;border:1px solid var(--line);color:var(--text-muted);}
+  .modal-cancel-btn:hover{border-color:var(--text-muted);color:var(--text);}
+  .modal-confirm-btn.ok{background:rgba(95,190,138,.18);border:1px solid var(--ok);color:var(--ok);}
+  .modal-confirm-btn.ok:hover{background:rgba(95,190,138,.28);}
+</style>
+</head>
+<body>
+<nav class="top-nav">
+  <a class="control-btn" id="back-link" href="sjxddxtygd.html">← 返回订单详情</a>
+</nav>
+<header>
+  <div class="title-block">
+    <h1 id="page-title">员工加菜</h1>
+    <span class="status-pill" id="table-pill"></span>
+  </div>
+  <div class="header-actions">
+    <span class="sel-count">已选 <b id="selCount">0</b> 项</span>
+    <button class="action-btn add-btn" id="addBtn" onclick="openAddModal()" disabled>确认加菜</button>
+  </div>
+</header>
+<div class="search-bar">
+  <input type="text" id="searchInput" placeholder="搜索菜品或酒水名称…" oninput="onSearchInput(this.value)" autocomplete="off">
+  <button class="search-clear-btn" id="searchClearBtn" onclick="clearSearch()">✕</button>
+</div>
+<div id="app"></div>
+<div id="modal-root"></div>
+
+<script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: 'AIzaSyBaFx1ZYKzEKfQLKbnD9YE_X_EJnFXrxOE',
+  authDomain: 'sjxddxt.firebaseapp.com',
+  projectId: 'sjxddxt',
+  storageBucket: 'sjxddxt.firebasestorage.app',
+  messagingSenderId: '56738241418',
+  appId: '1:56738241418:web:1ea87e2445e9d09e3d8673',
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+db.settings({ experimentalAutoDetectLongPolling: true });
+const ordersRef = db.collection('orders');
+const menuStatusRef = db.collection('menuStatus').doc('soldOut');
+
+const params = new URLSearchParams(location.search);
+const table = params.get('table');
+document.getElementById('back-link').href = table ? `ddxq.html?table=${encodeURIComponent(table)}` : 'sjxddxtygd.html';
+document.getElementById('table-pill').textContent = table ? `桌 ${table}` : '未指定桌号';
+
+// 员工加菜：接单看板订单详情页的"+ 加菜"入口，只覆盖火锅生食材/凉菜/甜品/饮品/酒水
+// 这些"选中即可加"的菜，不含锅底、午市套餐这些需要额外挑口味/辣度的品类——
+// 这本来就不是给顾客用的点单流程，只是员工代客下单、补一笔营业额用，够简单够快就行
+const SIZE_LABELS_ZH = { large:'大份', small:'小份', glass:'杯', bottle:'瓶' };
+const CATEGORY_ORDER = ["houseSpecial", "seafood", "premiumBeef", "meatballs", "mushrooms", "vegetables", "snacks", "desserts", "drinks", "wine"];
+const CATEGORY_LABELS = { houseSpecial:"招牌必点", seafood:"海鲜", premiumBeef:"精品肉类", meatballs:"丸子", mushrooms:"菌菇", vegetables:"素菜", snacks:"凉菜/小吃", desserts:"甜品", drinks:"果香鲜饮", wine:"酒水" };
+
+// 菜品清单：id / 分类 / 中文名 / 价格（或大小份/杯瓶价），跟顾客端 customer.html 里的
+// DISH_DATA 保持一致，只摘出这几个品类需要的字段
+const DISH_LIST = [
+{"id": "beefTripePremium", "category": "houseSpecial", "name": "极品鲜毛肚", "price": 14},
+{"id": "porkKidneySliced", "category": "houseSpecial", "name": "大刀腰片", "price": 11.8},
+{"id": "beefTripeLayered", "category": "houseSpecial", "name": "草原千层肚", "price": 10.8},
+{"id": "duckBlood", "category": "houseSpecial", "name": "鸭血", "price": 7.8},
+{"id": "porkLiverTender", "category": "houseSpecial", "name": "嫩滋猪肝", "price": 7.8},
+{"id": "malingLuncheonMeat", "category": "houseSpecial", "name": "梅林午餐肉", "price": 6.6},
+{"id": "pigBrain", "category": "houseSpecial", "name": "鲜绿脑花", "price": 9.6},
+{"id": "spicyTenderBeef", "category": "houseSpecial", "name": "麻辣牛肉", "price": 12.8},
+{"id": "seasonedBeef", "category": "houseSpecial", "name": "私房嫩牛肉", "price": 11.8},
+{"id": "chickenGizzard", "category": "houseSpecial", "name": "特色小郡肝", "price": 11},
+{"id": "braisedChickenFeet", "category": "houseSpecial", "name": "特色肥鸡爪", "price": 8.8},
+{"id": "beefTendonFresh", "category": "houseSpecial", "name": "特色肥腿筋", "price": 8.6},
+{"id": "spicyChickenDrumstick", "category": "houseSpecial", "name": "麻辣鸡腿肉", "price": 8.6},
+{"id": "braisedPorkIntestine", "category": "houseSpecial", "name": "特色肥肠", "price": 7.8},
+{"id": "braisedBeefTendon", "category": "houseSpecial", "name": "特色肥牛筋儿", "price": 6.8},
+{"id": "friedEggViral", "category": "houseSpecial", "name": "网红炸蛋", "price": 2.8},
+{"id": "rawEgg", "category": "houseSpecial", "name": "生鸡蛋", "price": 1.6},
+{"id": "kingPrawns8", "category": "seafood", "name": "带头大虾", "price": 11},
+{"id": "seaBassSliced", "category": "seafood", "name": "海鲈鱼片", "price": 16.8},
+{"id": "shrimpBallsHandmade", "category": "seafood", "name": "手打虾滑", "sizes": [{"key": "large", "price": 13.8}, {"key": "small", "price": 6.9}]},
+{"id": "babyCuttlefish", "category": "seafood", "name": "墨鱼仔", "price": 8.2},
+{"id": "squid", "category": "seafood", "name": "鱿鱼", "price": 6.8},
+{"id": "shrimpDumpling", "category": "seafood", "name": "虾饺", "price": 6.8},
+{"id": "japaneseWagyu", "category": "premiumBeef", "name": "日本和牛", "price": 68},
+{"id": "premiumMarbledFattyBeef", "category": "premiumBeef", "name": "极品雪花肥牛", "sizes": [{"key": "large", "price": 26}, {"key": "small", "price": 16.8}]},
+{"id": "angusBeefSlices", "category": "premiumBeef", "name": "安格斯吊龙", "sizes": [{"key": "large", "price": 16.8}, {"key": "small", "price": 12.8}]},
+{"id": "lambRoll", "category": "premiumBeef", "name": "羔羊卷", "price": 11.8},
+{"id": "beefTongueFresh", "category": "premiumBeef", "name": "现切牛舌", "price": 10.8},
+{"id": "fattyBeefRollOriginal", "category": "premiumBeef", "name": "原切肥牛", "price": 13.8},
+{"id": "porkBellyFresh", "category": "premiumBeef", "name": "现切五花肉", "price": 7.8},
+{"id": "thickPorkSlice", "category": "premiumBeef", "name": "现切老肉片", "price": 7.8},
+{"id": "meatballMix", "category": "meatballs", "name": "丸子拼盘", "price": 16.8},
+{"id": "porkMeatballsCoriander", "category": "meatballs", "name": "香菜猪肉丸", "price": 8.6},
+{"id": "crispySausageJapanese", "category": "meatballs", "name": "日式脆皮肠", "price": 8},
+{"id": "crabStick", "category": "meatballs", "name": "蟹肉棒", "price": 6.8},
+{"id": "fuzhouFishBalls", "category": "meatballs", "name": "福州鱼丸", "sizes": [{"key": "large", "price": 11.8}, {"key": "small", "price": 5.8}]},
+{"id": "juicyBeefBalls", "category": "meatballs", "name": "撒尿牛丸", "sizes": [{"key": "large", "price": 7.8}, {"key": "small", "price": 4.8}]},
+{"id": "chickenMeatballs", "category": "meatballs", "name": "鸡肉丸", "sizes": [{"key": "large", "price": 7.8}, {"key": "small", "price": 4.8}]},
+{"id": "mushroomPlatter", "category": "mushrooms", "name": "菌类拼盘", "price": 12},
+{"id": "shiitakeMushroom", "category": "mushrooms", "name": "香菇", "price": 6.8},
+{"id": "enokiMushroom", "category": "mushrooms", "name": "金针菇", "price": 5.8},
+{"id": "kingOysterMushroom", "category": "mushrooms", "name": "杏鲍菇", "price": 5.8},
+{"id": "oysterMushroom", "category": "mushrooms", "name": "平菇", "price": 5.8},
+{"id": "blackFungus", "category": "mushrooms", "name": "黑木耳", "price": 5.8},
+{"id": "vegPlatter", "category": "vegetables", "name": "蔬菜拼盘", "price": 12},
+{"id": "soybeanRoll", "category": "vegetables", "name": "响铃卷", "price": 7.8},
+{"id": "beancurdSticks", "category": "vegetables", "name": "腐竹", "price": 7.8},
+{"id": "bambooSlicesSunan", "category": "vegetables", "name": "蜀南竹笋片", "price": 6.8},
+{"id": "driedBeanCurdSheet", "category": "vegetables", "name": "干豆皮", "price": 6.8},
+{"id": "deepFriedTofu", "category": "vegetables", "name": "油豆腐", "price": 6.8},
+{"id": "wulongVermicelli", "category": "vegetables", "name": "武隆粉丝", "price": 6.5},
+{"id": "lotusRootSlices", "category": "vegetables", "name": "藕片", "price": 5.8},
+{"id": "broccoliSprouts", "category": "vegetables", "name": "西兰花苔", "price": 5.8},
+{"id": "riceCake", "category": "vegetables", "name": "年糕", "price": 5.8},
+{"id": "crownDaisy", "category": "vegetables", "name": "茼蒿菜", "price": 5.8},
+{"id": "pakChoi", "category": "vegetables", "name": "上海青", "price": 5.8},
+{"id": "lettuce", "category": "vegetables", "name": "生菜", "price": 5.8},
+{"id": "kelpSeaweed", "category": "vegetables", "name": "海带", "price": 5.8},
+{"id": "konjacNoodles", "category": "vegetables", "name": "魔芋丝", "price": 5.8},
+{"id": "chineseYam", "category": "vegetables", "name": "山药", "price": 4.9},
+{"id": "softTofu", "category": "vegetables", "name": "豆腐", "price": 4.8},
+{"id": "instantNoodles", "category": "vegetables", "name": "方便面", "price": 4.8},
+{"id": "chineseCabbage", "category": "vegetables", "name": "大白菜", "price": 4.8},
+{"id": "spinach", "category": "vegetables", "name": "菠菜", "price": 4.8},
+{"id": "sweetCorn", "category": "vegetables", "name": "甜玉米", "price": 4.8},
+{"id": "beanSprout", "category": "vegetables", "name": "豆芽", "price": 4.8},
+{"id": "whiteRadish", "category": "vegetables", "name": "白萝卜", "price": 4.8},
+{"id": "babyKelpSprouts", "category": "vegetables", "name": "海带芽", "price": 4.8},
+{"id": "longkouVermicelli", "category": "vegetables", "name": "龙口粉丝", "price": 4.8},
+{"id": "shreddedPotato", "category": "vegetables", "name": "千丝土豆", "price": 4.8},
+{"id": "potatoSlices", "category": "vegetables", "name": "土豆", "price": 3.8},
+{"id": "crispyPorkStrips", "category": "snacks", "name": "现炸酥肉", "price": 9.9},
+{"id": "brownSugarRiceCake", "category": "snacks", "name": "红糖糍粑", "price": 8.8},
+{"id": "blackFungusSalad", "category": "snacks", "name": "开胃黑木耳", "price": 6.9},
+{"id": "friedKingPrawn", "category": "snacks", "name": "炸虾", "price": 6.8},
+{"id": "kimchi", "category": "snacks", "name": "韩国泡菜", "price": 4.8},
+{"id": "springRoll", "category": "snacks", "name": "春卷", "price": 4.8},
+{"id": "cucumberSaladSpicy", "category": "snacks", "name": "凉拌黄瓜", "price": 4.8},
+{"id": "friedDoughSticks", "category": "snacks", "name": "油条", "price": 4.8},
+{"id": "housePickledVeg", "category": "snacks", "name": "秘制泡菜", "price": 2.8},
+{"id": "eggFriedRiceClassic", "category": "snacks", "name": "特色蛋炒饭", "price": 3.6, "unit": "person"},
+{"id": "steamedRice", "category": "snacks", "name": "白米饭", "price": 2.6, "unit": "person"},
+{"id": "spiceBag", "category": "snacks", "name": "辣袋", "price": 9.5},
+{"id": "mangoPomeloSago", "category": "desserts", "name": "杨枝甘露", "price": 5.8},
+{"id": "matchaShavedIce", "category": "desserts", "name": "抹茶绵绵冰", "price": 5.8},
+{"id": "chocoShavedIce", "category": "desserts", "name": "巧克力绵绵冰", "price": 5.8},
+{"id": "strawberryShavedIce", "category": "desserts", "name": "草莓绵绵冰", "price": 5.8},
+{"id": "mangoShavedIce", "category": "desserts", "name": "芒果绵绵冰", "price": 5.8},
+{"id": "milkShavedIce", "category": "desserts", "name": "牛奶绵绵冰", "price": 4.8},
+{"id": "cheeseCake", "category": "desserts", "name": "芝士蛋糕", "price": 4.8},
+{"id": "brownies", "category": "desserts", "name": "布朗尼", "price": 4.8},
+{"id": "friedSteamedBun", "category": "desserts", "name": "炸馒头", "price": 4.8},
+{"id": "chengduRiceDumpling", "category": "desserts", "name": "老成都醪糟汤圆（黑芝麻）", "price": 4.8},
+{"id": "iceJellyBrownSugar", "category": "desserts", "name": "特色冰粉", "price": 3.6},
+{"id": "cheeseStrawberry", "category": "drinks", "name": "芝芝莓莓", "price": 6.2},
+{"id": "cheeseMango", "category": "drinks", "name": "芝芝芒芒", "price": 6.2},
+{"id": "cheeseGrape", "category": "drinks", "name": "芝芝葡萄", "price": 6.2},
+{"id": "strawberryYakult", "category": "drinks", "name": "草莓养乐多", "price": 6.2},
+{"id": "mangoLemonTea", "category": "drinks", "name": "芒果柠檬茶", "price": 5.8},
+{"id": "jasmineStrawberry", "category": "drinks", "name": "茉莉草莓", "price": 5.8},
+{"id": "passionFruitLemonTea", "category": "drinks", "name": "百香果柠檬茶", "price": 5.8},
+{"id": "kiwiLemonTea", "category": "drinks", "name": "猕猴桃柠檬茶", "price": 5.8},
+{"id": "honeyLightMilkTea", "category": "drinks", "name": "蜜香轻乳茶", "price": 5.8},
+{"id": "pomegranateLemonTea", "category": "drinks", "name": "红石榴柠檬茶", "price": 5.8},
+{"id": "jasmineGreenGrape", "category": "drinks", "name": "茉莉青提", "price": 5.8},
+{"id": "waxberryLemonTea", "category": "drinks", "name": "杨梅柠檬茶", "price": 5.8},
+{"id": "jasmineLightMilkTea", "category": "drinks", "name": "茉莉轻乳茶", "price": 5.8},
+{"id": "wineMurariPinotGrigio", "category": "wine", "name": "Murari Pinot Grigio 卡斯特拉尼灰皮诺", "sizes": [{"key": "glass", "price": 7.9}, {"key": "bottle", "price": 28}]},
+{"id": "wineBouchardSauvignonBlanc", "category": "wine", "name": "Bouchard Aine & Fils Sauvignon Blanc 长相思", "sizes": [{"key": "glass", "price": 8.5}, {"key": "bottle", "price": 32}]},
+{"id": "winePeterRiesling", "category": "wine", "name": "Peter & Peter Riesling", "sizes": [{"key": "glass", "price": 9.9}, {"key": "bottle", "price": 36}]},
+{"id": "wineNauMaiSauvignonBlanc", "category": "wine", "name": "Nau Mai Sauvignon Blanc", "sizes": [{"key": "bottle", "price": 39}]},
+{"id": "wineCasalVentozelaAlvarinho", "category": "wine", "name": "Casal de Ventozela Alvarinho 阿瓦里诺", "sizes": [{"key": "bottle", "price": 45}]},
+{"id": "wineDomaneWachauGruner", "category": "wine", "name": "Domäne Wachau Grüner Veltliner Federspiel", "sizes": [{"key": "bottle", "price": 49}]},
+{"id": "wineLouisJadotChardonnay", "category": "wine", "name": "Louis Jadot Bourgogne Chardonnay 'Couvent des Jacobins' 勃艮第霞多丽", "sizes": [{"key": "bottle", "price": 65}]},
+{"id": "wineMarquisGoulaineSancerre", "category": "wine", "name": "Marquis de Goulaine Sancerre 'Les Lorys' 桑塞尔", "sizes": [{"key": "bottle", "price": 79}]},
+{"id": "wineOrquestraTempranillo", "category": "wine", "name": "Orquestra Tempranillo 丹魄乐团", "sizes": [{"key": "glass", "price": 7.9}, {"key": "bottle", "price": 28}]},
+{"id": "wineReserveAubeSyrahMerlot", "category": "wine", "name": "Reserve de L'Aube Syrah Merlot 奥布西拉梅洛珍藏", "sizes": [{"key": "glass", "price": 8.5}, {"key": "bottle", "price": 32}]},
+{"id": "wineChateauGrandVallons", "category": "wine", "name": "Château Les Grand Vallons 波尔多-城堡", "sizes": [{"key": "glass", "price": 10.95}, {"key": "bottle", "price": 39}]},
+{"id": "wineFincaMonicaCrianza", "category": "wine", "name": "Finca Mónica Crianza", "sizes": [{"key": "bottle", "price": 42}]},
+{"id": "wineFinDelMundoMalbec", "category": "wine", "name": "Fin del Mundo Reserva Malbec 珍藏马尔贝克", "sizes": [{"key": "bottle", "price": 45}]},
+{"id": "wineSuraniPrimitivo", "category": "wine", "name": "Surani Primitivo di Manduria", "sizes": [{"key": "bottle", "price": 49}]},
+{"id": "wineLouisJadotPinotNoir", "category": "wine", "name": "Louis Jadot Bourgogne Pinot Noir 'Couvent des Jacobins' 勃艮第黑皮诺", "sizes": [{"key": "bottle", "price": 69}]},
+{"id": "wineHautsLynchMoussas", "category": "wine", "name": "Les Hauts de Lynch Moussas 上梦多克", "sizes": [{"key": "bottle", "price": 89}]},
+{"id": "wineColombetteGrenacheRose", "category": "wine", "name": "Domaine La Colombette Grenache Rosé 歌海娜玫瑰庄", "sizes": [{"key": "glass", "price": 8}, {"key": "bottle", "price": 29}]},
+{"id": "wineBerneRomanceRose", "category": "wine", "name": "Château de Berne Romance Rosé 普罗旺斯玫瑰", "sizes": [{"key": "glass", "price": 10.95}, {"key": "bottle", "price": 39}]},
+{"id": "wineSerenaProsecco", "category": "wine", "name": "Serena Prosecco Frizzante 罗普罗蜜克(单人装20cl)", "price": 9.95},
+{"id": "wineMontegrandeFrizzante", "category": "wine", "name": "Montegrande Bianco Frizzante 蒙特格兰德(瓶)", "price": 29},
+{"id": "wineChampagneTheophile", "category": "wine", "name": "Champagne Theophile Brut NV 香槟(瓶)", "price": 89},
+{"id": "wineCola", "category": "wine", "name": "可乐/无糖可乐/健怡可乐 330ml", "price": 3.8},
+{"id": "wineSevenUp", "category": "wine", "name": "七喜/无糖七喜 300ml", "price": 3.8},
+{"id": "wineFanta", "category": "wine", "name": "芬达 Fanta 300ml", "price": 3.8},
+{"id": "wineJdb", "category": "wine", "name": "加多宝 Jiaduobao", "price": 3.8},
+{"id": "wineAloeRegular", "category": "wine", "name": "芦荟汁 Aloe Juice", "price": 3.8},
+{"id": "wineAloeLarge", "category": "wine", "name": "芦荟汁(大) Aloe Juice", "price": 9},
+{"id": "wineSoyDrink", "category": "wine", "name": "维他豆奶(小) Soy Drink", "price": 4.6},
+{"id": "wineCoconutJuice", "category": "wine", "name": "椰树牌椰汁", "price": 4.6},
+{"id": "wineWaterSmall", "category": "wine", "name": "小纯净水/小气泡水 330ml", "price": 3.8},
+{"id": "wineWaterLarge", "category": "wine", "name": "大纯净水/大气泡水 750ml", "price": 6},
+{"id": "wineAppleJuice", "category": "wine", "name": "苹果汁", "sizes": [{"key": "glass", "price": 2.8}, {"key": "bottle", "price": 8.8}]},
+{"id": "wineOrangeJuice", "category": "wine", "name": "橙汁", "sizes": [{"key": "glass", "price": 2.8}, {"key": "bottle", "price": 8.8}]},
+{"id": "wineCranberryJuice", "category": "wine", "name": "蔓越莓汁", "sizes": [{"key": "glass", "price": 2.8}, {"key": "bottle", "price": 8.8}]},
+{"id": "wineTsingtao", "category": "wine", "name": "青岛啤酒 330ml", "price": 5.95},
+{"id": "wineAsahi", "category": "wine", "name": "朝日啤酒 330ml", "price": 5.95},
+{"id": "wineHeineken", "category": "wine", "name": "喜力啤酒 330ml", "price": 5.95},
+{"id": "wineHeineken00", "category": "wine", "name": "喜力0.0 330ml", "price": 5.5},
+{"id": "wineGuinness", "category": "wine", "name": "健力士 500ml", "price": 7.95},
+{"id": "wineGuinness00", "category": "wine", "name": "健力士0.0 500ml", "price": 7.5},
+];
+const DISH_BY_ID = {};
+DISH_LIST.forEach(d => { DISH_BY_ID[d.id] = d; });
+
+let soldOutIds = new Set();
+let selected = new Map();   // id -> { size: string|null }
+let modalOpen = false;
+let loaded = false;
+let searchQuery = '';
+
+function onSearchInput(value){
+  searchQuery = value;
+  document.getElementById('searchClearBtn').classList.toggle('visible', searchQuery.length > 0);
+  renderList();   // search box lives outside #app，不需要（也不该触发）整页重画
+}
+
+function clearSearch(){
+  searchQuery = '';
+  const input = document.getElementById('searchInput');
+  if(input) input.value = '';
+  document.getElementById('searchClearBtn').classList.remove('visible');
+  renderList();
+}
+
+function matchesFilters(d){
+  if(!searchQuery.trim()) return true;
+  return d.name.toLowerCase().includes(searchQuery.trim().toLowerCase());
+}
+
+menuStatusRef.onSnapshot(snap => {
+  const data = snap.data();
+  soldOutIds = new Set((data && data.ids) || []);
+  loaded = true;
+  render();
+}, err => { loaded = true; render(); });
+
+function toggleSelect(id){
+  if(selected.has(id)){
+    selected.delete(id);
+  }else{
+    const d = DISH_BY_ID[id];
+    selected.set(id, { size: d && d.sizes ? d.sizes[0].key : null });
+  }
+  render();
+}
+
+function setDishSize(id, key){
+  const sel = selected.get(id);
+  if(!sel) return;
+  sel.size = key;
+  renderList();
+}
+
+function dishPrice(d, sel){
+  if(d.sizes){
+    const opt = d.sizes.find(s => s.key === (sel && sel.size)) || d.sizes[0];
+    return opt.price;
+  }
+  return d.price;
+}
+
+function priceLabelHTML(d){
+  if(d.sizes) return d.sizes.map(s => `${SIZE_LABELS_ZH[s.key] || s.key} €${s.price.toFixed(2)}`).join(' / ');
+  return `€${d.price.toFixed(2)}${d.unit === 'person' ? '/人' : ''}`;
+}
+
+function openAddModal(){
+  if(!table || selected.size === 0) return;
+  modalOpen = true;
+  renderModal();
+}
+
+function closeModal(){
+  modalOpen = false;
+  renderModal();
+}
+
+// 加菜：生成一笔新的待处理订单，昵称固定标成"员工代加"，方便在看板/详情页里
+// 跟顾客自己扫码点的区分开；下单后直接跳回订单详情页，还是要走一遍"确认送入厨房"
+async function confirmAdd(){
+  if(!table || selected.size === 0) return;
+  const items = [];
+  selected.forEach((sel, id) => {
+    const d = DISH_BY_ID[id];
+    if(!d) return;
+    const entry = { name: d.name, qty: 1, price: dishPrice(d, sel) };
+    if(d.sizes) entry.size = (sel && sel.size) || d.sizes[0].key;
+    items.push(entry);
+  });
+  try{
+    await ordersRef.add({
+      table: String(table), items, createdAt: Date.now(),
+      nickname: '员工代加', partySize: 1, status: 'pending',
+    });
+  }catch(e){
+    alert('加菜失败，请重试');
+    return;
+  }
+  location.href = `ddxq.html?table=${encodeURIComponent(table)}`;
+}
+
+function dishRowHTML(d){
+  const sel = selected.get(d.id);
+  const checked = !!sel;
+  const soldOut = soldOutIds.has(d.id);
+  const sizePicker = (checked && d.sizes) ? `
+    <div class="size-picker">${d.sizes.map(s => `
+      <button type="button" class="size-opt-btn ${sel.size === s.key ? 'active' : ''}" onclick="setDishSize('${d.id}','${s.key}')">${SIZE_LABELS_ZH[s.key] || s.key} €${s.price.toFixed(2)}</button>
+    `).join('')}</div>` : '';
+  return `
+    <li class="dish-row ${checked ? 'checked' : ''}">
+      <label>
+        <input type="checkbox" ${checked ? 'checked' : ''} onchange="toggleSelect('${d.id}')">
+        <span class="dish-row-name">${d.name}</span>
+        <span class="dish-row-price">${priceLabelHTML(d)}</span>
+        ${soldOut ? '<span class="sold-out-badge">已沽清</span>' : ''}
+      </label>
+      ${sizePicker}
+    </li>`;
+}
+
+function selectedRowsHTML(){
+  return Array.from(selected.entries()).map(([id, sel]) => {
+    const d = DISH_BY_ID[id];
+    if(!d) return '';
+    const price = dishPrice(d, sel);
+    const sizeLabel = d.sizes ? `（${SIZE_LABELS_ZH[sel.size] || sel.size}）` : '';
+    return `<li><span>${d.name}${sizeLabel}</span><span>€${price.toFixed(2)}</span></li>`;
+  }).join('');
+}
+
+function renderModal(){
+  const root = document.getElementById('modal-root');
+  if(!modalOpen){ root.innerHTML = ''; return; }
+  root.innerHTML = `
+    <div class="modal-overlay">
+      <div class="modal-box">
+        <ul class="modal-dish-list">${selectedRowsHTML()}</ul>
+        <p class="modal-note">确认后会给桌 ${table} 生成一笔新的待处理订单，仍需要在订单详情页里手动"确认送入厨房"。</p>
+        <div class="modal-actions">
+          <button class="modal-cancel-btn" onclick="closeModal()">取消</button>
+          <button class="modal-confirm-btn ok" onclick="confirmAdd()">确认加菜</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderList(){
+  const app = document.getElementById('app');
+  if(!loaded){ app.innerHTML = ''; return; }
+  if(!table){
+    app.innerHTML = `<p class="no-results">没有指定桌号，请从接单看板的订单详情页进入。</p>`;
+    return;
+  }
+  const sections = CATEGORY_ORDER.map(cat => {
+    const items = DISH_LIST.filter(d => d.category === cat && matchesFilters(d));
+    if(items.length === 0) return '';
+    return `<section class="cat-section"><h2>${CATEGORY_LABELS[cat]}</h2><ul class="dish-list">${items.map(dishRowHTML).join('')}</ul></section>`;
+  }).join('');
+  app.innerHTML = sections || `<p class="no-results">没有找到匹配的菜品</p>`;
+}
+
+function render(){
+  document.getElementById('selCount').textContent = selected.size;
+  document.getElementById('addBtn').disabled = !table || selected.size === 0;
+  renderList();
+  renderModal();
+}
+
+render();
+</script>
+</body>
+</html>

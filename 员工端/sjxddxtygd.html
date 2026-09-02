@@ -98,32 +98,15 @@
   }
   .order-card.warn{border-left-color:var(--warn);}
   .order-card.urgent{border-left-color:var(--urgent);}
-  .order-card.clickable{cursor:pointer;}
-  .order-card.clickable:hover{border-color:var(--text-muted);}
 
-  /* 看板卡片默认只是个"预览方框"：最多 5 道最新菜品，没有任何操作按钮，
-     点整张卡片才展开详情（全部菜品 + 送入厨房/整单删除）*/
+  /* 看板卡片默认只是个"预览方框"：最多 5 道最新菜品，没有单品/整单的删除操作，
+     只留结账和查看详细订单两个入口——全部菜品、加菜、送入厨房、整单删除都挪去
+     单独的订单详情页面（ddxq.html），而不是弹窗，方便当成独立页面分享/返回 */
   .preview-list li{cursor:default;}
   .preview-hint{
     font-size:12px;color:var(--text-muted);text-align:center;
     padding-top:4px;border-top:1px dashed var(--line);
   }
-  .detail-overlay{
-    position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.6);
-    display:flex;align-items:center;justify-content:center;padding:20px;
-  }
-  .detail-box{
-    max-width:440px;width:100%;max-height:86vh;overflow-y:auto;
-    cursor:default;
-  }
-  .detail-box .card-top{position:sticky;top:-1px;background:var(--card);padding-top:1px;}
-  .detail-close-btn{
-    width:26px;height:26px;border-radius:8px;flex-shrink:0;
-    border:1px solid var(--line);background:none;color:var(--text-muted);
-    font-size:14px;font-weight:900;cursor:pointer;line-height:1;font-family:inherit;
-    display:flex;align-items:center;justify-content:center;
-  }
-  .detail-close-btn:hover{border-color:var(--text-muted);color:var(--text);}
 
   .card-body-wrap{position:relative;display:flex;flex-direction:column;}
   .card-body{display:flex;flex-direction:column;gap:12px;}
@@ -168,13 +151,6 @@
     font-size:13px;color:var(--text-muted);margin-bottom:14px;line-height:1.5;
     background:rgba(255,255,255,.04);border-radius:8px;padding:10px 12px;text-align:left;
   }
-  .operator-input{
-    width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;
-    color:var(--text);font-family:inherit;font-size:14px;padding:11px 14px;margin-bottom:6px;
-    text-align:left;
-  }
-  .operator-input:focus{outline:none;border-color:var(--urgent);}
-  .operator-hint{font-size:11.5px;color:var(--text-muted);text-align:left;margin-bottom:16px;}
 
   .card-top{display:flex;justify-content:space-between;align-items:flex-start;}
   .table-num{font-family:'Archivo Black',sans-serif;font-size:30px;line-height:1;}
@@ -184,13 +160,6 @@
   }
   .order-card.warn .elapsed{color:var(--warn);}
   .order-card.urgent .elapsed{color:var(--urgent);}
-
-  .customer-block{display:flex;flex-direction:column;gap:8px;}
-  .customer-name{
-    font-size:13px;font-weight:700;color:var(--text-muted);
-    padding-top:6px;border-top:1px dashed var(--line);
-  }
-  .customer-block:first-of-type .customer-name{border-top:none;padding-top:0;}
 
   .item-list{list-style:none;display:flex;flex-direction:column;gap:8px;}
   .item-list li{
@@ -202,42 +171,29 @@
     font-family:'Archivo Black',sans-serif;color:var(--warn);margin-right:8px;
   }
   .spice-tag{font-size:11.5px;color:var(--text-muted);border:1px solid var(--line);border-radius:20px;padding:2px 9px;}
-  .exclude-tag{font-size:11.5px;color:var(--urgent);border:1px solid rgba(210,80,47,.5);border-radius:20px;padding:2px 9px;font-weight:700;}
   .for-dish-tag{font-size:11.5px;color:var(--warn);border:1px solid rgba(232,162,61,.5);border-radius:20px;padding:2px 9px;font-weight:700;}
-  .new-tag{font-size:11.5px;color:var(--urgent);border:1px solid var(--urgent);border-radius:20px;padding:2px 9px;font-weight:700;}
-  .item-list li.is-new{background:rgba(210,80,47,.14);}
-  .item-del-btn{
-    flex-shrink:0;width:26px;height:26px;border-radius:8px;
-    border:1.5px solid var(--urgent);background:rgba(210,80,47,.12);color:var(--urgent);
-    font-size:14px;font-weight:900;cursor:pointer;line-height:1;font-family:inherit;
-    display:flex;align-items:center;justify-content:center;
-  }
-  .item-del-btn:hover{background:rgba(210,80,47,.24);}
-  .order-del-btn{
-    width:100%;margin-top:8px;padding:11px;border-radius:10px;
-    font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit;
-    background:none;border:1px solid rgba(210,80,47,.5);color:var(--urgent);
-  }
-  .order-del-btn:hover{background:rgba(210,80,47,.12);}
 
   .confirmed-badge{
     font-size:11px;font-weight:700;color:#5FBE8A;border:1px solid rgba(95,190,138,.5);
     border-radius:20px;padding:3px 10px;white-space:nowrap;
   }
 
-  .done-btn, .confirm-btn{
-    margin-top:2px;padding:11px;border-radius:10px;font-size:14px;cursor:pointer;font-weight:700;
+  /* 预览方框底部两个大按钮：结账（常用、放绿色）+ 查看详细订单（次要、灰边框） */
+  .preview-actions{display:flex;gap:8px;margin-top:2px;}
+  .checkout-btn, .view-detail-btn{
+    flex:1;padding:13px 8px;border-radius:10px;font-size:14px;cursor:pointer;font-weight:900;
+    font-family:inherit;text-decoration:none;text-align:center;
+    display:flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;
   }
-  .done-btn{background:none;border:1px solid var(--line);color:var(--text-muted);}
-  .done-btn:hover{border-color:#5FBE8A;color:#5FBE8A;}
-  .done-btn:active{background:rgba(95,190,138,.12);}
-  .confirm-btn{background:rgba(232,162,61,.14);border:1px solid var(--warn);color:var(--warn);}
-  .confirm-btn:hover{background:rgba(232,162,61,.22);}
-  .confirm-btn:active{background:rgba(232,162,61,.3);}
+  .checkout-btn{background:rgba(95,190,138,.14);border:1px solid #5FBE8A;color:#5FBE8A;}
+  .checkout-btn:hover{background:rgba(95,190,138,.24);}
+  .checkout-btn:active{background:rgba(95,190,138,.32);}
+  .view-detail-btn{background:none;border:1px solid var(--line);color:var(--text-muted);}
+  .view-detail-btn:hover{border-color:var(--text-muted);color:var(--text);}
 </style>
 </head>
 <body>
-<div class="warn-banner">顾客未结账离开时禁止点击移出看板！！！！！！</div>
+<div class="warn-banner">！顾客未结账时禁止点击结账！</div>
 <nav class="top-nav">
   <a class="control-btn" href="../index.html">← 控制系统</a>
 </nav>
@@ -256,9 +212,7 @@
 </header>
 <div id="app"></div>
 <div id="confirm-modal"></div>
-<div id="delete-modal"></div>
 <div id="system-modal"></div>
-<div id="detail-modal"></div>
 
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-compat.js"></script>
@@ -401,7 +355,6 @@ function playSound(kind){
 }
 
 const SIZE_LABELS_ZH = { half:'半份', whole:'整份', large:'大份', small:'小份', glass:'杯', bottle:'瓶' };
-const OPTION_LABELS_ZH = { onion:'不要洋葱', scallion:'不要葱', ginger:'不要姜', cilantro:'不要香菜', meat:'不要肉' };
 const COOK_METHOD_LABELS_ZH = { steamed:'蒸', panFried:'煎' };
 const SOUP_BASE_LABELS_ZH = { tomato:'番茄', classicMala:'经典川味麻辣', boneBrothSpicy:'骨汤（辣）', boneBrothMild:'骨汤（不辣）', mushroom:'菌汤', malaBan:'麻辣拌' };
 const DRINK_LABELS_ZH = { cola:'可乐/无糖可乐/健怡可乐', sevenUp:'七喜/无糖七喜', fanta:'芬达', jdb:'加多宝', aloe:'芦荟汁' };
@@ -445,18 +398,7 @@ ordersRef.onSnapshot(snap => {
   document.getElementById('status').textContent = '连接异常，正在重试…';
 });
 
-// 第一步：确认订单，推送给顾客端“已送入厨房”动画，但仍留在看板上等待上菜
-async function confirmToKitchen(keys){
-  orders = orders.map(o => keys.includes(o.key) ? Object.assign({}, o, { status: 'confirmed' }) : o);
-  render();
-  try{
-    const batch = db.batch();
-    keys.forEach(key => batch.update(ordersRef.doc(key), { status: 'confirmed' }));
-    await batch.commit();
-  }catch(e){ /* onSnapshot 会在下一次推送时自动纠正 */ }
-}
-
-// 第二步：菜已上齐，彻底移出看板
+// 菜已上齐/顾客结账离开：彻底移出看板
 async function archiveOrder(keys){
   orders = orders.filter(o => !keys.includes(o.key));
   render();
@@ -467,7 +409,7 @@ async function archiveOrder(keys){
   }catch(e){ /* onSnapshot 会在下一次推送时自动纠正 */ }
 }
 
-// “顾客已经结账离开，移出看板”会误删还在用餐的桌，先弹窗二次确认
+// “结账”会误删还在用餐的桌，先弹窗二次确认
 let confirmKeys = null;
 let confirmTable = null;
 
@@ -533,144 +475,11 @@ function renderConfirmModal(){
       <div class="confirm-box">
         <p class="confirm-question">确认顾客已经结账离开？</p>
         <div class="confirm-actions">
-          <button class="confirm-cancel-btn" onclick="cancelLeave()">取消移出看板</button>
+          <button class="confirm-cancel-btn" onclick="cancelLeave()">取消</button>
           <button class="confirm-yes-btn" onclick="confirmLeaveYes()">确认已离开</button>
         </div>
       </div>
     </div>`;
-}
-
-// 单品删除 / 整单删除：都要求先填操作人姓名才能确认，且都会记一条日志到
-// staffActionLogs，供"员工操作日志"页面查看
-let deleteModalCtx = null;   // null | { type: 'item'|'order', target, operatorName }
-
-function requestDeleteItem(idx){
-  const target = itemDeleteTargets[idx];
-  if(!target) return;
-  deleteModalCtx = { type: 'item', target, operatorName: '' };
-  renderDeleteModal();
-}
-
-function requestDeleteOrder(idx){
-  const target = orderDeleteTargets[idx];
-  if(!target) return;
-  deleteModalCtx = { type: 'order', target, operatorName: '' };
-  renderDeleteModal();
-}
-
-function cancelDelete(){
-  deleteModalCtx = null;
-  renderDeleteModal();
-}
-
-// 操作人姓名只准填汉字和英文字母——不要数字、符号、空格，边打字边过滤掉
-function sanitizeOperatorName(v){
-  return (v || '').replace(/[^a-zA-Z一-龥]/g, '');
-}
-
-function updateDeleteOperatorName(v){
-  if(!deleteModalCtx) return;
-  const clean = sanitizeOperatorName(v);
-  deleteModalCtx.operatorName = clean;
-  const input = document.getElementById('operator-name-input');
-  if(input && input.value !== clean) input.value = clean;
-  const btn = document.getElementById('delete-confirm-btn');
-  if(btn) btn.disabled = clean.trim().length === 0;
-}
-
-function confirmDelete(){
-  if(!deleteModalCtx) return;
-  const name = deleteModalCtx.operatorName.trim();
-  if(!name) return;
-  const { type, target } = deleteModalCtx;
-  deleteModalCtx = null;
-  renderDeleteModal();
-  if(type === 'item') performDeleteItem(target, name);
-  else performDeleteOrder(target, name);
-}
-
-function renderDeleteModal(){
-  const el = document.getElementById('delete-modal');
-  if(!deleteModalCtx){ el.innerHTML = ''; return; }
-  const { type, target, operatorName } = deleteModalCtx;
-  const question = type === 'item' ? '确认删除这道菜？' : '确认整单删除？';
-  const detail = type === 'item'
-    ? `桌 ${target.table} · ${target.name} × ${target.qty}`
-    : `桌 ${target.table} · 共 ${target.items.length} 项：${target.items.map(it => `${it.name}×${it.qty}`).join('、')}`;
-  el.innerHTML = `
-    <div class="confirm-overlay">
-      <div class="confirm-box">
-        <p class="confirm-question">${question}</p>
-        <p class="delete-modal-detail">${detail}</p>
-        <input type="text" class="operator-input" id="operator-name-input" placeholder="请输入操作人员姓名，不填不能删除"
-               value="${operatorName}" oninput="updateDeleteOperatorName(this.value)"
-               onkeydown="if(event.key==='Enter' && this.value.trim()) confirmDelete()" autocomplete="off">
-        <p class="operator-hint">仅支持汉字和英文字母</p>
-        <div class="confirm-actions">
-          <button class="confirm-cancel-btn" onclick="cancelDelete()">取消</button>
-          <button class="confirm-yes-btn" id="delete-confirm-btn" onclick="confirmDelete()" ${operatorName.trim() ? '' : 'disabled'}>确认删除</button>
-        </div>
-      </div>
-    </div>`;
-  const input = document.getElementById('operator-name-input');
-  if(input) input.focus();
-}
-
-async function logStaffAction(entry){
-  try{
-    await db.collection('staffActionLogs').add({
-      action: entry.action, operator: entry.operator, table: entry.table,
-      detail: entry.detail, createdAt: Date.now(),
-    });
-  }catch(e){ /* 日志写入失败不影响已经执行完的删除操作 */ }
-}
-
-// 删掉某一道合并显示的菜：这道菜可能来自同一顾客的好几次加菜（好几个 order 文档各贡献
-// 一条 items 记录），所以要在这些文档里逐个找到匹配的那一条删掉，文档删空了就整份删除
-async function performDeleteItem(target, operatorName){
-  const { table, keys, name, spice, size, cookMethod, soupBase, drink, forDish, qty } = target;
-  const matches = it => it.name === name && (it.spice || '') === (spice || '')
-    && (it.size || '') === (size || '') && (it.cookMethod || '') === (cookMethod || '')
-    && (it.soupBase || '') === (soupBase || '') && (it.drink || '') === (drink || '') && (it.forDish || '') === (forDish || '');
-  const toDelete = [];
-  const toUpdate = [];
-  keys.forEach(key => {
-    const order = orders.find(o => o.key === key);
-    if(!order) return;
-    const items = order.items || [];
-    const idx = items.findIndex(matches);
-    if(idx === -1) return;
-    const newItems = items.slice(0, idx).concat(items.slice(idx + 1));
-    if(newItems.length === 0) toDelete.push(key);
-    else toUpdate.push({ key, items: newItems });
-  });
-  orders = orders
-    .filter(o => !toDelete.includes(o.key))
-    .map(o => {
-      const u = toUpdate.find(x => x.key === o.key);
-      return u ? Object.assign({}, o, { items: u.items }) : o;
-    });
-  render();
-  try{
-    const batch = db.batch();
-    toDelete.forEach(key => batch.delete(ordersRef.doc(key)));
-    toUpdate.forEach(({ key, items }) => batch.update(ordersRef.doc(key), { items }));
-    await batch.commit();
-  }catch(e){ /* onSnapshot 会在下一次推送时自动纠正 */ }
-  logStaffAction({ action: 'deleteItem', operator: operatorName, table, detail: `${name} × ${qty}` });
-}
-
-async function performDeleteOrder(target, operatorName){
-  const { table, keys, items } = target;
-  orders = orders.filter(o => !keys.includes(o.key));
-  render();
-  try{
-    const batch = db.batch();
-    keys.forEach(key => batch.delete(ordersRef.doc(key)));
-    await batch.commit();
-  }catch(e){ /* onSnapshot 会在下一次推送时自动纠正 */ }
-  const detail = items.map(it => `${it.name}×${it.qty}`).join('、');
-  logStaffAction({ action: 'deleteOrder', operator: operatorName, table, detail });
 }
 
 // 同一桌可能分多次下单（加菜），这里按桌号把订单合并成一张看板卡片
@@ -689,93 +498,18 @@ function groupByTable(list){
   return groups;
 }
 
-// 同一桌可能坐了好几位各自扫码点单的顾客，按昵称把订单分开显示，方便分别记录
-function groupByNickname(batch){
-  const map = new Map();
-  batch.forEach(o => {
-    const name = (o.nickname || '').trim() || '匿名顾客';
-    if(!map.has(name)) map.set(name, []);
-    map.get(name).push(o);
-  });
-  const groups = [];
-  for(const [nickname, docs] of map){
-    docs.sort((a,b) => a.createdAt - b.createdAt);
-    const partySize = docs.slice().reverse().find(d => d.partySize)?.partySize || null;
-    groups.push({ nickname, partySize, items: mergeItems(docs), keys: docs.map(d => d.key) });
-  }
-  return groups;
-}
-
-// 按“菜名+辣度+份量”合并数量；只有第一批之后才出现的菜品标记为“新加”
-function mergeItems(batch){
-  const merged = new Map();
-  batch.forEach((o, batchIndex) => {
-    o.items.forEach(it => {
-      const itemKey = it.name + '__' + it.spice + '__' + (it.size || '') + '__' + (it.cookMethod || '') + '__' + (it.soupBase || '') + '__' + (it.drink || '') + '__' + (it.forDish || '');
-      if(!merged.has(itemKey)){
-        merged.set(itemKey, { name: it.name, spice: it.spice, size: it.size || null, cookMethod: it.cookMethod || null, soupBase: it.soupBase || null, drink: it.drink || null, forDish: it.forDish || null, excludes: it.excludes || [], qty: 0, isNew: batchIndex > 0 });
-      }
-      merged.get(itemKey).qty += it.qty;
-    });
-  });
-  return Array.from(merged.values());
-}
-
-// 每次 render() 会先清空这个登记表，itemLineHTML/orderDelBtnHTML 往里塞“删除这一项需要
-// 操作哪些 order 文档”，删除按钮的 onclick 只带一个数组下标，避免把菜名（有些酒款名字
-// 带英文单引号）直接拼进 onclick 属性里，那样字符串会被提前截断
-let itemDeleteTargets = [];
-let orderDeleteTargets = [];
-
-function itemLineHTML(it, table, orderKeys){
-  const tags = [];
-  if(it.spice) tags.push(`<span class="spice-tag">${it.spice}</span>`);
-  if(it.size) tags.push(`<span class="spice-tag">${SIZE_LABELS_ZH[it.size] || it.size}</span>`);
-  if(it.cookMethod) tags.push(`<span class="spice-tag">${COOK_METHOD_LABELS_ZH[it.cookMethod] || it.cookMethod}</span>`);
-  if(it.soupBase) tags.push(`<span class="spice-tag">${SOUP_BASE_LABELS_ZH[it.soupBase] || it.soupBase}</span>`);
-  if(it.drink) tags.push(`<span class="spice-tag">${DRINK_LABELS_ZH[it.drink] || it.drink}</span>`);
-  it.excludes.forEach(k => tags.push(`<span class="exclude-tag">${OPTION_LABELS_ZH[k] || k}</span>`));
-  if(it.forDish) tags.push(`<span class="for-dish-tag">加菜给：${it.forDish}</span>`);
-  if(it.isNew) tags.push('<span class="new-tag">新加</span>');
-  const idx = itemDeleteTargets.length;
-  itemDeleteTargets.push({
-    table, keys: orderKeys,
-    name: it.name, spice: it.spice, size: it.size, cookMethod: it.cookMethod, soupBase: it.soupBase, drink: it.drink, forDish: it.forDish, qty: it.qty,
-  });
-  return `<li class="${it.isNew?'is-new':''}">
-      <span class="item-main"><span><span class="qty">${it.qty}×</span>${it.name}</span><span style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">${tags.join('')}</span></span>
-      <button class="item-del-btn" onclick="requestDeleteItem(${idx})" aria-label="删除这道菜">✕</button>
-    </li>`;
-}
-
-function customerBlockHTML(nGroup, table){
-  return `
-    <div class="customer-block">
-      <p class="customer-name">${nGroup.nickname}${nGroup.partySize ? ` · ${nGroup.partySize}人` : ''}</p>
-      <ul class="item-list">${nGroup.items.map(it => itemLineHTML(it, table, nGroup.keys)).join('')}</ul>
-    </div>`;
-}
-
-function orderDelBtnHTML(table, realBatch){
-  const items = [];
-  realBatch.forEach(o => (o.items || []).forEach(it => items.push({ name: it.name, qty: it.qty })));
-  const idx = orderDeleteTargets.length;
-  orderDeleteTargets.push({ table, keys: realBatch.map(o => o.key), items });
-  return `<button class="order-del-btn" onclick="requestDeleteOrder(${idx})">🗑 整单删除</button>`;
-}
-
 function callOverlayHTML(callKeys, isAbs){
   return `
     <div class="call-overlay ${isAbs ? 'call-overlay-abs' : 'call-overlay-inline'}">
       <span class="call-bell">🔔</span>
       <p class="call-caption">顾客呼叫</p>
-      <button class="call-dismiss-btn" data-keys="${callKeys.join(',')}" onclick="event.stopPropagation(); archiveOrder(this.dataset.keys.split(','))">✓ 已处理</button>
+      <button class="call-dismiss-btn" data-keys="${callKeys.join(',')}" onclick="archiveOrder(this.dataset.keys.split(','))">✓ 已处理</button>
     </div>`;
 }
 
 const PREVIEW_ITEM_LIMIT = 5;
 
-// 预览方框里只显示"最新点的 5 道菜"：跟 mergeItems 一样按菜名+口味合并数量，
+// 预览方框里只显示"最新点的 5 道菜"：跟详情页的合并逻辑一样按菜名+口味合并数量，
 // 但不分顾客昵称（预览就是要短），并记下每道菜最后一次被点/加菜是本桌第几批
 // 订单（lastBatchIndex），用来排出"最近点的在前"的顺序
 function previewItemsForTable(realBatch){
@@ -795,7 +529,7 @@ function previewItemsForTable(realBatch){
   return { latest: all.slice(0, PREVIEW_ITEM_LIMIT), totalDistinct: all.length };
 }
 
-// 预览行：纯展示，没有删除按钮，也不往 itemDeleteTargets 里塞东西
+// 预览行：纯展示，没有删除按钮
 function previewLineHTML(it){
   const tags = [];
   if(it.spice) tags.push(`<span class="spice-tag">${it.spice}</span>`);
@@ -809,7 +543,9 @@ function previewLineHTML(it){
     </li>`;
 }
 
-// 看板格子：只是个预览方框，不放任何操作按钮，点整张卡片才展开详情
+// 看板格子：只是个预览方框——最新 5 道菜 + 结账 / 查看详细订单两个按钮。
+// 加菜、单品删除、确认送入厨房、整单删除都在"查看详细订单"打开的独立页面（ddxq.html）里，
+// 不放在这里，避免桌数一多、每张卡片信息量太大导致误操作
 function cardHTML(group){
   const { label, level } = elapsedInfo(group.createdAt);
   const realBatch = group.batch.filter(o => !o.call);
@@ -820,9 +556,9 @@ function cardHTML(group){
   const pendingKeys = realBatch.filter(o => o.status !== 'confirmed').map(o => o.key);
   const anyPending = pendingKeys.length > 0;
   const moreCount = preview.totalDistinct - preview.latest.length;
-  const clickAttr = hasRealContent ? ` onclick="openDetail('${group.table}')"` : '';
+  const detailHref = `ddxq.html?table=${encodeURIComponent(group.table)}`;
   return `
-    <div class="order-card ${level}${hasRealContent ? ' clickable' : ''}"${clickAttr}>
+    <div class="order-card ${level}">
       <div class="card-top">
         <span class="table-num">桌 ${group.table}</span>
         <span style="display:flex;gap:8px;align-items:center;">
@@ -834,74 +570,27 @@ function cardHTML(group){
       <div class="card-body-wrap">
         <div class="card-body${hasCall ? ' blurred' : ''}">
           <ul class="item-list preview-list">${preview.latest.map(previewLineHTML).join('')}</ul>
-          <p class="preview-hint">${moreCount > 0 ? `还有 ${moreCount} 项 · 点击查看全部详情 →` : '点击查看详情 →'}</p>
+          ${moreCount > 0 ? `<p class="preview-hint">还有 ${moreCount} 项</p>` : ''}
+          <div class="preview-actions">
+            <button class="checkout-btn" data-keys="${realBatch.map(o=>o.key).join(',')}" onclick="confirmLeave(this.dataset.keys.split(','), '${group.table}')">💳 结账</button>
+            <a class="view-detail-btn" href="${detailHref}">📋 查看详细订单</a>
+          </div>
         </div>
         ${hasCall ? callOverlayHTML(callKeys, true) : ''}
       </div>` : (hasCall ? callOverlayHTML(callKeys, false) : '')}
     </div>`;
 }
 
-// 点开预览方框后的详情弹层：完整的按顾客分组菜单 + 送入厨房/整单删除，
-// 跟改版之前卡片里的内容完全一样，只是从"常驻显示"挪到"点击才展开"
-let detailTable = null;
-
-function openDetail(table){
-  detailTable = table;
-  render();
-}
-
-function closeDetail(){
-  detailTable = null;
-  render();
-}
-
-function renderDetailModal(groups){
-  const el = document.getElementById('detail-modal');
-  if(!detailTable){ el.innerHTML = ''; return; }
-  const group = groups.find(g => g.table === detailTable);
-  if(!group){ detailTable = null; el.innerHTML = ''; return; }   // 这一桌已经被移出/删空了，自动关掉详情层
-  const { label, level } = elapsedInfo(group.createdAt);
-  const realBatch = group.batch.filter(o => !o.call);
-  const nicknameGroups = groupByNickname(realBatch).filter(g => g.items.length > 0);
-  const pendingKeys = realBatch.filter(o => o.status !== 'confirmed').map(o => o.key);
-  const anyPending = pendingKeys.length > 0;
-  const actionBtn = anyPending
-    ? `<button class="confirm-btn" data-keys="${pendingKeys.join(',')}" onclick="confirmToKitchen(this.dataset.keys.split(','))">🍳 确认，送入厨房</button>`
-    : `<button class="done-btn" data-keys="${realBatch.map(o=>o.key).join(',')}" onclick="confirmLeave(this.dataset.keys.split(','), '${group.table}')">✓ 顾客已经结账离开，移出看板</button>`;
-  el.innerHTML = `
-    <div class="detail-overlay" onclick="if(event.target===this) closeDetail()">
-      <div class="order-card ${level} detail-box">
-        <div class="card-top">
-          <span class="table-num">桌 ${group.table}</span>
-          <span style="display:flex;gap:8px;align-items:center;">
-            ${!anyPending ? '<span class="confirmed-badge">已确认</span>' : ''}
-            <span class="elapsed">${label}</span>
-            <button class="detail-close-btn" onclick="closeDetail()" aria-label="关闭详情">✕</button>
-          </span>
-        </div>
-        <div class="card-body">
-          ${nicknameGroups.map(g => customerBlockHTML(g, group.table)).join('')}
-          ${actionBtn}
-          ${orderDelBtnHTML(group.table, realBatch)}
-        </div>
-      </div>
-    </div>`;
-}
-
 function render(){
-  itemDeleteTargets = [];
-  orderDeleteTargets = [];
   const groups = groupByTable(orders);
   document.getElementById('count').textContent = groups.length;
   const app = document.getElementById('app');
-  if(!loaded){ app.innerHTML = ''; renderDetailModal(groups); return; }
+  if(!loaded){ app.innerHTML = ''; return; }
   if(groups.length === 0){
     app.innerHTML = `<div class="empty"><p>暂无订单，等待顾客点单中…</p></div>`;
-    renderDetailModal(groups);
     return;
   }
   app.innerHTML = `<div class="grid">${groups.map(cardHTML).join('')}</div>`;
-  renderDetailModal(groups);
 }
 
 render();

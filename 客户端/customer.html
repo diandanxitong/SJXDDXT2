@@ -101,6 +101,8 @@
     background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><g fill='none' stroke='%23E8A23D' stroke-width='2'><circle cx='50' cy='50' r='30'/><path d='M20 50 Q35 30 50 50 Q65 70 80 50'/><path d='M20 50 Q35 70 50 50 Q65 30 80 50'/></g></svg>");
     background-size:contain;background-repeat:no-repeat;opacity:.1;pointer-events:none;
   }
+  .menu-logo-row{position:relative;z-index:1;display:flex;justify-content:center;margin-bottom:14px;}
+  .menu-logo{width:68px;height:auto;display:block;filter:drop-shadow(0 4px 10px rgba(59,44,30,.25));}
   .bar-row{position:relative;z-index:1;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
   .table-badge{display:flex;flex-direction:column;align-items:flex-start;gap:10px;position:relative;}
   .table-badge-row{display:flex;align-items:baseline;gap:14px;}
@@ -127,6 +129,9 @@
   #panda-nav{position:fixed;top:18px;right:18px;z-index:60;display:flex;flex-direction:column;align-items:flex-end;}
   .menu-panda-slot{position:relative;z-index:56;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;}
   .panda-overlay{position:fixed;inset:0;z-index:55;background:none;border:none;padding:0;margin:0;cursor:default;}
+  /* "我的" 和语言切换现在并排放在同一行——语言切换从"我的"下拉菜单里搬出来，
+     单独一个按钮，图标用"文"这个语言切换的通用符号，而不是之前的地球图标 🌐 */
+  .panda-nav-row{position:relative;z-index:56;display:flex;align-items:center;gap:16px;}
   .my-order-btn{
     position:relative;z-index:56;
     display:flex;align-items:center;gap:7px;background:none;border:none;cursor:pointer;
@@ -137,6 +142,11 @@
     display:flex;align-items:center;justify-content:center;line-height:1;
   }
   .panda-avatar img{display:block;width:100%;height:100%;object-fit:contain;}
+  .lang-switch-icon{
+    font-family:'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif;
+    font-size:18px;font-weight:900;color:var(--gold-ink);
+    background:rgba(232,162,61,.14);border:1px solid var(--gold-line);border-radius:50%;
+  }
   .my-order-label{font-size:12.5px;font-weight:700;color:var(--text-muted);}
   .my-order-btn:hover .my-order-label{color:var(--gold-ink);}
   .panda-dropdown{
@@ -1832,10 +1842,25 @@ function onTableOrdersChanged(){
   if(state.screen === 'myOrder' || state.screen === 'confirm') render();
 }
 
+// 语言选择按设备记住（localStorage 天然就是按浏览器/设备分开存的，没有登录系统，
+// 只能做到这一步）——本桌还没结账再次扫码跳过欢迎页时，就用这台设备上次选的语言，
+// 而不是每次都要重新选
+const LANG_STORAGE_KEY = 'sjxddxtLang';
+function getStoredLanguage(){
+  try{
+    const v = localStorage.getItem(LANG_STORAGE_KEY);
+    return LANG_ORDER.includes(v) ? v : null;
+  }catch(e){ return null; }
+}
+function storeLanguage(code){
+  try{ localStorage.setItem(LANG_STORAGE_KEY, code); }catch(e){}
+}
+
 function applyLanguage(code){
   state.lang = code;
   document.documentElement.lang = code;
   document.title = t('appTitle');
+  storeLanguage(code);
 }
 
 function selectLanguage(code){
@@ -2982,6 +3007,9 @@ function menuHTML(){
   return `
     ${backRowHTML()}
     <header class="bar">
+      <div class="menu-logo-row">
+        <img class="menu-logo" src="../image/LOGO/logo.webp" alt="SJX Cheng Du Hotpot"/>
+      </div>
       <div class="bar-row">
         <div class="table-badge">
           <span class="eyebrow">${t('tableEyebrow')}</span>
@@ -3265,15 +3293,20 @@ function pandaNavHTML(){
   if(!state.table) return '';
   return `
     ${state.pandaMenuOpen ? `<button class="panda-overlay" onclick="closePandaMenu()" aria-label="${t('closeMenu')}"></button>` : ''}
-    <button class="my-order-btn" onclick="togglePandaMenu()" aria-label="${t('myPot')}" aria-expanded="${state.pandaMenuOpen}">
-      <span class="panda-avatar"><img src="../image/LOGO/logo.webp" alt=""/></span>
-      <span class="my-order-label">${t('myPot')}</span>
-    </button>
+    <div class="panda-nav-row">
+      <button class="my-order-btn" onclick="toggleLangSwitcher()" aria-label="${t('languageLabel')}">
+        <span class="panda-avatar lang-switch-icon">文</span>
+        <span class="my-order-label">${LANG_META[state.lang].native}</span>
+      </button>
+      <button class="my-order-btn" onclick="togglePandaMenu()" aria-label="${t('myPot')}" aria-expanded="${state.pandaMenuOpen}">
+        <span class="panda-avatar"><img src="../image/LOGO/logo.webp" alt=""/></span>
+        <span class="my-order-label">${t('myPot')}</span>
+      </button>
+    </div>
     ${state.pandaMenuOpen ? `
       <div class="panda-dropdown">
         <button onclick="goToCart()">${t('cart')}</button>
         <button onclick="goToMyOrder()">${t('orderedItems')}</button>
-        <button onclick="toggleLangSwitcher()">🌐 ${LANG_META[state.lang].native}</button>
       </div>` : ''}`;
 }
 
@@ -3473,7 +3506,25 @@ function render(){
   else{ stopConfirmAnimations(); }
 }
 
-if(state.table){ watchTableOrders(state.table); watchSharedCart(state.table); }
+if(state.table){
+  watchTableOrders(state.table);
+  watchSharedCart(state.table);
+  // 这一桌如果还没结账（Firestore 里还有它的订单——结账后订单文档会被整个删掉，
+  // 呼叫服务员的 call 单不算），说明顾客是中途重新扫码，不是第一次进店：直接跳过
+  // 欢迎页进菜单，语言用这台设备上次选过的（没存过就默认英文，不默认中文，
+  // 免得语言忽然变成看不懂的）。用 state.screen==='welcome' 兜底，防止这份请求
+  // 还没回来时顾客已经自己手动选了语言/往下走了，那样就不要再帮它跳转一次。
+  fetchTableOrders(state.table).then(list => {
+    const hasActiveOrder = list.some(o => !o.call);
+    if(hasActiveOrder && state.screen === 'welcome'){
+      applyLanguage(getStoredLanguage() || 'en');
+      stopWelcomeCycle();
+      screenHistory = [];
+      state.screen = 'menu';
+      render();
+    }
+  });
+}
 render();
 </script>
 </body>

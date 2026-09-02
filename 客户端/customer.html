@@ -102,7 +102,7 @@
     background-size:contain;background-repeat:no-repeat;opacity:.1;pointer-events:none;
   }
   .menu-logo-row{position:relative;z-index:1;display:flex;justify-content:center;margin-bottom:14px;}
-  .menu-logo{width:68px;height:auto;display:block;filter:drop-shadow(0 4px 10px rgba(59,44,30,.25));}
+  .menu-logo{width:88px;height:auto;display:block;filter:drop-shadow(0 4px 10px rgba(59,44,30,.25));}
   .bar-row{position:relative;z-index:1;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
   .table-badge{display:flex;flex-direction:column;align-items:flex-start;gap:10px;position:relative;}
   .table-badge-row{display:flex;align-items:baseline;gap:14px;}
@@ -126,28 +126,22 @@
      On the menu screen it's docked inline in the header (.menu-panda-slot)
      so it scrolls away with the page instead of floating forever; #panda-nav
      is the fixed fallback root used on the other (less-visited) screens. */
-  #panda-nav{position:fixed;top:18px;right:18px;z-index:60;display:flex;flex-direction:column;align-items:flex-end;}
-  .menu-panda-slot{position:relative;z-index:56;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;}
+  /* "我的" 在上、语言切换在下，竖着排在右上角——语言切换是从"我的"下拉菜单里
+     搬出来的独立按钮，图标用 lang.png（那个通用的"文/A"翻译图标） */
+  #panda-nav{position:fixed;top:18px;right:18px;z-index:60;display:flex;flex-direction:column;align-items:flex-end;gap:10px;}
+  .menu-panda-slot{position:relative;z-index:56;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:10px;}
   .panda-overlay{position:fixed;inset:0;z-index:55;background:none;border:none;padding:0;margin:0;cursor:default;}
-  /* "我的" 和语言切换现在并排放在同一行——语言切换从"我的"下拉菜单里搬出来，
-     单独一个按钮，图标用"文"这个语言切换的通用符号，而不是之前的地球图标 🌐 */
-  .panda-nav-row{position:relative;z-index:56;display:flex;align-items:center;gap:16px;}
   .my-order-btn{
     position:relative;z-index:56;
-    display:flex;align-items:center;gap:7px;background:none;border:none;cursor:pointer;
+    display:flex;align-items:center;gap:6px;background:none;border:none;cursor:pointer;
     padding:0;font-family:inherit;color:var(--text);
   }
   .panda-avatar{
-    width:38px;height:38px;flex-shrink:0;
+    width:32px;height:32px;flex-shrink:0;
     display:flex;align-items:center;justify-content:center;line-height:1;
   }
   .panda-avatar img{display:block;width:100%;height:100%;object-fit:contain;}
-  .lang-switch-icon{
-    font-family:'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif;
-    font-size:18px;font-weight:900;color:var(--gold-ink);
-    background:rgba(232,162,61,.14);border:1px solid var(--gold-line);border-radius:50%;
-  }
-  .my-order-label{font-size:12.5px;font-weight:700;color:var(--text-muted);}
+  .my-order-label{font-size:11.5px;font-weight:700;color:var(--text-muted);}
   .my-order-btn:hover .my-order-label{color:var(--gold-ink);}
   .panda-dropdown{
     position:relative;z-index:56;margin-top:8px;min-width:136px;
@@ -3293,16 +3287,14 @@ function pandaNavHTML(){
   if(!state.table) return '';
   return `
     ${state.pandaMenuOpen ? `<button class="panda-overlay" onclick="closePandaMenu()" aria-label="${t('closeMenu')}"></button>` : ''}
-    <div class="panda-nav-row">
-      <button class="my-order-btn" onclick="toggleLangSwitcher()" aria-label="${t('languageLabel')}">
-        <span class="panda-avatar lang-switch-icon">文</span>
-        <span class="my-order-label">${LANG_META[state.lang].native}</span>
-      </button>
-      <button class="my-order-btn" onclick="togglePandaMenu()" aria-label="${t('myPot')}" aria-expanded="${state.pandaMenuOpen}">
-        <span class="panda-avatar"><img src="../image/LOGO/logo.webp" alt=""/></span>
-        <span class="my-order-label">${t('myPot')}</span>
-      </button>
-    </div>
+    <button class="my-order-btn" onclick="togglePandaMenu()" aria-label="${t('myPot')}" aria-expanded="${state.pandaMenuOpen}">
+      <span class="panda-avatar"><img src="../image/LOGO/panda.png" alt=""/></span>
+      <span class="my-order-label">${t('myPot')}</span>
+    </button>
+    <button class="my-order-btn" onclick="toggleLangSwitcher()" aria-label="${t('languageLabel')}">
+      <span class="panda-avatar"><img src="../image/LOGO/lang.png" alt=""/></span>
+      <span class="my-order-label">${LANG_META[state.lang].native}</span>
+    </button>
     ${state.pandaMenuOpen ? `
       <div class="panda-dropdown">
         <button onclick="goToCart()">${t('cart')}</button>

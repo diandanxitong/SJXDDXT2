@@ -127,7 +127,7 @@
      so it scrolls away with the page instead of floating forever; #panda-nav
      is the fixed fallback root used on the other (less-visited) screens. */
   /* "我的" 在上、语言切换在下，竖着排在右上角——语言切换是从"我的"下拉菜单里
-     搬出来的独立按钮，图标用 lang.png（那个通用的"文/A"翻译图标） */
+     搬出来的独立按钮，图标用 lang.webp（那个通用的"文/A"翻译图标） */
   #panda-nav{position:fixed;top:18px;right:18px;z-index:60;display:flex;flex-direction:column;align-items:flex-end;gap:10px;}
   .menu-panda-slot{position:relative;z-index:56;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:10px;}
   .panda-overlay{position:fixed;inset:0;z-index:55;background:none;border:none;padding:0;margin:0;cursor:default;}
@@ -3288,11 +3288,11 @@ function pandaNavHTML(){
   return `
     ${state.pandaMenuOpen ? `<button class="panda-overlay" onclick="closePandaMenu()" aria-label="${t('closeMenu')}"></button>` : ''}
     <button class="my-order-btn" onclick="togglePandaMenu()" aria-label="${t('myPot')}" aria-expanded="${state.pandaMenuOpen}">
-      <span class="panda-avatar"><img src="../image/LOGO/panda.png" alt=""/></span>
+      <span class="panda-avatar"><img src="../image/LOGO/panda.webp" alt=""/></span>
       <span class="my-order-label">${t('myPot')}</span>
     </button>
     <button class="my-order-btn" onclick="toggleLangSwitcher()" aria-label="${t('languageLabel')}">
-      <span class="panda-avatar"><img src="../image/LOGO/lang.png" alt=""/></span>
+      <span class="panda-avatar"><img src="../image/LOGO/lang.webp" alt=""/></span>
       <span class="my-order-label">${LANG_META[state.lang].native}</span>
     </button>
     ${state.pandaMenuOpen ? `

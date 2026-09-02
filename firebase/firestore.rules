@@ -148,6 +148,21 @@ service cloud.firestore {
                     && math.abs(request.time.toMillis() - request.resource.data.updatedAt) < 10 * 60 * 1000;
     }
 
+    // 共享购物车草稿：同一桌多台设备扫同一个桌号点单时，下单前"还没提交"的购物车
+    // 状态（选了哪些菜/锅底/辣度……）实时同步用，避免同桌各点各的、菜重复下单。
+    // 文档 id 就是桌号，items 是个 map（菜品 id -> 该菜当前的选择），结构跟顾客端
+    // 本地的 state.items 一致；规则没法深入校验 map 里每个菜品字段的形状，这点
+    // 跟上面 orders.items 是同样的已知局限。好在这里只是"还没下单的草稿"，写坏了
+    // 顶多是预览不准，不影响下单校验、不产生流水——真正的订单仍然只能通过上面
+    // orders 那套完整校验落地。
+    match /tableCarts/{table} {
+      allow read: if true;
+      allow write: if request.resource.data.keys().hasOnly(['items', 'updatedAt'])
+                    && request.resource.data.items is map
+                    && request.resource.data.updatedAt is number
+                    && math.abs(request.time.toMillis() - request.resource.data.updatedAt) < 10 * 60 * 1000;
+    }
+
     // 兜底：其他任何 collection 一律拒绝，避免规则之外的路径被意外读写
     match /{document=**} {
       allow read, write: if false;

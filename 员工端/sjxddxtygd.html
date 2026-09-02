@@ -98,6 +98,32 @@
   }
   .order-card.warn{border-left-color:var(--warn);}
   .order-card.urgent{border-left-color:var(--urgent);}
+  .order-card.clickable{cursor:pointer;}
+  .order-card.clickable:hover{border-color:var(--text-muted);}
+
+  /* 看板卡片默认只是个"预览方框"：最多 5 道最新菜品，没有任何操作按钮，
+     点整张卡片才展开详情（全部菜品 + 送入厨房/整单删除）*/
+  .preview-list li{cursor:default;}
+  .preview-hint{
+    font-size:12px;color:var(--text-muted);text-align:center;
+    padding-top:4px;border-top:1px dashed var(--line);
+  }
+  .detail-overlay{
+    position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.6);
+    display:flex;align-items:center;justify-content:center;padding:20px;
+  }
+  .detail-box{
+    max-width:440px;width:100%;max-height:86vh;overflow-y:auto;
+    cursor:default;
+  }
+  .detail-box .card-top{position:sticky;top:-1px;background:var(--card);padding-top:1px;}
+  .detail-close-btn{
+    width:26px;height:26px;border-radius:8px;flex-shrink:0;
+    border:1px solid var(--line);background:none;color:var(--text-muted);
+    font-size:14px;font-weight:900;cursor:pointer;line-height:1;font-family:inherit;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .detail-close-btn:hover{border-color:var(--text-muted);color:var(--text);}
 
   .card-body-wrap{position:relative;display:flex;flex-direction:column;}
   .card-body{display:flex;flex-direction:column;gap:12px;}
@@ -232,6 +258,7 @@
 <div id="confirm-modal"></div>
 <div id="delete-modal"></div>
 <div id="system-modal"></div>
+<div id="detail-modal"></div>
 
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-compat.js"></script>
@@ -742,24 +769,60 @@ function callOverlayHTML(callKeys, isAbs){
     <div class="call-overlay ${isAbs ? 'call-overlay-abs' : 'call-overlay-inline'}">
       <span class="call-bell">🔔</span>
       <p class="call-caption">顾客呼叫</p>
-      <button class="call-dismiss-btn" data-keys="${callKeys.join(',')}" onclick="archiveOrder(this.dataset.keys.split(','))">✓ 已处理</button>
+      <button class="call-dismiss-btn" data-keys="${callKeys.join(',')}" onclick="event.stopPropagation(); archiveOrder(this.dataset.keys.split(','))">✓ 已处理</button>
     </div>`;
 }
 
+const PREVIEW_ITEM_LIMIT = 5;
+
+// 预览方框里只显示"最新点的 5 道菜"：跟 mergeItems 一样按菜名+口味合并数量，
+// 但不分顾客昵称（预览就是要短），并记下每道菜最后一次被点/加菜是本桌第几批
+// 订单（lastBatchIndex），用来排出"最近点的在前"的顺序
+function previewItemsForTable(realBatch){
+  const merged = new Map();
+  realBatch.forEach((o, batchIndex) => {
+    (o.items || []).forEach(it => {
+      const key = it.name + '__' + it.spice + '__' + (it.size || '') + '__' + (it.cookMethod || '') + '__' + (it.soupBase || '') + '__' + (it.drink || '') + '__' + (it.forDish || '');
+      if(!merged.has(key)){
+        merged.set(key, { name: it.name, spice: it.spice, size: it.size || null, cookMethod: it.cookMethod || null, soupBase: it.soupBase || null, drink: it.drink || null, forDish: it.forDish || null, qty: 0, lastBatchIndex: 0 });
+      }
+      const entry = merged.get(key);
+      entry.qty += it.qty;
+      entry.lastBatchIndex = batchIndex;
+    });
+  });
+  const all = Array.from(merged.values()).sort((a,b) => b.lastBatchIndex - a.lastBatchIndex);
+  return { latest: all.slice(0, PREVIEW_ITEM_LIMIT), totalDistinct: all.length };
+}
+
+// 预览行：纯展示，没有删除按钮，也不往 itemDeleteTargets 里塞东西
+function previewLineHTML(it){
+  const tags = [];
+  if(it.spice) tags.push(`<span class="spice-tag">${it.spice}</span>`);
+  if(it.size) tags.push(`<span class="spice-tag">${SIZE_LABELS_ZH[it.size] || it.size}</span>`);
+  if(it.cookMethod) tags.push(`<span class="spice-tag">${COOK_METHOD_LABELS_ZH[it.cookMethod] || it.cookMethod}</span>`);
+  if(it.soupBase) tags.push(`<span class="spice-tag">${SOUP_BASE_LABELS_ZH[it.soupBase] || it.soupBase}</span>`);
+  if(it.drink) tags.push(`<span class="spice-tag">${DRINK_LABELS_ZH[it.drink] || it.drink}</span>`);
+  if(it.forDish) tags.push(`<span class="for-dish-tag">加菜给：${it.forDish}</span>`);
+  return `<li>
+      <span class="item-main"><span><span class="qty">${it.qty}×</span>${it.name}</span><span style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">${tags.join('')}</span></span>
+    </li>`;
+}
+
+// 看板格子：只是个预览方框，不放任何操作按钮，点整张卡片才展开详情
 function cardHTML(group){
   const { label, level } = elapsedInfo(group.createdAt);
   const realBatch = group.batch.filter(o => !o.call);
   const callKeys = group.batch.filter(o => o.call).map(o => o.key);
   const hasCall = callKeys.length > 0;
-  const nicknameGroups = groupByNickname(realBatch).filter(g => g.items.length > 0);
-  const hasRealContent = nicknameGroups.length > 0;
+  const preview = previewItemsForTable(realBatch);
+  const hasRealContent = preview.totalDistinct > 0;
   const pendingKeys = realBatch.filter(o => o.status !== 'confirmed').map(o => o.key);
   const anyPending = pendingKeys.length > 0;
-  const actionBtn = !hasRealContent ? '' : (anyPending
-    ? `<button class="confirm-btn" data-keys="${pendingKeys.join(',')}" onclick="confirmToKitchen(this.dataset.keys.split(','))">🍳 确认，送入厨房</button>`
-    : `<button class="done-btn" data-keys="${realBatch.map(o=>o.key).join(',')}" onclick="confirmLeave(this.dataset.keys.split(','), '${group.table}')">✓ 顾客已经结账离开，移出看板</button>`);
+  const moreCount = preview.totalDistinct - preview.latest.length;
+  const clickAttr = hasRealContent ? ` onclick="openDetail('${group.table}')"` : '';
   return `
-    <div class="order-card ${level}">
+    <div class="order-card ${level}${hasRealContent ? ' clickable' : ''}"${clickAttr}>
       <div class="card-top">
         <span class="table-num">桌 ${group.table}</span>
         <span style="display:flex;gap:8px;align-items:center;">
@@ -770,12 +833,58 @@ function cardHTML(group){
       ${hasRealContent ? `
       <div class="card-body-wrap">
         <div class="card-body${hasCall ? ' blurred' : ''}">
+          <ul class="item-list preview-list">${preview.latest.map(previewLineHTML).join('')}</ul>
+          <p class="preview-hint">${moreCount > 0 ? `还有 ${moreCount} 项 · 点击查看全部详情 →` : '点击查看详情 →'}</p>
+        </div>
+        ${hasCall ? callOverlayHTML(callKeys, true) : ''}
+      </div>` : (hasCall ? callOverlayHTML(callKeys, false) : '')}
+    </div>`;
+}
+
+// 点开预览方框后的详情弹层：完整的按顾客分组菜单 + 送入厨房/整单删除，
+// 跟改版之前卡片里的内容完全一样，只是从"常驻显示"挪到"点击才展开"
+let detailTable = null;
+
+function openDetail(table){
+  detailTable = table;
+  render();
+}
+
+function closeDetail(){
+  detailTable = null;
+  render();
+}
+
+function renderDetailModal(groups){
+  const el = document.getElementById('detail-modal');
+  if(!detailTable){ el.innerHTML = ''; return; }
+  const group = groups.find(g => g.table === detailTable);
+  if(!group){ detailTable = null; el.innerHTML = ''; return; }   // 这一桌已经被移出/删空了，自动关掉详情层
+  const { label, level } = elapsedInfo(group.createdAt);
+  const realBatch = group.batch.filter(o => !o.call);
+  const nicknameGroups = groupByNickname(realBatch).filter(g => g.items.length > 0);
+  const pendingKeys = realBatch.filter(o => o.status !== 'confirmed').map(o => o.key);
+  const anyPending = pendingKeys.length > 0;
+  const actionBtn = anyPending
+    ? `<button class="confirm-btn" data-keys="${pendingKeys.join(',')}" onclick="confirmToKitchen(this.dataset.keys.split(','))">🍳 确认，送入厨房</button>`
+    : `<button class="done-btn" data-keys="${realBatch.map(o=>o.key).join(',')}" onclick="confirmLeave(this.dataset.keys.split(','), '${group.table}')">✓ 顾客已经结账离开，移出看板</button>`;
+  el.innerHTML = `
+    <div class="detail-overlay" onclick="if(event.target===this) closeDetail()">
+      <div class="order-card ${level} detail-box">
+        <div class="card-top">
+          <span class="table-num">桌 ${group.table}</span>
+          <span style="display:flex;gap:8px;align-items:center;">
+            ${!anyPending ? '<span class="confirmed-badge">已确认</span>' : ''}
+            <span class="elapsed">${label}</span>
+            <button class="detail-close-btn" onclick="closeDetail()" aria-label="关闭详情">✕</button>
+          </span>
+        </div>
+        <div class="card-body">
           ${nicknameGroups.map(g => customerBlockHTML(g, group.table)).join('')}
           ${actionBtn}
           ${orderDelBtnHTML(group.table, realBatch)}
         </div>
-        ${hasCall ? callOverlayHTML(callKeys, true) : ''}
-      </div>` : (hasCall ? callOverlayHTML(callKeys, false) : '')}
+      </div>
     </div>`;
 }
 
@@ -785,12 +894,14 @@ function render(){
   const groups = groupByTable(orders);
   document.getElementById('count').textContent = groups.length;
   const app = document.getElementById('app');
-  if(!loaded){ app.innerHTML = ''; return; }
+  if(!loaded){ app.innerHTML = ''; renderDetailModal(groups); return; }
   if(groups.length === 0){
     app.innerHTML = `<div class="empty"><p>暂无订单，等待顾客点单中…</p></div>`;
+    renderDetailModal(groups);
     return;
   }
   app.innerHTML = `<div class="grid">${groups.map(cardHTML).join('')}</div>`;
+  renderDetailModal(groups);
 }
 
 render();

@@ -964,6 +964,10 @@ const db = firebase.firestore();
 db.settings({ experimentalAutoDetectLongPolling: true });
 const ordersRef = db.collection('orders');
 const menuStatusRef = db.collection('menuStatus').doc('soldOut');
+// 同桌多台手机共享的"下单前购物车草稿"：一台手机选了锅底/加了菜，还没点"下单"，
+// 同桌其他人扫同一个桌号码进来也要实时看到，避免大家各点各的、菜重复下单。
+// 文档 id 就是桌号，字段 items 结构跟 state.items 一模一样，按菜品 id 逐条存。
+const tableCartsRef = db.collection('tableCarts');
 
 // 给一个 promise 加超时：网络很差时 Firestore 请求可能一直挂着不 resolve 也不 reject，
 // 页面就会卡在"下单中"出不来。超时后统一当失败处理，好歹能提示顾客重试。
@@ -1758,6 +1762,51 @@ function watchTableOrders(table){
   }, err => {});
 }
 
+// 同桌共享购物车草稿：本桌一旦选定就订阅 tableCarts/<桌号>，任何一台设备改了某道菜
+// （数量/辣度/锅底/饮品……）都会推到这个文档，其它设备的 onSnapshot 立刻收到并合并
+// 进本地 state.items，界面自动跟着更新（复用 updateItemUI 逐张菜卡片刷新，不整页重画）。
+let sharedCartUnsub = null;
+
+function watchSharedCart(table){
+  if(sharedCartUnsub){ sharedCartUnsub(); sharedCartUnsub = null; }
+  if(!table) return;
+  sharedCartUnsub = tableCartsRef.doc(table).onSnapshot(snap => {
+    const incoming = (snap.data() && snap.data().items) || {};
+    const touchedIds = new Set([...Object.keys(incoming), ...Object.keys(state.items)]);
+    let anyChanged = false;
+    touchedIds.forEach(id => {
+      const oldVal = state.items[id] || null;
+      const newVal = incoming[id] || null;
+      if(JSON.stringify(oldVal) === JSON.stringify(newVal)) return;
+      anyChanged = true;
+      if(newVal) state.items[id] = newVal; else delete state.items[id];
+    });
+    if(!anyChanged) return;
+    if(state.screen === 'menu') touchedIds.forEach(updateItemUI);
+    else if(state.screen === 'cart' || state.screen === 'orderReview') render();
+  }, err => {});
+}
+
+// 每次本地改动某道菜（数量/口味/锅底……）都同步写一份到共享购物车草稿里。
+// 关键是用 "items.<菜品id>" 这种带点号的字段路径当 key（而不是嵌套对象字面量）+
+// merge:true——Firestore 只会精确覆盖这一道菜自己的记录，不会动到同桌其他人正在
+// 改的另一道菜（嵌套对象字面量则会把整个 items 字段整体替换掉，那样会冲掉别人）。
+// 文档还不存在时（本桌第一次有人点单）也会自动建出来。
+function pushSharedCartItem(id){
+  if(!state.table) return;
+  tableCartsRef.doc(state.table).set({
+    [`items.${id}`]: state.items[id] || null,
+    updatedAt: Date.now(),
+  }, { merge: true }).catch(()=>{});
+}
+
+// 下单成功后草稿要清空——这一轮选的菜已经变成正式订单了，留着会让同桌其他人
+// 以为这些菜还没提交，继续叠加甚至重复下单
+function clearSharedCart(){
+  if(!state.table) return;
+  tableCartsRef.doc(state.table).set({ items: {}, updatedAt: Date.now() }).catch(()=>{});
+}
+
 function onTableOrdersChanged(){
   const foodOrders = liveTableOrders.filter(o => !o.call);
 
@@ -1934,6 +1983,7 @@ function changeQty(id, delta){
   state.items[id] = { qty, spice: cur.spice, size: cur.size, excludes: cur.excludes, cookMethod: cur.cookMethod, soupBase: cur.soupBase, drink: cur.drink, meatType: cur.meatType, addOns: cur.addOns };
   if(delta > 0 && qty > cur.qty) celebrateAddToCart();
   updateItemUI(id);
+  pushSharedCartItem(id);
   // 自选火锅米线只是个空碗，选它的一瞬间就带客人去午市点餐挑配菜
   if(id === CUSTOM_RICE_NOODLES_ID && delta > 0 && cur.qty === 0){
     promptCustomRiceNoodlesPicks();
@@ -1956,6 +2006,7 @@ function changeAddOnQty(targetId, lpId, delta){
   state.items[targetId] = Object.assign({}, target, { addOns });
   if(delta > 0 && qty > cur) celebrateAddToCart();
   updateItemUI(lpId);
+  pushSharedCartItem(targetId);
 }
 
 function setSpice(id, level){
@@ -1965,6 +2016,7 @@ function setSpice(id, level){
   if(LUNCH_FLAVOR_DISH_IDS.includes(id) && !SPICE_ELIGIBLE_SOUP_KEYS.includes(cur.soupBase)) return;
   state.items[id] = { qty: cur.qty, spice: level, size: cur.size, excludes: cur.excludes, cookMethod: cur.cookMethod, soupBase: cur.soupBase, drink: cur.drink, meatType: cur.meatType, addOns: cur.addOns };
   updateItemUI(id);
+  pushSharedCartItem(id);
 }
 
 function setSoupBase(id, key){
@@ -1974,6 +2026,7 @@ function setSoupBase(id, key){
   const spice = SPICE_ELIGIBLE_SOUP_KEYS.includes(key) ? cur.spice : null;
   state.items[id] = { qty: cur.qty, spice, size: cur.size, excludes: cur.excludes, cookMethod: cur.cookMethod, soupBase: key, drink: cur.drink, meatType: cur.meatType, addOns: cur.addOns };
   updateItemUI(id);
+  pushSharedCartItem(id);
 }
 
 // 冒菜/火锅米线含一杯饮品，从固定的几款里选一款，不额外计价
@@ -1982,6 +2035,7 @@ function setDrink(id, key){
   if(cur.qty <= 0) return;
   state.items[id] = { qty: cur.qty, spice: cur.spice, size: cur.size, excludes: cur.excludes, cookMethod: cur.cookMethod, soupBase: cur.soupBase, drink: key, meatType: cur.meatType, addOns: cur.addOns };
   updateItemUI(id);
+  pushSharedCartItem(id);
 }
 
 // 冒菜口味：牛肉/猪肉/海鲜/素食，价格和配料跟着口味走
@@ -1990,12 +2044,14 @@ function setMeatType(id, key){
   if(cur.qty <= 0) return;
   state.items[id] = { qty: cur.qty, spice: cur.spice, size: cur.size, excludes: cur.excludes, cookMethod: cur.cookMethod, soupBase: cur.soupBase, drink: cur.drink, meatType: key, addOns: cur.addOns };
   updateItemUI(id);
+  pushSharedCartItem(id);
 }
 
 function setSize(id, key){
   const cur = getItem(id);
   state.items[id] = { qty: cur.qty, spice: cur.spice, size: key, excludes: cur.excludes, cookMethod: cur.cookMethod, soupBase: cur.soupBase, drink: cur.drink, meatType: cur.meatType, addOns: cur.addOns };
   updateItemUI(id);
+  pushSharedCartItem(id);
 }
 
 function toggleExclude(id, key){
@@ -2004,6 +2060,7 @@ function toggleExclude(id, key){
   const excludes = Object.assign({}, cur.excludes, { [key]: !cur.excludes[key] });
   state.items[id] = { qty: cur.qty, spice: cur.spice, size: cur.size, excludes, cookMethod: cur.cookMethod, soupBase: cur.soupBase, drink: cur.drink, meatType: cur.meatType, addOns: cur.addOns };
   updateItemUI(id);
+  pushSharedCartItem(id);
 }
 
 function setCookMethod(id, method){
@@ -2011,6 +2068,7 @@ function setCookMethod(id, method){
   if(cur.qty <= 0) return;
   state.items[id] = { qty: cur.qty, spice: cur.spice, size: cur.size, excludes: cur.excludes, cookMethod: method, soupBase: cur.soupBase, drink: cur.drink, meatType: cur.meatType, addOns: cur.addOns };
   updateItemUI(id);
+  pushSharedCartItem(id);
 }
 
 // 点了某份冒菜/火锅米线卡片上的“加菜”按钮：跳到（改名为“加菜”的）午市点餐分类，
@@ -2147,10 +2205,22 @@ function promptMiniHotpotPicks(){
 
 // 下单前的最终把关：火锅生食材必须配一份锅底；自选火锅米线必须配午市点餐里的配菜；
 // 冒菜/火锅米线必须选好辣度+汤底；单点“加菜”配菜不能脱离一个午餐类型单独下单
+// bug fix：锅底送进厨房后，顾客再扫码回来只加菜，本地购物车 state.items 是全新的空对象，
+// 看不到"锅底其实已经点过了"，会被误判成没点锅底又逼着重选一次。这里查一下本桌
+// liveTableOrders（已经提交、还没被移出看板的所有订单，含厨房里正在做的）里是不是已经
+// 有一份真正的锅底菜（排除蘸料），有的话这一轮点单就不用再强制选了。
+function tableAlreadyHasSoupBase(){
+  return liveTableOrders.some(o => !o.call && (o.items || []).some(it => {
+    const dish = MENU_BY_ID[ZH_NAME_TO_ID[it.name]];
+    return !!dish && dish.category === 'soupBase' && dish.sub !== 'dipSauce';
+  }));
+}
+
 function validateCartForCheckout(){
   const hasQty = cats => MENU.some(d => cats.includes(d.category) && getItem(d.id).qty > 0);
   // "蘸料" 也挂在 soupBase 分类下（方便导航），但它是蘸碟不是锅底，不能当锅底数
-  const hasSoupBase = MENU.some(d => d.category === 'soupBase' && d.sub !== 'dipSauce' && getItem(d.id).qty > 0);
+  const hasSoupBase = MENU.some(d => d.category === 'soupBase' && d.sub !== 'dipSauce' && getItem(d.id).qty > 0)
+    || tableAlreadyHasSoupBase();
   if(hasQty(HOTPOT_INGREDIENT_CATS) && !hasSoupBase){
     return { ok:false, view:'hotpot', category:'soupBase', message:t('missingSoupBaseMsg') };
   }
@@ -2460,6 +2530,7 @@ function confirmUpsellAdd(){
     if(!state.upsellSelected[id]) return;
     const cur = getItem(id);
     state.items[id] = { qty: cur.qty + 1, spice: cur.spice, size: cur.size, excludes: cur.excludes };
+    pushSharedCartItem(id);
   });
   state.upsellOpen = false;
   state.upsellShown = true;   // resolved: pressing 立刻下单 again on the mirrored review page submits for real, no re-prompt
@@ -2500,6 +2571,7 @@ function selectTable(n){
   state.table = String(n);
   state.screen = 'menu';
   watchTableOrders(state.table);
+  watchSharedCart(state.table);
   render();
 }
 
@@ -2519,6 +2591,7 @@ function totalCount(){
 
 function resetToMenu(){
   state.items = {};
+  clearSharedCart();   // 兜底：万一下单成功那次清空共享草稿的请求没发出去，这里再清一次
   state.addOnTarget = null;
   state.lastOrder = null;
   state.orderNickname = '';
@@ -2609,6 +2682,9 @@ async function submitOrder(){
       nickname: order.nickname, partySize: order.partySize,
       docId: docRef.id, status: 'pending', removed: false,
     };
+    // 这一轮共享购物车草稿已经变成正式订单了，立刻清空——不然同桌其他设备还会
+    // 看着这些菜"待点"，容易重复加、重复下单
+    clearSharedCart();
     screenHistory.push('menu');
     state.screen = 'confirm';
   }catch(e){
@@ -3379,7 +3455,7 @@ function render(){
   else{ stopConfirmAnimations(); }
 }
 
-if(state.table) watchTableOrders(state.table);
+if(state.table){ watchTableOrders(state.table); watchSharedCart(state.table); }
 render();
 </script>
 </body>

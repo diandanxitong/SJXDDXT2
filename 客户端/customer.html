@@ -101,10 +101,16 @@
     background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><g fill='none' stroke='%23E8A23D' stroke-width='2'><circle cx='50' cy='50' r='30'/><path d='M20 50 Q35 30 50 50 Q65 70 80 50'/><path d='M20 50 Q35 70 50 50 Q65 30 80 50'/></g></svg>");
     background-size:contain;background-repeat:no-repeat;opacity:.1;pointer-events:none;
   }
-  .menu-logo-row{position:relative;z-index:1;display:flex;justify-content:center;margin-bottom:14px;}
-  .menu-logo{width:88px;height:auto;display:block;filter:drop-shadow(0 4px 10px rgba(59,44,30,.25));}
-  .bar-row{position:relative;z-index:1;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
-  .table-badge{display:flex;flex-direction:column;align-items:flex-start;gap:10px;position:relative;}
+  /* logo 跟桌号数字同一行、水平对齐，放在线（.masthead-rule）上方正中间——
+     两侧的桌号牌和"我的"宽度不一定相等，用 grid 的 1fr auto 1fr 保证中间
+     这一列永远居中，不会因为两边宽度不同而歪掉 */
+  .bar-row{
+    position:relative;z-index:1;
+    display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;
+  }
+  .menu-logo-row{display:flex;justify-content:center;}
+  .menu-logo{width:104px;height:auto;display:block;filter:drop-shadow(0 4px 10px rgba(59,44,30,.25));}
+  .table-badge{display:flex;flex-direction:column;align-items:flex-start;gap:10px;position:relative;justify-self:start;min-width:0;}
   .table-badge-row{display:flex;align-items:baseline;gap:14px;}
   .table-badge .num{
     font-family:var(--serif-display);font-weight:700;
@@ -129,7 +135,7 @@
   /* "我的" 在上、语言切换在下，竖着排在右上角——语言切换是从"我的"下拉菜单里
      搬出来的独立按钮，图标用 lang.webp（那个通用的"文/A"翻译图标） */
   #panda-nav{position:fixed;top:18px;right:18px;z-index:60;display:flex;flex-direction:column;align-items:flex-end;gap:10px;}
-  .menu-panda-slot{position:relative;z-index:56;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:10px;}
+  .menu-panda-slot{position:relative;z-index:56;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:10px;justify-self:end;min-width:0;}
   .panda-overlay{position:fixed;inset:0;z-index:55;background:none;border:none;padding:0;margin:0;cursor:default;}
   .my-order-btn{
     position:relative;z-index:56;
@@ -3001,9 +3007,6 @@ function menuHTML(){
   return `
     ${backRowHTML()}
     <header class="bar">
-      <div class="menu-logo-row">
-        <img class="menu-logo" src="../image/LOGO/logo.webp" alt="SJX Cheng Du Hotpot"/>
-      </div>
       <div class="bar-row">
         <div class="table-badge">
           <span class="eyebrow">${t('tableEyebrow')}</span>
@@ -3011,6 +3014,9 @@ function menuHTML(){
             <span class="num">${state.table}</span>
             ${!state.lockedByUrl ? `<button class="change-table" onclick="changeTable()">${t('changeTable')}</button>` : ''}
           </div>
+        </div>
+        <div class="menu-logo-row">
+          <img class="menu-logo" src="../image/LOGO/logo.webp" alt="SJX Cheng Du Hotpot"/>
         </div>
         <div id="menu-panda-slot" class="menu-panda-slot"></div>
       </div>

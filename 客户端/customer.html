@@ -2224,6 +2224,16 @@ function tableAlreadyHasSoupBase(){
   }));
 }
 
+// 甜品/饮品推销只在本桌第一次下单时弹一次——查的是 liveTableOrders 而不是本机的
+// state.upsellShown，所以不管顾客是同一台设备加菜、还是同桌换了另一台手机扫码，
+// 只要这一桌已经有过正式订单（呼叫服务员的 call 单不算），后面都不会再弹，
+// 免得每次点单都被推销一遍让人反感。这里没有额外等 liveTableOrdersLoaded：
+// 选定桌号那一刻就订阅了，走到下单这一步时通常早就有数据了；真赶上极端情况下
+// 还没加载出来，宁可漏推一次，也不要在明明点过单的桌子上又弹一次。
+function tableHasPriorOrder(){
+  return liveTableOrders.some(o => !o.call);
+}
+
 function validateCartForCheckout(){
   const hasQty = cats => MENU.some(d => cats.includes(d.category) && getItem(d.id).qty > 0);
   // "蘸料" 也挂在 soupBase 分类下（方便导航），但它是蘸碟不是锅底，不能当锅底数
@@ -2480,7 +2490,7 @@ function handlePlaceOrderClick(){
   if(totalCount() === 0 || state.submitting) return;
   const check = validateCartForCheckout();
   if(!check.ok){ jumpToCategoryWithWarning(check.view, check.category, check.message); return; }
-  if(!state.upsellShown){
+  if(!state.upsellShown && !tableHasPriorOrder()){
     openUpsell();
   }else{
     submitOrder();

@@ -62,11 +62,6 @@
     background:rgba(245,158,11,.16);border-color:var(--warn);color:var(--warn);font-weight:900;
   }
   .sold-out-entry-btn:hover{background:rgba(245,158,11,.26);color:var(--warn);border-color:var(--warn);}
-  .daily-report-entry-btn{
-    background:rgba(52,211,153,.16);border-color:var(--ok);color:var(--ok);font-weight:900;
-  }
-  .daily-report-entry-btn:hover{background:rgba(52,211,153,.26);color:var(--ok);border-color:var(--ok);}
-  .admin-log-entry-btn{font-weight:900;}
   .system-toggle-btn{
     background:rgba(248,113,113,.16);border-color:var(--urgent);color:var(--urgent);font-weight:900;
   }
@@ -84,13 +79,29 @@
   .password-input:focus{outline:none;border-color:var(--urgent);}
   .password-error{font-size:12.5px;color:var(--urgent);margin:-2px 0 12px;min-height:1.2em;}
 
-  header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:10px;}
-  header h1{font-family:'Archivo Black',sans-serif;font-size:22px;letter-spacing:.02em;}
+  header{display:grid;grid-template-columns:auto 1fr auto;align-items:center;margin-bottom:22px;gap:14px;}
+  header h1{font-family:'Archivo Black',sans-serif;font-size:22px;letter-spacing:.02em;white-space:nowrap;}
   .live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--ok);margin-right:8px;}
   @media (prefers-reduced-motion:no-preference){
     .live-dot{animation:pulse 1.8s ease-in-out infinite;}
   }
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .header-center{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:12px;}
+  /* 齿轮下拉：把不常点的"盘点/日志"几个入口收起来，固定在页面最右边，
+     其余按钮就能在标题和齿轮之间的空间里居中，不用被一长排入口挤得偏左 */
+  .gear-menu-wrap{position:relative;justify-self:end;}
+  .gear-btn{font-size:16px;padding:8px 12px;}
+  .gear-dropdown{
+    position:absolute;top:calc(100% + 8px);right:0;z-index:50;min-width:172px;
+    background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:6px;display:flex;flex-direction:column;gap:2px;
+    box-shadow:0 12px 28px rgba(0,0,0,.35);
+  }
+  .gear-dropdown a{
+    display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:10px;
+    color:var(--text-muted);text-decoration:none;font-size:13px;font-weight:700;font-family:inherit;
+  }
+  .gear-dropdown a:hover{background:rgba(255,255,255,.06);color:var(--text);}
   .status{color:var(--text-muted);font-size:13px;}
   .count-pill{
     position:relative;background:var(--card);border:1px solid var(--line);border-radius:20px;
@@ -239,15 +250,21 @@
 </nav>
 <header>
   <h1><span class="live-dot"></span>接单看板</h1>
-  <div style="display:flex;align-items:center;gap:12px;">
+  <div class="header-center">
     <a class="control-btn sold-out-entry-btn" href="gqcp.html">🚫 沽清菜品</a>
-    <a class="control-btn daily-report-entry-btn" href="jrpd.html">📊 今日盘点</a>
-    <a class="control-btn daily-report-entry-btn" href="lspd.html">📅 历史盘点</a>
-    <a class="control-btn admin-log-entry-btn" href="ygczrz.html">🗒 员工操作日志</a>
+    <button class="control-btn" onclick="location.reload()">🔄 刷新</button>
     <button class="control-btn" id="sound-toggle" onclick="unlockAudio()">🔊 开启提示音</button>
     <button class="control-btn system-toggle-btn" id="system-toggle-btn" onclick="openSystemModal()">⛔ 关闭系统</button>
     <span class="status" id="status">加载中…</span>
     <button class="count-pill" id="pending-filter-btn" onclick="togglePendingFilter()">待处理 <b id="count">0</b> 桌<span class="pending-bubble" id="pending-bubble" hidden>0</span></button>
+  </div>
+  <div class="gear-menu-wrap">
+    <button class="control-btn gear-btn" id="gear-btn" onclick="toggleGearMenu()" aria-haspopup="true" aria-expanded="false" aria-label="更多">⚙️</button>
+    <div class="gear-dropdown" id="gear-dropdown" hidden>
+      <a href="jrpd.html">📊 今日盘点</a>
+      <a href="lspd.html">📅 历史盘点</a>
+      <a href="ygczrz.html">🗒 员工操作日志</a>
+    </div>
   </div>
 </header>
 <div id="app"></div>
@@ -292,6 +309,23 @@ function updateSystemToggleBtn(){
   btn.classList.toggle('is-disabled', systemDisabled);
   btn.textContent = systemDisabled ? '🔓 重新开启系统' : '⛔ 关闭系统';
 }
+
+// 齿轮下拉：收着今日盘点/历史盘点/员工操作日志这几个不常用的入口，点齿轮开合，
+// 点下拉外面任意位置也能收起
+function toggleGearMenu(){
+  const dropdown = document.getElementById('gear-dropdown');
+  const btn = document.getElementById('gear-btn');
+  const willOpen = dropdown.hidden;
+  dropdown.hidden = !willOpen;
+  btn.setAttribute('aria-expanded', String(willOpen));
+}
+document.addEventListener('click', (ev) => {
+  const dropdown = document.getElementById('gear-dropdown');
+  if(!dropdown || dropdown.hidden) return;
+  if(ev.target.closest('.gear-menu-wrap')) return;
+  dropdown.hidden = true;
+  document.getElementById('gear-btn').setAttribute('aria-expanded', 'false');
+});
 
 function openSystemModal(){
   systemModalOpen = true;
@@ -707,14 +741,6 @@ function render(){
 
 render();
 setInterval(render, 1000);        // 每秒刷新一次等待时长与颜色提示（订单数据本身由 onSnapshot 实时推送）
-
-// 整页每 3 秒自动刷新一次：这块看板常年挂在后厨平板上没人管，onSnapshot 理论上是
-// 实时推送，但连接偶尔会静默卡死（不报错，只是不再收到新订单）——定时硬刷新兜底。
-// 员工正在输入系统密码或确认结账时跳过这一轮，避免刷新把没提交的输入冲掉。
-setInterval(() => {
-  if(confirmKeys || systemModalOpen) return;
-  location.reload();
-}, 3000);
 </script>
 </body>
 </html>

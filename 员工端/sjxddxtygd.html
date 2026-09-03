@@ -127,6 +127,18 @@
   .order-card.warn{border-left-color:var(--warn);}
   .order-card.urgent{border-left-color:var(--urgent);}
 
+  /* 桌号模块（整张卡片）外框跟着状态方框里的"新订单/加菜"文字一起闪红光——
+     用 box-shadow 叠一层扩散的红色光圈，和 status-flash 用同样的时长/节奏，
+     视觉上像是同一次呼吸在闪，而不是两个各闪各的动画 */
+  .order-card.flashing{border-color:var(--urgent);}
+  @media (prefers-reduced-motion:no-preference){
+    .order-card.flashing{animation:card-glow 1s ease-in-out infinite;}
+  }
+  @keyframes card-glow{
+    0%,100%{box-shadow:0 0 0 1px var(--urgent), 0 0 26px 5px rgba(248,113,113,.55);}
+    50%{box-shadow:0 0 0 1px rgba(248,113,113,.3), 0 0 8px 1px rgba(248,113,113,.15);}
+  }
+
   /* 看板卡片不再显示具体菜品：只是个"状态方框"——新订单/加菜用橙字闪烁提醒，
      已处理用绿字静止显示，单品/整单删除、加菜、送入厨房都在"查看详细订单"打开的
      独立页面（ddxq.html）里，不放在这里，避免桌数一多、每张卡片信息量太大导致误操作 */
@@ -615,8 +627,9 @@ function cardHTML(group){
   const state = tableState(realBatch);
   const hasRealContent = state !== 'empty';
   const detailHref = `ddxq.html?table=${encodeURIComponent(group.table)}`;
+  const flashingClass = (state === 'new' || state === 'add') ? ' flashing' : '';
   return `
-    <div class="order-card ${level}">
+    <div class="order-card ${level}${flashingClass}">
       <div class="card-top">
         <span class="table-num">桌 ${group.table}</span>
         <span style="display:flex;gap:8px;align-items:center;">
@@ -636,6 +649,19 @@ function cardHTML(group){
         ${hasCall ? callOverlayHTML(callKeys, true) : ''}
       </div>` : (hasCall ? callOverlayHTML(callKeys, false) : '')}
     </div>`;
+}
+
+// 看板排序：闪红光（新订单/加菜）的桌永远排在最前面，已处理的桌自动沉到最后面，
+// 和桌号本身的大小顺序无关——方便员工一眼扫到最上面几格就是当前要处理的桌。
+// 同一优先级内部仍按下单时间从早到晚排（groupByTable 已经排好，Array.sort 是稳定排序，
+// 这里只按优先级分组不会打乱同组内的相对顺序）。
+function tablePriority(group){
+  const state = tableState(group.batch.filter(o => !o.call && (o.items || []).length > 0));
+  return (state === 'new' || state === 'add') ? 0 : 1;
+}
+
+function sortForDisplay(groups){
+  return [...groups].sort((a, b) => tablePriority(a) - tablePriority(b));
 }
 
 let pendingFilterOn = false;   // 点一次"待处理"只显示还有菜没送入厨房的桌，再点一次恢复显示全部
@@ -658,7 +684,7 @@ function render(){
   bubble.textContent = pendingGroups.length;
   document.getElementById('pending-filter-btn').classList.toggle('active', pendingFilterOn);
 
-  const shown = pendingFilterOn ? pendingGroups : groups;
+  const shown = pendingFilterOn ? pendingGroups : sortForDisplay(groups);
   const app = document.getElementById('app');
   if(!loaded){ app.innerHTML = ''; return; }
   if(shown.length === 0){

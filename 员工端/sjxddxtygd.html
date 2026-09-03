@@ -397,6 +397,15 @@ function armGlobalAudioUnlock(){
 }
 armGlobalAudioUnlock();
 
+// 专供无人值守的看板设备：浏览器本身要求"先有一次真实用户手势才允许播放声音"这条
+// 挡不掉，但如果这台设备启动时就用了 --autoplay-policy=no-user-gesture-required 这类
+// 参数，浏览器自己已经放开了这条限制，那就没必要死等一次点击——用 ?kiosk=1 打开本页
+// 时直接跳过等待，开机即解锁。普通设备（没加那个启动参数）打开时不带这个参数，
+// 行为不变，还是老老实实等第一次点击
+if(new URLSearchParams(location.search).get('kiosk') === '1'){
+  unlockAudio();
+}
+
 // 发现播放权限被收回了：把按钮打回"点此重新开启"的可点状态并高亮，让员工一眼
 // 看到、随手一点就能恢复，而不是背地里一直放不出声音自己都不知道
 function markAudioLocked(){

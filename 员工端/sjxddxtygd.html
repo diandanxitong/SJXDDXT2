@@ -10,14 +10,23 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Archivo+Black&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#121012;
-    --card:#1C191A;
-    --line:#332E2C;
-    --text:#F5F1EC;
-    --text-muted:#8E8883;
-    --normal:#3E5C4C;
-    --warn:#E8A23D;
-    --urgent:#D2502F;
+    /* 深藏青背景 + 比它稍浅一档的卡片色，靠色差"浮"出层次，不用阴影。
+       状态色全站只用三种：橙（待处理/新订单/加菜）、绿（已处理/送入厨房）、
+       蓝（顾客呼叫）——每种都配一个更亮的“状态文字”专用色阶，正文文字统一用
+       带灰蓝调的浅色，不用纯白，深色背景下久看更柔和 */
+    --bg:#0F172A;
+    --card:#1E293B;
+    --line:#334155;
+    --text:#E6F1FB;
+    --text-muted:#94A3B8;
+    --normal:#2F6F5C;
+    --warn:#F59E0B;
+    --warn-bright:#FAC775;
+    --urgent:#F87171;
+    --ok:#34D399;
+    --ok-bright:#6EE7B7;
+    --call:#38BDF8;
+    --call-bright:#7DD3FC;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   body{
@@ -42,24 +51,24 @@
     font-family:inherit;cursor:pointer;
   }
   .control-btn:hover{color:var(--text);border-color:var(--text-muted);}
-  .control-btn:disabled{color:#5FBE8A;border-color:#5FBE8A;cursor:default;opacity:.9;}
+  .control-btn:disabled{color:var(--ok);border-color:var(--ok);cursor:default;opacity:.9;}
   .sold-out-entry-btn{
-    background:rgba(232,162,61,.16);border-color:var(--warn);color:var(--warn);font-weight:900;
+    background:rgba(245,158,11,.16);border-color:var(--warn);color:var(--warn);font-weight:900;
   }
-  .sold-out-entry-btn:hover{background:rgba(232,162,61,.26);color:var(--warn);border-color:var(--warn);}
+  .sold-out-entry-btn:hover{background:rgba(245,158,11,.26);color:var(--warn);border-color:var(--warn);}
   .daily-report-entry-btn{
-    background:rgba(95,190,138,.16);border-color:#5FBE8A;color:#5FBE8A;font-weight:900;
+    background:rgba(52,211,153,.16);border-color:var(--ok);color:var(--ok);font-weight:900;
   }
-  .daily-report-entry-btn:hover{background:rgba(95,190,138,.26);color:#5FBE8A;border-color:#5FBE8A;}
+  .daily-report-entry-btn:hover{background:rgba(52,211,153,.26);color:var(--ok);border-color:var(--ok);}
   .admin-log-entry-btn{font-weight:900;}
   .system-toggle-btn{
-    background:rgba(210,80,47,.16);border-color:var(--urgent);color:var(--urgent);font-weight:900;
+    background:rgba(248,113,113,.16);border-color:var(--urgent);color:var(--urgent);font-weight:900;
   }
-  .system-toggle-btn:hover{background:rgba(210,80,47,.26);color:var(--urgent);border-color:var(--urgent);}
+  .system-toggle-btn:hover{background:rgba(248,113,113,.26);color:var(--urgent);border-color:var(--urgent);}
   .system-toggle-btn.is-disabled{
-    background:rgba(95,190,138,.16);border-color:#5FBE8A;color:#5FBE8A;
+    background:rgba(52,211,153,.16);border-color:var(--ok);color:var(--ok);
   }
-  .system-toggle-btn.is-disabled:hover{background:rgba(95,190,138,.26);color:#5FBE8A;border-color:#5FBE8A;}
+  .system-toggle-btn.is-disabled:hover{background:rgba(52,211,153,.26);color:var(--ok);border-color:var(--ok);}
 
   .password-input{
     width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;
@@ -71,7 +80,7 @@
 
   header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:10px;}
   header h1{font-family:'Archivo Black',sans-serif;font-size:22px;letter-spacing:.02em;}
-  .live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#5FBE8A;margin-right:8px;}
+  .live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--ok);margin-right:8px;}
   @media (prefers-reduced-motion:no-preference){
     .live-dot{animation:pulse 1.8s ease-in-out infinite;}
   }
@@ -84,10 +93,10 @@
   }
   .count-pill:hover{border-color:var(--text-muted);color:var(--text);}
   .count-pill b{color:var(--text);font-size:15px;}
-  .count-pill.active{border-color:var(--urgent);color:var(--urgent);}
-  .count-pill.active b{color:var(--urgent);}
+  .count-pill.active{border-color:var(--warn);color:var(--warn-bright);}
+  .count-pill.active b{color:var(--warn-bright);}
   .pending-bubble{
-    position:absolute;top:-8px;right:-8px;background:var(--urgent);color:#fff;
+    position:absolute;top:-8px;right:-8px;background:var(--warn);color:#0F172A;
     font-size:11px;font-weight:900;min-width:18px;height:18px;border-radius:10px;
     display:flex;align-items:center;justify-content:center;padding:0 4px;
     box-shadow:0 0 0 2px var(--bg);
@@ -112,7 +121,7 @@
   .order-card.warn{border-left-color:var(--warn);}
   .order-card.urgent{border-left-color:var(--urgent);}
 
-  /* 看板卡片不再显示具体菜品：只是个"状态方框"——新订单/加菜用红字闪烁提醒，
+  /* 看板卡片不再显示具体菜品：只是个"状态方框"——新订单/加菜用橙字闪烁提醒，
      已处理用绿字静止显示，单品/整单删除、加菜、送入厨房都在"查看详细订单"打开的
      独立页面（ddxq.html）里，不放在这里，避免桌数一多、每张卡片信息量太大导致误操作 */
   .status-panel{
@@ -120,13 +129,13 @@
     gap:6px;padding:22px 8px;border-radius:12px;text-align:center;
   }
   .status-panel.state-new, .status-panel.state-add{
-    background:rgba(210,80,47,.14);border:2px solid var(--urgent);
+    background:rgba(245,158,11,.14);border:2px solid var(--warn);
   }
   .status-panel.state-done{
-    background:rgba(95,190,138,.12);border:2px solid #5FBE8A;
+    background:rgba(52,211,153,.12);border:2px solid var(--ok);
   }
-  .status-big{font-family:'Archivo Black',sans-serif;font-size:21px;letter-spacing:.02em;color:var(--urgent);}
-  .status-panel.state-done .status-big{color:#5FBE8A;}
+  .status-big{font-family:'Archivo Black',sans-serif;font-size:21px;letter-spacing:.02em;color:var(--warn-bright);}
+  .status-panel.state-done .status-big{color:var(--ok-bright);}
   @media (prefers-reduced-motion:no-preference){
     .status-panel.state-new .status-big, .status-panel.state-add .status-big{animation:status-flash 1s ease-in-out infinite;}
   }
@@ -137,7 +146,7 @@
   .card-body{display:flex;flex-direction:column;gap:12px;}
   .card-body.blurred{filter:blur(6px);pointer-events:none;user-select:none;}
   .call-overlay{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;}
-  .call-overlay-abs{position:absolute;inset:0;background:rgba(18,16,18,.45);border-radius:12px;z-index:5;}
+  .call-overlay-abs{position:absolute;inset:0;background:rgba(15,23,42,.55);border-radius:12px;z-index:5;}
   .call-overlay-inline{padding:26px 0 6px;}
   .call-bell{font-size:42px;line-height:1;animation:bell-ring 1s ease-in-out infinite;}
   @keyframes bell-ring{
@@ -147,12 +156,12 @@
     60%{transform:rotate(-8deg);}
     80%{transform:rotate(5deg);}
   }
-  .call-caption{font-weight:700;font-size:15px;color:var(--text);}
+  .call-caption{font-weight:700;font-size:15px;color:var(--call-bright);}
   .call-dismiss-btn{
-    padding:9px 18px;border-radius:20px;border:1px solid var(--urgent);
-    background:rgba(210,80,47,.18);color:var(--urgent);font-weight:700;cursor:pointer;font-size:13px;
+    padding:9px 18px;border-radius:20px;border:1px solid var(--call);
+    background:rgba(56,189,248,.18);color:var(--call);font-weight:700;cursor:pointer;font-size:13px;
   }
-  .call-dismiss-btn:hover{background:rgba(210,80,47,.28);}
+  .call-dismiss-btn:hover{background:rgba(56,189,248,.28);}
 
   .confirm-overlay{
     position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.6);
@@ -169,8 +178,8 @@
   }
   .confirm-cancel-btn{background:none;border:1px solid var(--line);color:var(--text-muted);}
   .confirm-cancel-btn:hover{border-color:var(--text-muted);color:var(--text);}
-  .confirm-yes-btn{background:rgba(210,80,47,.18);border:1px solid var(--urgent);color:var(--urgent);}
-  .confirm-yes-btn:hover{background:rgba(210,80,47,.28);}
+  .confirm-yes-btn{background:rgba(248,113,113,.18);border:1px solid var(--urgent);color:var(--urgent);}
+  .confirm-yes-btn:hover{background:rgba(248,113,113,.28);}
   .confirm-yes-btn:disabled{opacity:.4;cursor:default;}
   .delete-modal-detail{
     font-size:13px;color:var(--text-muted);margin-bottom:14px;line-height:1.5;
@@ -187,7 +196,7 @@
   .order-card.urgent .elapsed{color:var(--urgent);}
 
   .confirmed-badge{
-    font-size:11px;font-weight:700;color:#5FBE8A;border:1px solid rgba(95,190,138,.5);
+    font-size:11px;font-weight:700;color:var(--ok);border:1px solid rgba(52,211,153,.5);
     border-radius:20px;padding:3px 10px;white-space:nowrap;
   }
 
@@ -198,9 +207,9 @@
     font-family:inherit;text-decoration:none;text-align:center;
     display:flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;
   }
-  .checkout-btn{background:rgba(95,190,138,.14);border:1px solid #5FBE8A;color:#5FBE8A;}
-  .checkout-btn:hover{background:rgba(95,190,138,.24);}
-  .checkout-btn:active{background:rgba(95,190,138,.32);}
+  .checkout-btn{background:rgba(52,211,153,.14);border:1px solid var(--ok);color:var(--ok);}
+  .checkout-btn:hover{background:rgba(52,211,153,.24);}
+  .checkout-btn:active{background:rgba(52,211,153,.32);}
   .view-detail-btn{background:none;border:1px solid var(--line);color:var(--text-muted);}
   .view-detail-btn:hover{border-color:var(--text-muted);color:var(--text);}
 </style>

@@ -33,6 +33,7 @@
     --dur:.32s;
     --gold-hi:#F6DFA0;
     --gold-deep:#9C6A1E;
+    --pepper-brown:#6B4226;
     --shadow-card:0 1px 2px rgba(59,44,30,.12), 0 16px 32px -16px rgba(59,44,30,.35);
     --shadow-card-active:0 2px 4px rgba(59,44,30,.18), 0 22px 40px -14px rgba(59,44,30,.4);
     --shadow-pop:0 22px 54px rgba(59,44,30,.35);
@@ -447,6 +448,10 @@
   .spice-pill.active .flame.lit{fill:var(--cinnabar);}
   .spice-pill:not(.active) .flame.lit{fill:var(--text-muted);}
   .spice-pill:disabled{opacity:.4;cursor:not-allowed;}
+  /* 锅底"不要花椒"按钮：跟辣度档位并排，但用棕色区分——它不是辣度选项，
+     而是独立的做法要求（去花椒），选中后填色以示已勾选 */
+  .spice-pill.pepper-pill{flex:0 0 auto;border-color:var(--pepper-brown);color:var(--pepper-brown);}
+  .spice-pill.pepper-pill.active{background:var(--pepper-brown);color:#fff;border-color:var(--pepper-brown);}
   .spice-row-disabled{cursor:not-allowed;}
 
   /* ---------- sticky bottom bar ---------- */
@@ -1049,11 +1054,11 @@ const I18N = {
     allergensBtn:"过敏原", allergensModalTitle:"过敏原说明", allergenTapHint:"点击查看过敏原", totalLabel:"合计", perPersonSuffix:" /人",
     orderReviewTitle:"确认订单", nicknamePlaceholder:"如果愿意请留下昵称哦~", partySizeLabel:"请选择您的就餐人数",
     upsellTitle:"忘了点什么？", shuffleUpsellBtn:"换一批", addToOrderBtn:"加入到当前订单", laterBtn:"以后再说",
-    categories:{ soupBase:"锅底", houseSpecial:"招牌必点", seafood:"海鲜", premiumBeef:"精品肉类", meatballs:"丸子", mushrooms:"菌菇", vegetables:"素菜", snacks:"凉菜/小吃", desserts:"甜品", drinks:"果香鲜饮", wine:"酒水", lunchSet:"午市套餐", hotpotBowl:"冒菜", riceNoodles:"火锅米线", miniHotpot:"迷你火锅", lunchPieces:"加菜" },
+    categories:{ soupBase:"锅底", houseSpecial:"招牌必点", seafood:"海鲜", premiumBeef:"精品肉类", meatballs:"丸子", mushrooms:"菌菇", vegetables:"素菜", snacks:"凉菜/小吃", desserts:"甜品", drinks:"果香鲜饮", wine:"酒水", hotpotBowl:"冒菜", riceNoodles:"火锅米线", miniHotpot:"迷你火锅", lunchPieces:"加菜" },
     spice:["微辣","中辣","特辣"],
     soldOutMsg:"暂时售罄，抱歉！",
     perPieceSuffix:" /件",
-    soupBaseNote:"鸳鸯锅可选特辣/中辣/微辣", lunchSetNote:"两种套餐任选一份：冒菜套餐（含米饭）或火锅米线套餐，都含一杯饮品",
+    soupBaseNote:"鸳鸯锅可选特辣/中辣/微辣",
     miniHotpotNote:"最低起选10件配菜，锅底免费",
     viewHotpotBtn:"火锅菜单", viewLunchBtn:"午餐菜单",
     missingSoupBaseMsg:"忘记选择锅底了哦~", missingLunchPiecesMsg:"自选米线要选够配菜才能下单哦，先去挑几样吧~",
@@ -1061,8 +1066,8 @@ const I18N = {
     missingMiniHotpotSoupBaseMsg:"迷你火锅还没选锅底哦~",
     missingMiniHotpotFillingsMsg:"迷你火锅至少要选够10件配菜才能下单哦，再去挑几样吧~",
     customMiniHotpotPickMsg:"已为您跳转到加菜，选够10件配菜搭配迷你火锅吧~",
-    missingLunchTypeMsg:"点单前先选一个午餐类型哦：冒菜 / 火锅米线 / 自选米线 / 午市套餐~",
-    missingLunchFlavorMsg:"还有一份没选好口味哦，冒菜种类、锅底、辣度和饮品都要选一下～",
+    missingLunchTypeMsg:"点单前先选一个午餐类型哦：冒菜 / 火锅米线 / 自选米线~",
+    missingLunchFlavorMsg:"还有一份没选好口味哦，锅底和辣度都要选一下～",
     addExtraBtn:"加菜", addOnBannerPrefix:"正在为", addOnBannerSuffix:" 加菜，选好后点下方完成", addOnDoneBtn:"完成加菜", addOnTagPrefix:"加菜给：",
   },
   zhHant:{
@@ -1086,11 +1091,11 @@ const I18N = {
     allergensBtn:'過敏原', allergensModalTitle:'過敏原說明', allergenTapHint:'點擊查看過敏原', totalLabel:'合計', perPersonSuffix:' /人',
     orderReviewTitle:'確認訂單', nicknamePlaceholder:'如果願意請留下暱稱哦~', partySizeLabel:'請選擇您的就餐人數',
     upsellTitle:'忘了點什麼？', shuffleUpsellBtn:'換一批', addToOrderBtn:'加入到當前訂單', laterBtn:'以後再說',
-    categories:{ soupBase:'鍋底', houseSpecial:'招牌必點', seafood:'海鮮', premiumBeef:'精品肉類', meatballs:'丸子', mushrooms:'菌菇', vegetables:'素菜', snacks:'涼菜/小吃', desserts:'甜品', drinks:'果香鮮飲', wine:'酒水', lunchSet:'午市套餐', hotpotBowl:'冒菜', riceNoodles:'火鍋米線', miniHotpot:'迷你火鍋', lunchPieces:'加菜' },
+    categories:{ soupBase:'鍋底', houseSpecial:'招牌必點', seafood:'海鮮', premiumBeef:'精品肉類', meatballs:'丸子', mushrooms:'菌菇', vegetables:'素菜', snacks:'涼菜/小吃', desserts:'甜品', drinks:'果香鮮飲', wine:'酒水', hotpotBowl:'冒菜', riceNoodles:'火鍋米線', miniHotpot:'迷你火鍋', lunchPieces:'加菜' },
     spice:['微辣','中辣','特辣'],
     soldOutMsg:'暫時售罄，抱歉！',
     perPieceSuffix:' /件',
-    soupBaseNote:'鴛鴦鍋可選特辣/中辣/微辣', lunchSetNote:'兩種套餐任選一份：冒菜套餐（含米飯）或火鍋米線套餐，都含一杯飲品',
+    soupBaseNote:'鴛鴦鍋可選特辣/中辣/微辣',
     miniHotpotNote:'最低起選10件配菜，鍋底免費',
     viewHotpotBtn:'火鍋菜單', viewLunchBtn:'午餐菜單',
     missingSoupBaseMsg:'忘記選擇鍋底了哦~', missingLunchPiecesMsg:'自選米線要選夠配菜才能下單哦，先去挑幾樣吧~',
@@ -1098,8 +1103,8 @@ const I18N = {
     missingMiniHotpotSoupBaseMsg:'迷你火鍋還沒選鍋底哦~',
     missingMiniHotpotFillingsMsg:'迷你火鍋至少要選夠10件配菜才能下單哦，再去挑幾樣吧~',
     customMiniHotpotPickMsg:'已為您跳轉到加菜，選夠10件配菜搭配迷你火鍋吧~',
-    missingLunchTypeMsg:'點單前先選一個午餐類型哦：冒菜 / 火鍋米線 / 自選米線 / 午市套餐~',
-    missingLunchFlavorMsg:'還有一份沒選好口味哦，冒菜種類、鍋底、辣度和飲品都要選一下～',
+    missingLunchTypeMsg:'點單前先選一個午餐類型哦：冒菜 / 火鍋米線 / 自選米線~',
+    missingLunchFlavorMsg:'還有一份沒選好口味哦，鍋底和辣度都要選一下～',
     addExtraBtn:'加菜', addOnBannerPrefix:'正在為', addOnBannerSuffix:' 加菜，選好後點下方完成', addOnDoneBtn:'完成加菜', addOnTagPrefix:'加菜給：',
   },
   en:{
@@ -1123,11 +1128,11 @@ const I18N = {
     allergensBtn:"Allergens", allergensModalTitle:"Allergen Guide", allergenTapHint:"Tap to view allergen", totalLabel:"Total", perPersonSuffix:" / person",
     orderReviewTitle:"Confirm Order", nicknamePlaceholder:"Got a nickname? Totally optional~", partySizeLabel:"Select your party size",
     upsellTitle:"Forgot Something?", shuffleUpsellBtn:"Shuffle", addToOrderBtn:"Add to Order", laterBtn:"Later",
-    categories:{ soupBase:"Soup Base", houseSpecial:"Signature Must-Haves", seafood:"Seafood", premiumBeef:"Premium Meats", meatballs:"Meatballs", mushrooms:"Mushrooms", vegetables:"Vegetables", snacks:"Snacks", desserts:"Desserts", drinks:"Handmade Fresh Juice Drinks", wine:"Wine & Beverages", lunchSet:"Lunch Set", hotpotBowl:"Hotpot Bowl", riceNoodles:"Rice Noodles", miniHotpot:"Mini Hotpot", lunchPieces:"Add-Ons" },
+    categories:{ soupBase:"Soup Base", houseSpecial:"Signature Must-Haves", seafood:"Seafood", premiumBeef:"Premium Meats", meatballs:"Meatballs", mushrooms:"Mushrooms", vegetables:"Vegetables", snacks:"Snacks", desserts:"Desserts", drinks:"Handmade Fresh Juice Drinks", wine:"Wine & Beverages", hotpotBowl:"Hotpot Bowl", riceNoodles:"Rice Noodles", miniHotpot:"Mini Hotpot", lunchPieces:"Add-Ons" },
     spice:["Mild","Medium","Extra Spicy"],
     soldOutMsg:"Sorry, temporarily sold out~",
     perPieceSuffix:" / piece",
-    soupBaseNote:"Two-Flavour Pot: choose Extra/Medium/Mild spicy", lunchSetNote:"Pick one set: Hotpot Bowl Set (with rice) or Hotpot Rice Noodles Set — both include a drink.",
+    soupBaseNote:"Two-Flavour Pot: choose Extra/Medium/Mild spicy",
     miniHotpotNote:"Minimum order 10 topping items — soup base is free",
     viewHotpotBtn:"Hotpot Menu", viewLunchBtn:"Lunch Menu",
     missingSoupBaseMsg:"Don't forget to pick a soup base~", missingLunchPiecesMsg:"Add a few toppings for your custom rice noodles before ordering~",
@@ -1135,8 +1140,8 @@ const I18N = {
     missingMiniHotpotSoupBaseMsg:"Your mini hotpot still needs a soup base~",
     missingMiniHotpotFillingsMsg:"Your mini hotpot needs at least 10 topping items before ordering — pick a few more~",
     customMiniHotpotPickMsg:"Jumped to Add-Ons — pick at least 10 toppings for your mini hotpot~",
-    missingLunchTypeMsg:"Please pick a lunch type first: Hotpot Bowl / Hotpot Rice Noodles / Custom Rice Noodles / Lunch Set~",
-    missingLunchFlavorMsg:"One of your lunch bowls still needs its flavour — pick a bowl type, soup base, spice level, and a drink~",
+    missingLunchTypeMsg:"Please pick a lunch type first: Hotpot Bowl / Hotpot Rice Noodles / Custom Rice Noodles~",
+    missingLunchFlavorMsg:"One of your lunch bowls still needs its flavour — pick a soup base and spice level~",
     addExtraBtn:"Add Extra", addOnBannerPrefix:"Adding extras for ", addOnBannerSuffix:" — tap Done when you're finished", addOnDoneBtn:"Done Adding", addOnTagPrefix:"Add-on for: ",
   },
   it:{
@@ -1160,11 +1165,11 @@ const I18N = {
     allergensBtn:"Allergeni", allergensModalTitle:"Guida agli Allergeni", allergenTapHint:"Tocca per vedere l'allergene", totalLabel:"Totale", perPersonSuffix:" / persona",
     orderReviewTitle:"Conferma Ordine", nicknamePlaceholder:"Un nickname a piacere~ nessun obbligo", partySizeLabel:"Seleziona il numero di persone",
     upsellTitle:"Hai Dimenticato Qualcosa?", shuffleUpsellBtn:"Cambia", addToOrderBtn:"Aggiungi all'Ordine", laterBtn:"Più Tardi",
-    categories:{ soupBase:"Base Zuppa", houseSpecial:"Specialità Imperdibili", seafood:"Frutti di Mare", premiumBeef:"Carni Pregiate", meatballs:"Polpette", mushrooms:"Funghi", vegetables:"Verdure", snacks:"Snack", desserts:"Dessert", drinks:"Bevande Fresche Artigianali", wine:"Vini e Bevande", lunchSet:"Menu Pranzo", hotpotBowl:"Ciotola Hotpot", riceNoodles:"Noodles di Riso", miniHotpot:"Mini Hotpot", lunchPieces:"Extra" },
+    categories:{ soupBase:"Base Zuppa", houseSpecial:"Specialità Imperdibili", seafood:"Frutti di Mare", premiumBeef:"Carni Pregiate", meatballs:"Polpette", mushrooms:"Funghi", vegetables:"Verdure", snacks:"Snack", desserts:"Dessert", drinks:"Bevande Fresche Artigianali", wine:"Vini e Bevande", hotpotBowl:"Ciotola Hotpot", riceNoodles:"Noodles di Riso", miniHotpot:"Mini Hotpot", lunchPieces:"Extra" },
     spice:["Poco Piccante","Piccante","Molto Piccante"],
     soldOutMsg:"Siamo spiacenti, momentaneamente esaurito~",
     perPieceSuffix:" / pezzo",
-    soupBaseNote:"Pentola a Due Sapori: piccante extra/medio/leggero a scelta", lunchSetNote:"Scegli un menu: Menu Ciotola Hotpot (con riso) o Menu Noodles di Riso Hotpot — entrambi includono una bevanda.",
+    soupBaseNote:"Pentola a Due Sapori: piccante extra/medio/leggero a scelta",
     miniHotpotNote:"Ordine minimo di 10 ingredienti — base zuppa gratuita",
     viewHotpotBtn:"Menu Hotpot", viewLunchBtn:"Menu Pranzo",
     missingSoupBaseMsg:"Non dimenticare di scegliere una base zuppa~", missingLunchPiecesMsg:"Aggiungi qualche ingrediente ai tuoi noodles personalizzati prima di ordinare~",
@@ -1172,8 +1177,8 @@ const I18N = {
     missingMiniHotpotSoupBaseMsg:"Il tuo mini hotpot non ha ancora una base zuppa~",
     missingMiniHotpotFillingsMsg:"Il tuo mini hotpot ha bisogno di almeno 10 ingredienti prima di ordinare — scegline qualcuno in più~",
     customMiniHotpotPickMsg:"Passato a Extra — scegli almeno 10 ingredienti per il tuo mini hotpot~",
-    missingLunchTypeMsg:"Scegli prima un tipo di pranzo: Ciotola Hotpot / Noodles di Riso Hotpot / Noodles di Riso Personalizzati / Menu Pranzo~",
-    missingLunchFlavorMsg:"Una delle tue ciotole pranzo non ha ancora il sapore completo — scegli tipo di ciotola, base zuppa, piccantezza e una bevanda~",
+    missingLunchTypeMsg:"Scegli prima un tipo di pranzo: Ciotola Hotpot / Noodles di Riso Hotpot / Noodles di Riso Personalizzati~",
+    missingLunchFlavorMsg:"Una delle tue ciotole pranzo non ha ancora il sapore completo — scegli base zuppa e piccantezza~",
     addExtraBtn:"Aggiungi Extra", addOnBannerPrefix:"Stai aggiungendo extra per ", addOnBannerSuffix:" — tocca Fine quando hai finito", addOnDoneBtn:"Fine Aggiunta", addOnTagPrefix:"Extra per: ",
   },
   fr:{
@@ -1197,11 +1202,11 @@ const I18N = {
     allergensBtn:"Allergènes", allergensModalTitle:"Guide des Allergènes", allergenTapHint:"Touchez pour voir l'allergène", totalLabel:"Total", perPersonSuffix:" / personne",
     orderReviewTitle:"Confirmer la Commande", nicknamePlaceholder:"Un surnom si tu veux~ rien d'obligatoire", partySizeLabel:"Sélectionnez le nombre de convives",
     upsellTitle:"Vous Avez Oublié Quelque Chose ?", shuffleUpsellBtn:"Changer", addToOrderBtn:"Ajouter à la Commande", laterBtn:"Plus Tard",
-    categories:{ soupBase:"Base de Bouillon", houseSpecial:"Incontournables Signature", seafood:"Fruits de Mer", premiumBeef:"Viandes Premium", meatballs:"Boulettes", mushrooms:"Champignons", vegetables:"Légumes", snacks:"En-cas", desserts:"Desserts", drinks:"Boissons Fraîches Artisanales", wine:"Vins et Boissons", lunchSet:"Menu Déjeuner", hotpotBowl:"Bol Hotpot", riceNoodles:"Nouilles de Riz", miniHotpot:"Mini Hotpot", lunchPieces:"Suppléments" },
+    categories:{ soupBase:"Base de Bouillon", houseSpecial:"Incontournables Signature", seafood:"Fruits de Mer", premiumBeef:"Viandes Premium", meatballs:"Boulettes", mushrooms:"Champignons", vegetables:"Légumes", snacks:"En-cas", desserts:"Desserts", drinks:"Boissons Fraîches Artisanales", wine:"Vins et Boissons", hotpotBowl:"Bol Hotpot", riceNoodles:"Nouilles de Riz", miniHotpot:"Mini Hotpot", lunchPieces:"Suppléments" },
     spice:["Peu Épicé","Épicé","Très Épicé"],
     soldOutMsg:"Désolé, temporairement épuisé~",
     perPieceSuffix:" / pièce",
-    soupBaseNote:"Marmite Deux Saveurs : extra/moyen/léger épicé au choix", lunchSetNote:"Choisissez un menu : Menu Bol Hotpot (avec riz) ou Menu Nouilles de Riz Hotpot — les deux incluent une boisson.",
+    soupBaseNote:"Marmite Deux Saveurs : extra/moyen/léger épicé au choix",
     miniHotpotNote:"Commande minimum de 10 garnitures — base de bouillon offerte",
     viewHotpotBtn:"Menu Hotpot", viewLunchBtn:"Menu Déjeuner",
     missingSoupBaseMsg:"N'oubliez pas de choisir une base de bouillon~", missingLunchPiecesMsg:"Ajoutez quelques garnitures à vos nouilles personnalisées avant de commander~",
@@ -1209,8 +1214,8 @@ const I18N = {
     missingMiniHotpotSoupBaseMsg:"Votre mini hotpot n'a pas encore de base de bouillon~",
     missingMiniHotpotFillingsMsg:"Votre mini hotpot a besoin d'au moins 10 garnitures avant de commander — choisissez-en quelques-unes de plus~",
     customMiniHotpotPickMsg:"Direction Suppléments — choisissez au moins 10 garnitures pour votre mini hotpot~",
-    missingLunchTypeMsg:"Choisissez d'abord un type de déjeuner : Bol Hotpot / Nouilles de Riz Hotpot / Nouilles de Riz Personnalisées / Menu Déjeuner~",
-    missingLunchFlavorMsg:"Un de vos bols déjeuner n'a pas encore sa saveur complète — choisissez le type de bol, la base de bouillon, le piquant et une boisson~",
+    missingLunchTypeMsg:"Choisissez d'abord un type de déjeuner : Bol Hotpot / Nouilles de Riz Hotpot / Nouilles de Riz Personnalisées~",
+    missingLunchFlavorMsg:"Un de vos bols déjeuner n'a pas encore sa saveur complète — choisissez la base de bouillon et le piquant~",
     addExtraBtn:"Ajouter un Extra", addOnBannerPrefix:"Ajout d'extras pour ", addOnBannerSuffix:" — appuyez sur Terminé une fois fini", addOnDoneBtn:"Terminer l'Ajout", addOnTagPrefix:"Extra pour : ",
   },
   es:{
@@ -1234,11 +1239,11 @@ const I18N = {
     allergensBtn:"Alérgenos", allergensModalTitle:"Guía de Alérgenos", allergenTapHint:"Toca para ver el alérgeno", totalLabel:"Total", perPersonSuffix:" / persona",
     orderReviewTitle:"Confirmar Pedido", nicknamePlaceholder:"Ponte un apodo si quieres~ sin presión", partySizeLabel:"Selecciona tu número de comensales",
     upsellTitle:"¿Olvidaste Algo?", shuffleUpsellBtn:"Cambiar", addToOrderBtn:"Añadir al Pedido", laterBtn:"Más Tarde",
-    categories:{ soupBase:"Base de Sopa", houseSpecial:"Imprescindibles de la Casa", seafood:"Marisco", premiumBeef:"Carnes Premium", meatballs:"Albóndigas", mushrooms:"Setas", vegetables:"Verduras", snacks:"Aperitivos", desserts:"Postres", drinks:"Bebidas Frescas Artesanales", wine:"Vinos y Bebidas", lunchSet:"Menú de Almuerzo", hotpotBowl:"Bol de Hotpot", riceNoodles:"Fideos de Arroz", miniHotpot:"Mini Hotpot", lunchPieces:"Extras" },
+    categories:{ soupBase:"Base de Sopa", houseSpecial:"Imprescindibles de la Casa", seafood:"Marisco", premiumBeef:"Carnes Premium", meatballs:"Albóndigas", mushrooms:"Setas", vegetables:"Verduras", snacks:"Aperitivos", desserts:"Postres", drinks:"Bebidas Frescas Artesanales", wine:"Vinos y Bebidas", hotpotBowl:"Bol de Hotpot", riceNoodles:"Fideos de Arroz", miniHotpot:"Mini Hotpot", lunchPieces:"Extras" },
     spice:["Poco Picante","Picante","Muy Picante"],
     soldOutMsg:"Lo sentimos, agotado temporalmente~",
     perPieceSuffix:" / pieza",
-    soupBaseNote:"Olla de Dos Sabores: extra/medio/suave picante a elegir", lunchSetNote:"Elige un menú: Menú Bol de Hotpot (con arroz) o Menú Fideos de Arroz Hotpot — ambos incluyen una bebida.",
+    soupBaseNote:"Olla de Dos Sabores: extra/medio/suave picante a elegir",
     miniHotpotNote:"Pedido mínimo de 10 ingredientes — base de sopa gratis",
     viewHotpotBtn:"Menú Hotpot", viewLunchBtn:"Menú Almuerzo",
     missingSoupBaseMsg:"No olvides elegir una base de sopa~", missingLunchPiecesMsg:"Añade algunos ingredientes a tus fideos personalizados antes de pedir~",
@@ -1246,8 +1251,8 @@ const I18N = {
     missingMiniHotpotSoupBaseMsg:"A tu mini hotpot todavía le falta una base de sopa~",
     missingMiniHotpotFillingsMsg:"Tu mini hotpot necesita al menos 10 ingredientes antes de pedir — elige algunos más~",
     customMiniHotpotPickMsg:"Saltamos a Extras — elige al menos 10 ingredientes para tu mini hotpot~",
-    missingLunchTypeMsg:"Elige primero un tipo de almuerzo: Bol de Hotpot / Fideos de Arroz Hotpot / Fideos de Arroz Personalizados / Menú de Almuerzo~",
-    missingLunchFlavorMsg:"A uno de tus bols de almuerzo le falta el sabor completo — elige el tipo de bol, la base de sopa, el picante y una bebida~",
+    missingLunchTypeMsg:"Elige primero un tipo de almuerzo: Bol de Hotpot / Fideos de Arroz Hotpot / Fideos de Arroz Personalizados~",
+    missingLunchFlavorMsg:"A uno de tus bols de almuerzo le falta el sabor completo — elige la base de sopa y el picante~",
     addExtraBtn:"Añadir Extra", addOnBannerPrefix:"Añadiendo extras para ", addOnBannerSuffix:" — toca Listo cuando termines", addOnDoneBtn:"Terminar de Añadir", addOnTagPrefix:"Extra para: ",
   },
 };
@@ -1293,7 +1298,7 @@ const SOUP_BASE_LABELS = {
 };
 // 只有这几种口味带辣味，选了才能选辣度；番茄/菌汤不辣，辣度那一行灰掉不可选
 const SPICE_ELIGIBLE_SOUP_KEYS = ['classicMala','boneBrothSpicy','boneBrothMild','malaBan'];
-// 午市套餐（冒菜/火锅米线）含一杯饮品，从这几款里选一款，不额外计价
+// 午市套餐下线后不再有新订单会带饮品，这份表只用来把历史订单里存量的 drink 字段翻译显示出来
 const DRINK_LABELS = {
   cola:{zh:'可乐/无糖可乐/健怡可乐',zhHant:'可樂/無糖可樂/健怡可樂',en:'Coke / Diet Coke / Coke Zero',it:'Coca-Cola / Coca-Cola Light / Coca-Cola Zero',fr:'Coca-Cola / Coca-Cola Light / Coca-Cola Zero',es:'Coca-Cola / Coca-Cola Light / Coca-Cola Zero'},
   sevenUp:{zh:'七喜/无糖七喜',zhHant:'七喜/無糖七喜',en:'7 Up / Diet 7 Up',it:'7 Up / 7 Up Senza Zucchero',fr:'7 Up / 7 Up Sans Sucre',es:'7 Up / 7 Up Sin Azúcar'},
@@ -1323,6 +1328,7 @@ const OPTION_LABELS = {
   ginger:{zh:'不要姜',zhHant:'不要姜',en:'No Ginger',it:'Senza Zenzero',fr:'Sans Gingembre',es:'Sin Jengibre'},
   cilantro:{zh:'不要香菜',zhHant:'不要香菜',en:'No Coriander',it:'Senza Coriandolo',fr:'Sans Coriandre',es:'Sin Cilantro'},
   meat:{zh:'不要肉',zhHant:'不要肉',en:'No Meat',it:'Senza Carne',fr:'Sans Viande',es:'Sin Carne'},
+  noPepper:{zh:'不要花椒',zhHant:'不要花椒',en:'No Sichuan Pepper',it:'Senza Pepe di Sichuan',fr:'Sans Poivre du Sichuan',es:'Sin Pimienta de Sichuan'},
 };
 
 function t(key){
@@ -1330,7 +1336,7 @@ function t(key){
   return dict[key] !== undefined ? dict[key] : I18N.zh[key];
 }
 function tCat(catId){ return (I18N[state.lang] || I18N.zh).categories[catId]; }
-const CATEGORY_NOTE_KEYS = { soupBase:'soupBaseNote', lunchSet:'lunchSetNote', miniHotpot:'miniHotpotNote' };
+const CATEGORY_NOTE_KEYS = { soupBase:'soupBaseNote', miniHotpot:'miniHotpotNote' };
 function categoryNoteHTML(catId){
   const key = CATEGORY_NOTE_KEYS[catId];
   if(!key) return '';
@@ -1371,25 +1377,17 @@ function tSoupBase(key){ return key ? ((SOUP_BASE_LABELS[key] || {})[state.lang]
 function tDrink(key){ return key ? ((DRINK_LABELS[key] || {})[state.lang] || DRINK_LABELS[key].zh) : ''; }
 function tOption(key){ return (OPTION_LABELS[key] || {})[state.lang] || OPTION_LABELS[key].zh; }
 function displayDishName(zhName){
-  // 冒菜套餐选好口味后存的是具体口味名（牛肉冒菜套餐/猪肉冒菜套餐...），不是独立菜品，
-  // 这里得先认出这些名字，换语言查看老订单时才能正确翻译回去
-  const meatKey = HOTPOT_BOWL_MEAT_TYPES.find(k => HOTPOT_BOWL_SET_MEAT_LABELS[k].zh === zhName);
-  if(meatKey) return tHotpotBowlSetMeat(meatKey);
   const id = ZH_NAME_TO_ID[zhName];
   return id ? tDish(id, 'name') : zhName;
 }
 function zhDishName(id){ return I18N.zh.dishes[id].name; }
-// 冒菜套餐选好口味后，下单/购物车/厨房显示的名字要是具体口味（牛肉冒菜套餐），不是笼统的"冒菜套餐"
 function dishDisplayName(d, item){
-  if(d.id === HOTPOT_BOWL_SET_ID && item && item.meatType) return tHotpotBowlSetMeat(item.meatType);
   return tDish(d.id, 'name');
 }
 function dishDisplayTag(d, item){
-  if(d.id === HOTPOT_BOWL_SET_ID && item && item.meatType) return tHotpotBowlSetMeatTag(item.meatType);
   return tDish(d.id, 'tag');
 }
 function dishZhName(d, item){
-  if(d.id === HOTPOT_BOWL_SET_ID && item && item.meatType) return HOTPOT_BOWL_SET_MEAT_LABELS[item.meatType].zh;
   return zhDishName(d.id);
 }
 function displaySpice(zhSpice){
@@ -1415,7 +1413,7 @@ function dishPriceLabel(d, item){
 // 火锅菜单/午餐菜单各自的主打分类在前，凉菜/小吃、甜品、饮品两边都有且统一排最后
 const VIEW_CATEGORIES = {
   hotpot: ['soupBase','houseSpecial','seafood','premiumBeef','meatballs','mushrooms','vegetables','snacks','desserts','drinks','wine'],
-  lunch: ['lunchSet','hotpotBowl','riceNoodles','miniHotpot','lunchPieces','snacks','desserts','drinks','wine'],
+  lunch: ['hotpotBowl','riceNoodles','miniHotpot','lunchPieces','snacks','desserts','drinks','wine'],
 };
 const SPICE_LEVELS = ['微辣','中辣','特辣'];
 
@@ -1425,32 +1423,9 @@ const HOTPOT_INGREDIENT_CATS = ['houseSpecial','seafood','premiumBeef','meatball
 const CUSTOM_RICE_NOODLES_ID = 'hotpotRiceNoodlesCustom';
 const RICE_NOODLES_FIXED_ID = 'hotpotRiceNoodlesFixed';
 
-// 午市套餐分类下的两张套餐卡：冒菜套餐（选牛肉/猪肉/海鲜/素食口味，价格不随口味变，固定16.99/人）
-// 和火锅米线套餐（不用选口味，跟单点火锅米线一样只要选锅底/辣度/饮品）
-const HOTPOT_BOWL_SET_ID = 'hotpotBowlSet';
-const RICE_NOODLES_SET_ID = 'riceNoodlesSet';
-const HOTPOT_BOWL_MEAT_TYPES = ['beef','pork','seafood','veg'];
-const HOTPOT_BOWL_SET_MEAT_LABELS = {
-  beef:{zh:'牛肉冒菜套餐',zhHant:'牛肉冒菜套餐',en:'Beef Hotpot Bowl Set',it:'Menu Ciotola Hotpot al Manzo',fr:'Menu Bol Hotpot au Bœuf',es:'Menú Bol de Hotpot con Ternera'},
-  pork:{zh:'猪肉冒菜套餐',zhHant:'豬肉冒菜套餐',en:'Pork Hotpot Bowl Set',it:'Menu Ciotola Hotpot al Maiale',fr:'Menu Bol Hotpot au Porc',es:'Menú Bol de Hotpot con Cerdo'},
-  seafood:{zh:'海鲜冒菜套餐',zhHant:'海鮮冒菜套餐',en:'Seafood Hotpot Bowl Set',it:'Menu Ciotola Hotpot ai Frutti di Mare',fr:'Menu Bol Hotpot aux Fruits de Mer',es:'Menú Bol de Hotpot con Marisco'},
-  veg:{zh:'素食冒菜套餐',zhHant:'素食冒菜套餐',en:'Vegetarian Hotpot Bowl Set',it:'Menu Ciotola Hotpot Vegetariana',fr:'Menu Bol Hotpot Végétarien',es:'Menú Bol de Hotpot Vegetariano'},
-};
-const HOTPOT_BOWL_SET_MEAT_TAGS = {
-  beef:{zh:'木耳、方便面、白菜、豆芽、土豆、金针菇、响铃卷、牛肉丸、米饭',zhHant:'木耳、方便麵、白菜、豆芽、土豆、金針菇、響鈴卷、牛肉丸、米飯',en:'Black fungus, instant noodles, Chinese cabbage, bean sprouts, potatoes, enoki mushrooms, crispy tofu skin rolls, beef balls, rice',it:'Fungo nero, noodles istantanei, cavolo cinese, germogli di soia, patate, funghi enoki, involtini di tofu croccante, polpette di manzo, riso',fr:'Champignon noir, nouilles instantanées, chou chinois, pousses de soja, pommes de terre, champignons enoki, rouleaux de peau de tofu croustillants, boulettes de bœuf, riz',es:'Hongo negro, fideos instantáneos, col china, brotes de soja, patatas, champiñones enoki, rollitos de tofu crujiente, albóndigas de ternera, arroz'},
-  pork:{zh:'木耳、方便面、白菜、豆芽、土豆、金针菇、响铃卷、豆腐、老肉片、米饭',zhHant:'木耳、方便麵、白菜、豆芽、土豆、金針菇、響鈴卷、豆腐、老肉片、米飯',en:'Black fungus, instant noodles, Chinese cabbage, bean sprouts, potatoes, enoki mushrooms, crispy tofu skin rolls, tofu, thick pork slices, rice',it:'Fungo nero, noodles istantanei, cavolo cinese, germogli di soia, patate, funghi enoki, involtini di tofu croccante, tofu, fettine di maiale spesse, riso',fr:'Champignon noir, nouilles instantanées, chou chinois, pousses de soja, pommes de terre, champignons enoki, rouleaux de peau de tofu croustillants, tofu, tranches de porc épaisses, riz',es:'Hongo negro, fideos instantáneos, col china, brotes de soja, patatas, champiñones enoki, rollitos de tofu crujiente, tofu, lonchas de cerdo gruesas, arroz'},
-  seafood:{zh:'木耳、方便面、白菜、豆芽、土豆、金针菇、响铃卷、大虾、鱼丸、米饭',zhHant:'木耳、方便麵、白菜、豆芽、土豆、金針菇、響鈴卷、大蝦、魚丸、米飯',en:'Black fungus, instant noodles, Chinese cabbage, bean sprouts, potatoes, enoki mushrooms, crispy tofu skin rolls, large shrimp, fish balls, rice',it:'Fungo nero, noodles istantanei, cavolo cinese, germogli di soia, patate, funghi enoki, involtini di tofu croccante, gamberoni, polpette di pesce, riso',fr:'Champignon noir, nouilles instantanées, chou chinois, pousses de soja, pommes de terre, champignons enoki, rouleaux de peau de tofu croustillants, grosses crevettes, boulettes de poisson, riz',es:'Hongo negro, fideos instantáneos, col china, brotes de soja, patatas, champiñones enoki, rollitos de tofu crujiente, langostinos, bolas de pescado, arroz'},
-  veg:{zh:'木耳、方便面、白菜、土豆、金针菇、响铃卷、豆腐、藕片、油豆腐、米饭',zhHant:'木耳、方便麵、白菜、土豆、金針菇、響鈴卷、豆腐、藕片、油豆腐、米飯',en:'Black fungus, instant noodles, Chinese cabbage, potatoes, enoki mushrooms, crispy tofu skin rolls, tofu, lotus root slices, fried tofu, rice',it:'Fungo nero, noodles istantanei, cavolo cinese, patate, funghi enoki, involtini di tofu croccante, tofu, radice di loto affettata, tofu fritto, riso',fr:'Champignon noir, nouilles instantanées, chou chinois, pommes de terre, champignons enoki, rouleaux de peau de tofu croustillants, tofu, racine de lotus tranchée, tofu frit, riz',es:'Hongo negro, fideos instantáneos, col china, patatas, champiñones enoki, rollitos de tofu crujiente, tofu, raíz de loto en lonchas, tofu frito, arroz'},
-};
-function tHotpotBowlSetMeat(key){ return key ? ((HOTPOT_BOWL_SET_MEAT_LABELS[key] || {})[state.lang] || HOTPOT_BOWL_SET_MEAT_LABELS[key].zh) : ''; }
-function tHotpotBowlSetMeatTag(key){ return key ? ((HOTPOT_BOWL_SET_MEAT_TAGS[key] || {})[state.lang] || HOTPOT_BOWL_SET_MEAT_TAGS[key].zh) : ''; }
-
-// 冒菜/火锅米线（固定汤底套餐）：这些菜必须把辣度和汤底都选好才能下单，
+// 冒菜/火锅米线（固定汤底）：这些菜必须把辣度和汤底都选好才能下单，
 // 也是唯一能点“加菜”的午餐类型
-const LUNCH_FLAVOR_DISH_IDS = ['beefHotpotBowl','porkHotpotBowl','seafoodHotpotBowl','vegHotpotBowl', RICE_NOODLES_FIXED_ID, HOTPOT_BOWL_SET_ID, RICE_NOODLES_SET_ID];
-// 只有“午市套餐”（冒菜套餐/火锅米线套餐）本身含一杯饮品，必须强制选；
-// 单点的冒菜/火锅米线不含饮品，不需要绑定
-const LUNCH_SET_DISH_IDS = [HOTPOT_BOWL_SET_ID, RICE_NOODLES_SET_ID];
+const LUNCH_FLAVOR_DISH_IDS = ['beefHotpotBowl','porkHotpotBowl','seafoodHotpotBowl','vegHotpotBowl', RICE_NOODLES_FIXED_ID];
 const HOTPOT_BOWL_SOUP_BASE_KEYS = ['tomato','classicMala','boneBrothSpicy','boneBrothMild','mushroom','malaBan'];
 const RICE_NOODLES_SOUP_BASE_KEYS = ['tomato','classicMala','boneBrothSpicy','boneBrothMild','mushroom'];
 // 迷你火锅：只挑锅底，锅底免费，配菜必须去“加菜”里凑够 10 件才能下单
@@ -1458,18 +1433,17 @@ const MINI_HOTPOT_ID = 'miniHotpot';
 const MINI_HOTPOT_MIN_FILLINGS = 10;
 // 只需要选锅底、不需要选辣度的菜（跟 LUNCH_FLAVOR_DISH_IDS 的“辣度+汤底都要选”不同）
 const SOUP_BASE_ONLY_DISH_IDS = [MINI_HOTPOT_ID];
-// 按菜品 id（不是分类）配对应能选的锅底，因为“午市套餐”分类下冒菜套餐/米线套餐两张卡锅底选项不一样
+// 按菜品 id（不是分类）配对应能选的锅底
 const LUNCH_FLAVOR_SOUP_KEYS = {
   beefHotpotBowl: HOTPOT_BOWL_SOUP_BASE_KEYS, porkHotpotBowl: HOTPOT_BOWL_SOUP_BASE_KEYS,
   seafoodHotpotBowl: HOTPOT_BOWL_SOUP_BASE_KEYS, vegHotpotBowl: HOTPOT_BOWL_SOUP_BASE_KEYS,
   [RICE_NOODLES_FIXED_ID]: RICE_NOODLES_SOUP_BASE_KEYS, [MINI_HOTPOT_ID]: HOTPOT_BOWL_SOUP_BASE_KEYS,
-  [HOTPOT_BOWL_SET_ID]: HOTPOT_BOWL_SOUP_BASE_KEYS, [RICE_NOODLES_SET_ID]: RICE_NOODLES_SOUP_BASE_KEYS,
 };
 const SOUP_BASE_DISH_IDS = [...LUNCH_FLAVOR_DISH_IDS, ...SOUP_BASE_ONLY_DISH_IDS];
 
 // Each entry: id, category, price (or sizes[]+unit), allergens[], img, and i18n{lang:{name,tag}}
 const DISH_DATA = [
-{"id": "potBeefTallow", "img": "../image/菜品/牛油锅.webp", "category": "soupBase", "sub": "potSingle", "price": 16.6, "allergens": ["1", "2", "4"], "i18n": {"zh": {"name": "牛油锅", "tag": ""}, "zhHant": {"name": "牛油鍋", "tag": ""}, "en": {"name": "Spicy Chilli Beef Tallow Broth", "tag": ""}, "it": {"name": "Brodo Piccante al Sego di Manzo", "tag": ""}, "fr": {"name": "Bouillon Épicé au Suif de Bœuf", "tag": ""}, "es": {"name": "Caldo Picante de Sebo de Ternera", "tag": ""}}},
+{"id": "potBeefTallow", "img": "../image/菜品/牛油锅.webp", "category": "soupBase", "sub": "potSingle", "price": 16.6, "allergens": ["1", "2", "4"], "i18n": {"zh": {"name": "牛油锅", "tag": "特辣/中辣/微辣可选"}, "zhHant": {"name": "牛油鍋", "tag": "特辣/中辣/微辣可選"}, "en": {"name": "Spicy Chilli Beef Tallow Broth", "tag": "Extra/Medium/Mild spicy"}, "it": {"name": "Brodo Piccante al Sego di Manzo", "tag": "Piccante extra/medio/leggero a scelta"}, "fr": {"name": "Bouillon Épicé au Suif de Bœuf", "tag": "Extra/moyen/léger épicé au choix"}, "es": {"name": "Caldo Picante de Sebo de Ternera", "tag": "Extra/medio/suave picante a elegir"}}},
 {"id": "potTomato", "img": "../image/菜品/番茄锅.webp", "category": "soupBase", "sub": "potSingle", "price": 15.6, "allergens": [], "i18n": {"zh": {"name": "番茄锅（素）", "tag": ""}, "zhHant": {"name": "番茄鍋（素）", "tag": ""}, "en": {"name": "Tomato Broth (V)", "tag": ""}, "it": {"name": "Brodo di Pomodoro (V)", "tag": ""}, "fr": {"name": "Bouillon Tomate (V)", "tag": ""}, "es": {"name": "Caldo de Tomate (V)", "tag": ""}}},
 {"id": "potMushroom", "img": "../image/菜品/菌汤锅.webp", "category": "soupBase", "sub": "potSingle", "price": 11.8, "allergens": [], "i18n": {"zh": {"name": "菌汤锅（素）", "tag": ""}, "zhHant": {"name": "菌湯鍋（素）", "tag": ""}, "en": {"name": "Mushroom Broth (V)", "tag": ""}, "it": {"name": "Brodo di Funghi (V)", "tag": ""}, "fr": {"name": "Bouillon aux Champignons (V)", "tag": ""}, "es": {"name": "Caldo de Setas (V)", "tag": ""}}},
 {"id": "potPorkBone", "img": "../image/菜品/骨汤锅.webp", "category": "soupBase", "sub": "potSingle", "price": 9.8, "allergens": [], "i18n": {"zh": {"name": "骨汤锅", "tag": ""}, "zhHant": {"name": "骨湯鍋", "tag": ""}, "en": {"name": "Pork Bone Broth", "tag": ""}, "it": {"name": "Brodo di Ossa di Maiale", "tag": ""}, "fr": {"name": "Bouillon d'Os de Porc", "tag": ""}, "es": {"name": "Caldo de Hueso de Cerdo", "tag": ""}}},
@@ -1587,8 +1561,6 @@ const DISH_DATA = [
 {"id": "jasmineGreenGrape", "img": "../image/菜品/茉莉青提.webp", "category": "drinks", "price": 5.8, "allergens": [], "i18n": {"zh": {"name": "茉莉青提", "tag": ""}, "zhHant": {"name": "茉莉青提", "tag": ""}, "en": {"name": "Jasmine Green Grape", "tag": ""}, "it": {"name": "Tè al Gelsomino e Uva Verde", "tag": ""}, "fr": {"name": "Thé au Jasmin et Raisin Vert", "tag": ""}, "es": {"name": "Té de Jazmín y Uva Verde", "tag": ""}}},
 {"id": "waxberryLemonTea", "img": "../image/菜品/杨梅柠檬茶.webp", "category": "drinks", "price": 5.8, "allergens": [], "i18n": {"zh": {"name": "杨梅柠檬茶", "tag": ""}, "zhHant": {"name": "楊梅檸檬茶", "tag": ""}, "en": {"name": "Waxberry Lemon Tea", "tag": ""}, "it": {"name": "Tè al Limone e Waxberry", "tag": ""}, "fr": {"name": "Thé au Citron et Arbouse Chinoise", "tag": ""}, "es": {"name": "Té de Limón y Waxberry", "tag": ""}}},
 {"id": "jasmineLightMilkTea", "img": "../image/菜品/茉莉轻乳茶.webp", "category": "drinks", "price": 5.8, "allergens": ["2"], "i18n": {"zh": {"name": "茉莉轻乳茶", "tag": ""}, "zhHant": {"name": "茉莉輕乳茶", "tag": ""}, "en": {"name": "Jasmine Light Milk Tea", "tag": ""}, "it": {"name": "Tè al Latte Leggero al Gelsomino", "tag": ""}, "fr": {"name": "Thé au Lait Léger au Jasmin", "tag": ""}, "es": {"name": "Té con Leche Ligero de Jazmín", "tag": ""}}},
-{"id": "hotpotBowlSet", "img": "../image/菜品/牛肉冒菜.webp", "category": "lunchSet", "price": 16.99, "unit": "person", "allergens": ["4", "8", "9"], "i18n": {"zh": {"name": "冒菜套餐", "tag": "含一份冒菜 + 一碗米饭 + 一杯饮品"}, "zhHant": {"name": "冒菜套餐", "tag": "含一份冒菜 + 一碗米飯 + 一杯飲品"}, "en": {"name": "Hotpot Bowl Set", "tag": "Includes a hotpot bowl, a bowl of rice, and a drink"}, "it": {"name": "Menu Ciotola Hotpot", "tag": "Include una ciotola hotpot, una ciotola di riso e una bevanda"}, "fr": {"name": "Menu Bol Hotpot", "tag": "Comprend un bol hotpot, un bol de riz et une boisson"}, "es": {"name": "Menú Bol de Hotpot", "tag": "Incluye un bol de hotpot, un bol de arroz y una bebida"}}},
-{"id": "riceNoodlesSet", "img": "../image/菜品/火锅米线.webp", "category": "lunchSet", "price": 16.99, "unit": "person", "allergens": ["4", "8", "9"], "i18n": {"zh": {"name": "火锅米线套餐", "tag": "含一份火锅米线 + 一杯饮品"}, "zhHant": {"name": "火鍋米線套餐", "tag": "含一份火鍋米線 + 一杯飲品"}, "en": {"name": "Hotpot Rice Noodles Set", "tag": "Includes hotpot rice noodles and a drink"}, "it": {"name": "Menu Noodles di Riso Hotpot", "tag": "Include noodles di riso hotpot e una bevanda"}, "fr": {"name": "Menu Nouilles de Riz Hotpot", "tag": "Comprend des nouilles de riz hotpot et une boisson"}, "es": {"name": "Menú Fideos de Arroz Hotpot", "tag": "Incluye fideos de arroz hotpot y una bebida"}}},
 {"id": "beefHotpotBowl", "img": "../image/菜品/牛肉冒菜.webp", "category": "hotpotBowl", "price": 14.98, "allergens": ["1", "4"], "i18n": {"zh": {"name": "牛肉冒菜", "tag": "木耳、方便面、白菜、豆芽、土豆、金针菇、响铃卷、牛肉丸、米饭"}, "zhHant": {"name": "牛肉冒菜", "tag": "木耳、方便麵、白菜、豆芽、土豆、金針菇、響鈴卷、牛肉丸、米飯"}, "en": {"name": "Hotpot Beef Bowl", "tag": "Black fungus, instant noodles, Chinese cabbage, bean sprouts, potatoes, enoki mushrooms, crispy tofu skin rolls, beef balls, rice"}, "it": {"name": "Ciotola Hotpot al Manzo", "tag": "Fungo nero, noodles istantanei, cavolo cinese, germogli di soia, patate, funghi enoki, involtini di tofu croccante, polpette di manzo, riso"}, "fr": {"name": "Bol Hotpot au Bœuf", "tag": "Champignon noir, nouilles instantanées, chou chinois, pousses de soja, pommes de terre, champignons enoki, rouleaux de peau de tofu croustillants, boulettes de bœuf, riz"}, "es": {"name": "Bol de Hotpot con Ternera", "tag": "Hongo negro, fideos instantáneos, col china, brotes de soja, patatas, champiñones enoki, rollitos de tofu crujiente, albóndigas de ternera, arroz"}}},
 {"id": "porkHotpotBowl", "img": "../image/菜品/猪肉冒菜.webp", "category": "hotpotBowl", "price": 14.98, "allergens": ["1", "4"], "i18n": {"zh": {"name": "猪肉冒菜", "tag": "木耳、方便面、白菜、豆芽、土豆、金针菇、响铃卷、豆腐、老肉片、米饭"}, "zhHant": {"name": "豬肉冒菜", "tag": "木耳、方便麵、白菜、豆芽、土豆、金針菇、響鈴卷、豆腐、老肉片、米飯"}, "en": {"name": "Hotpot Pork Bowl", "tag": "Black fungus, instant noodles, Chinese cabbage, bean sprouts, potatoes, enoki mushrooms, crispy tofu skin rolls, tofu, thick pork slices, rice"}, "it": {"name": "Ciotola Hotpot al Maiale", "tag": "Fungo nero, noodles istantanei, cavolo cinese, germogli di soia, patate, funghi enoki, involtini di tofu croccante, tofu, fettine di maiale spesse, riso"}, "fr": {"name": "Bol Hotpot au Porc", "tag": "Champignon noir, nouilles instantanées, chou chinois, pousses de soja, pommes de terre, champignons enoki, rouleaux de peau de tofu croustillants, tofu, tranches de porc épaisses, riz"}, "es": {"name": "Bol de Hotpot con Cerdo", "tag": "Hongo negro, fideos instantáneos, col china, brotes de soja, patatas, champiñones enoki, rollitos de tofu crujiente, tofu, lonchas de cerdo gruesas, arroz"}}},
 {"id": "seafoodHotpotBowl", "img": "../image/菜品/海鲜冒菜.webp", "category": "hotpotBowl", "price": 14.98, "allergens": ["1", "4", "5", "6"], "i18n": {"zh": {"name": "海鲜冒菜", "tag": "木耳、方便面、白菜、豆芽、土豆、金针菇、响铃卷、大虾、鱼丸、米饭"}, "zhHant": {"name": "海鮮冒菜", "tag": "木耳、方便麵、白菜、豆芽、土豆、金針菇、響鈴卷、大蝦、魚丸、米飯"}, "en": {"name": "Hotpot Sea Food Bowl", "tag": "Black fungus, instant noodles, Chinese cabbage, bean sprouts, potatoes, enoki mushrooms, crispy tofu skin rolls, large shrimp, fish balls, rice"}, "it": {"name": "Ciotola Hotpot ai Frutti di Mare", "tag": "Fungo nero, noodles istantanei, cavolo cinese, germogli di soia, patate, funghi enoki, involtini di tofu croccante, gamberoni, polpette di pesce, riso"}, "fr": {"name": "Bol Hotpot aux Fruits de Mer", "tag": "Champignon noir, nouilles instantanées, chou chinois, pousses de soja, pommes de terre, champignons enoki, rouleaux de peau de tofu croustillants, grosses crevettes, boulettes de poisson, riz"}, "es": {"name": "Bol de Hotpot con Marisco", "tag": "Hongo negro, fideos instantáneos, col china, brotes de soja, patatas, champiñones enoki, rollitos de tofu crujiente, langostinos, bolas de pescado, arroz"}}},
@@ -1987,7 +1959,7 @@ function backRowHTML(){
 function getItem(id){
   return state.items[id] || {
     qty:0, spice: LUNCH_FLAVOR_DISH_IDS.includes(id) ? null : '中辣',
-    size:null, excludes:{}, cookMethod:'steamed', soupBase:null, drink:null, meatType:null, addOns:{},
+    size:null, excludes:{}, cookMethod:'steamed', soupBase:null, addOns:{},
   };
 }
 
@@ -2000,7 +1972,7 @@ function getEffectiveItem(d){
   if(isAddOnBrowsing(d)){
     const target = getItem(state.addOnTarget);
     const qty = (target.addOns && target.addOns[d.id]) || 0;
-    return { qty, spice:'中辣', size:null, excludes:{}, cookMethod:'steamed', soupBase:null, drink:null, meatType:null, addOns:{} };
+    return { qty, spice:'中辣', size:null, excludes:{}, cookMethod:'steamed', soupBase:null, addOns:{} };
   }
   return getItem(d.id);
 }
@@ -2013,7 +1985,7 @@ function changeQty(id, delta){
   }
   const cur = getItem(id);
   const qty = Math.max(0, Math.min(20, cur.qty + delta));
-  state.items[id] = { qty, spice: cur.spice, size: cur.size, excludes: cur.excludes, cookMethod: cur.cookMethod, soupBase: cur.soupBase, drink: cur.drink, meatType: cur.meatType, addOns: cur.addOns };
+  state.items[id] = { qty, spice: cur.spice, size: cur.size, excludes: cur.excludes, cookMethod: cur.cookMethod, soupBase: cur.soupBase, addOns: cur.addOns };
   if(delta > 0 && qty > cur.qty) celebrateAddToCart();
   updateItemUI(id);
   pushSharedCartItem(id);
@@ -2047,7 +2019,7 @@ function setSpice(id, level){
   if(cur.qty <= 0) return;
   // 番茄/菌汤这类不辣的锅底，辣度那一行是灰的，不接受点击
   if(LUNCH_FLAVOR_DISH_IDS.includes(id) && !SPICE_ELIGIBLE_SOUP_KEYS.includes(cur.soupBase)) return;
-  state.items[id] = { qty: cur.qty, spice: level, size: cur.size, excludes: cur.excludes, cookMethod: cur.cookMethod, soupBase: cur.soupBase, drink: cur.drink, meatType: cur.meatType, addOns: cur.addOns };
+  state.items[id] = { qty: cur.qty, spice: level, size: cur.size, excludes: cur.excludes, cookMethod: cur.cookMethod, soupBase: cur.soupBase, addOns: cur.addOns };
   updateItemUI(id);
   pushSharedCartItem(id);
 }
@@ -2057,32 +2029,14 @@ function setSoupBase(id, key){
   if(cur.qty <= 0) return;
   // 换成不辣的锅底（番茄/菌汤）时，之前选的辣度就不作数了，清掉避免带着一个选不了的辣度去下单
   const spice = SPICE_ELIGIBLE_SOUP_KEYS.includes(key) ? cur.spice : null;
-  state.items[id] = { qty: cur.qty, spice, size: cur.size, excludes: cur.excludes, cookMethod: cur.cookMethod, soupBase: key, drink: cur.drink, meatType: cur.meatType, addOns: cur.addOns };
-  updateItemUI(id);
-  pushSharedCartItem(id);
-}
-
-// 冒菜/火锅米线含一杯饮品，从固定的几款里选一款，不额外计价
-function setDrink(id, key){
-  const cur = getItem(id);
-  if(cur.qty <= 0) return;
-  state.items[id] = { qty: cur.qty, spice: cur.spice, size: cur.size, excludes: cur.excludes, cookMethod: cur.cookMethod, soupBase: cur.soupBase, drink: key, meatType: cur.meatType, addOns: cur.addOns };
-  updateItemUI(id);
-  pushSharedCartItem(id);
-}
-
-// 冒菜口味：牛肉/猪肉/海鲜/素食，价格和配料跟着口味走
-function setMeatType(id, key){
-  const cur = getItem(id);
-  if(cur.qty <= 0) return;
-  state.items[id] = { qty: cur.qty, spice: cur.spice, size: cur.size, excludes: cur.excludes, cookMethod: cur.cookMethod, soupBase: cur.soupBase, drink: cur.drink, meatType: key, addOns: cur.addOns };
+  state.items[id] = { qty: cur.qty, spice, size: cur.size, excludes: cur.excludes, cookMethod: cur.cookMethod, soupBase: key, addOns: cur.addOns };
   updateItemUI(id);
   pushSharedCartItem(id);
 }
 
 function setSize(id, key){
   const cur = getItem(id);
-  state.items[id] = { qty: cur.qty, spice: cur.spice, size: key, excludes: cur.excludes, cookMethod: cur.cookMethod, soupBase: cur.soupBase, drink: cur.drink, meatType: cur.meatType, addOns: cur.addOns };
+  state.items[id] = { qty: cur.qty, spice: cur.spice, size: key, excludes: cur.excludes, cookMethod: cur.cookMethod, soupBase: cur.soupBase, addOns: cur.addOns };
   updateItemUI(id);
   pushSharedCartItem(id);
 }
@@ -2091,7 +2045,7 @@ function toggleExclude(id, key){
   const cur = getItem(id);
   if(cur.qty <= 0) return;
   const excludes = Object.assign({}, cur.excludes, { [key]: !cur.excludes[key] });
-  state.items[id] = { qty: cur.qty, spice: cur.spice, size: cur.size, excludes, cookMethod: cur.cookMethod, soupBase: cur.soupBase, drink: cur.drink, meatType: cur.meatType, addOns: cur.addOns };
+  state.items[id] = { qty: cur.qty, spice: cur.spice, size: cur.size, excludes, cookMethod: cur.cookMethod, soupBase: cur.soupBase, addOns: cur.addOns };
   updateItemUI(id);
   pushSharedCartItem(id);
 }
@@ -2099,7 +2053,7 @@ function toggleExclude(id, key){
 function setCookMethod(id, method){
   const cur = getItem(id);
   if(cur.qty <= 0) return;
-  state.items[id] = { qty: cur.qty, spice: cur.spice, size: cur.size, excludes: cur.excludes, cookMethod: method, soupBase: cur.soupBase, drink: cur.drink, meatType: cur.meatType, addOns: cur.addOns };
+  state.items[id] = { qty: cur.qty, spice: cur.spice, size: cur.size, excludes: cur.excludes, cookMethod: method, soupBase: cur.soupBase, addOns: cur.addOns };
   updateItemUI(id);
   pushSharedCartItem(id);
 }
@@ -2272,11 +2226,7 @@ function validateCartForCheckout(){
     const it = getItem(id);
     // 番茄/菌汤锅底不辣，不强制选辣度；其余口味（经典麻辣/骨汤/麻辣拌）辣度必选
     const spiceRequired = it.soupBase && SPICE_ELIGIBLE_SOUP_KEYS.includes(it.soupBase);
-    // 冒菜套餐还得多选一样：牛肉/猪肉/海鲜/素食
-    const meatTypeMissing = id === HOTPOT_BOWL_SET_ID && !it.meatType;
-    // 只有午市套餐本身含饮品，才强制选饮料；单点的冒菜/火锅米线不含饮品，不做要求
-    const drinkMissing = LUNCH_SET_DISH_IDS.includes(id) && !it.drink;
-    if(it.qty > 0 && (!it.soupBase || drinkMissing || meatTypeMissing || (spiceRequired && !it.spice))){
+    if(it.qty > 0 && (!it.soupBase || (spiceRequired && !it.spice))){
       return { ok:false, view:'lunch', category: MENU_BY_ID[id].category, message:t('missingLunchFlavorMsg') };
     }
   }
@@ -2290,8 +2240,8 @@ function validateCartForCheckout(){
   }
 
   // bug fix：单独点“加菜”分类里的配菜（不是通过某份冒菜/火锅米线的加菜按钮加的），
-  // 必须先选一个午餐类型（冒菜/火锅米线/自选米线/迷你火锅/午市套餐），否则厨房不知道这配菜该配给哪碗
-  const hasLunchType = hasQty(['hotpotBowl']) || getItem(RICE_NOODLES_FIXED_ID).qty > 0 || getItem(CUSTOM_RICE_NOODLES_ID).qty > 0 || getItem(MINI_HOTPOT_ID).qty > 0 || LUNCH_SET_DISH_IDS.some(id => getItem(id).qty > 0);
+  // 必须先选一个午餐类型（冒菜/火锅米线/自选米线/迷你火锅），否则厨房不知道这配菜该配给哪碗
+  const hasLunchType = hasQty(['hotpotBowl']) || getItem(RICE_NOODLES_FIXED_ID).qty > 0 || getItem(CUSTOM_RICE_NOODLES_ID).qty > 0 || getItem(MINI_HOTPOT_ID).qty > 0;
   const hasStandaloneLunchPieces = MENU.some(d => d.category === 'lunchPieces' && (state.items[d.id] || {}).qty > 0);
   if(hasStandaloneLunchPieces && !hasLunchType){
     return { ok:false, view:'lunch', category:'hotpotBowl', message:t('missingLunchTypeMsg') };
@@ -2522,11 +2472,8 @@ function handlePlaceOrderClick(){
   }
 }
 
-// 只有午市套餐本身含一杯饮品，点了套餐的顾客下单前就不用再推饮品或酒水；
-// 单点的冒菜/火锅米线不含饮品，仍然可以推，甜品则始终可以推
 function upsellPool(){
-  const hasLunchSetWithDrink = LUNCH_SET_DISH_IDS.some(id => getItem(id).qty > 0);
-  return MENU.filter(d => (d.category === 'desserts' || ((d.category === 'drinks' || d.category === 'wine') && !hasLunchSetWithDrink)) && !isSoldOut(d.id));
+  return MENU.filter(d => (d.category === 'desserts' || d.category === 'drinks' || d.category === 'wine') && !isSoldOut(d.id));
 }
 
 function openUpsell(){
@@ -2542,7 +2489,7 @@ function openUpsell(){
   render();
 }
 
-// “换一批”：换成另外 4 个随机推荐，规则跟打开弹窗时一样（点了含饮品的午市套餐就不会换出酒水/饮料）。
+// “换一批”：换成另外 4 个随机推荐，规则跟打开弹窗时一样。
 // 只重画格子本身，弹窗其余部分（标题、按钮）不用跟着重建。
 function shuffleUpsell(event){
   const pool = upsellPool();
@@ -2681,7 +2628,6 @@ async function submitOrder(){
       if(d.sizes) entry.size = it.size || d.sizes[0].key;
       if(d.category === 'dumplings') entry.cookMethod = it.cookMethod || 'steamed';
       if(SOUP_BASE_DISH_IDS.includes(d.id)) entry.soupBase = it.soupBase;
-      if(LUNCH_FLAVOR_DISH_IDS.includes(d.id)) entry.drink = it.drink;
       const excludeKeys = Object.keys(it.excludes || {}).filter(k => it.excludes[k]);
       if(excludeKeys.length) entry.excludes = excludeKeys;
       items.push(entry);
@@ -2845,15 +2791,6 @@ function chefCarouselHTML(){
     </div>`;
 }
 
-// 冒菜套餐口味行：牛肉/猪肉/海鲜/素食，选哪个决定名字和配料（价格不变，套餐统一价）
-function hotpotBowlMeatRowHTML(d, it){
-  return `<div class="spice-row">
-    ${HOTPOT_BOWL_MEAT_TYPES.map(key=>`
-      <button class="spice-pill ${it.meatType===key?'active':''}" onclick="setMeatType('${d.id}','${key}')">
-        <span class="spice-label">${tHotpotBowlSetMeat(key)}</span>
-      </button>`).join('')}
-  </div>`;
-}
 // 冒菜/火锅米线的辣度行：只有选了经典麻辣/骨汤/麻辣拌这几种带辣味的锅底才能点辣度，
 // 番茄/菌汤本身不辣，这一行灰掉不可点
 function lunchSpiceRowHTML(d, it){
@@ -2865,29 +2802,18 @@ function lunchSpiceRowHTML(d, it){
       </button>`).join('')}
   </div>`;
 }
-// 冒菜/火锅米线含一杯饮品，从固定的几款里选一款，不标注价格
-function lunchDrinkRowHTML(d, it){
-  return `<div class="spice-row">
-    ${Object.keys(DRINK_LABELS).map(key=>`
-      <button class="spice-pill ${it.drink===key?'active':''}" onclick="setDrink('${d.id}','${key}')">
-        <span class="spice-label">${tDrink(key)}</span>
-      </button>`).join('')}
-  </div>`;
-}
 
 // Everything that only shows up once qty>0 (spice level, soup-base pick,
-// meat type, drink pick, cook method, options) lives in one "extension"
-// note below the card row — a divider, then an inset slip — instead of
-// stretching/recentering the row itself the instant the + button is tapped.
-// Self-contained (recomputes it/flags) so dishCardHTML and updateItemUI can
-// both call it without threading state through dishBodyHTML.
+// cook method, options) lives in one "extension" note below the card row —
+// a divider, then an inset slip — instead of stretching/recentering the
+// row itself the instant the + button is tapped. Self-contained (recomputes
+// it/flags) so dishCardHTML and updateItemUI can both call it without
+// threading state through dishBodyHTML.
 function dishExtendHTML(d){
   const inAddOnMode = isAddOnBrowsing(d);
   const it = inAddOnMode ? getEffectiveItem(d) : getItem(d.id);
   if(it.qty<=0) return '';
   const isLunchFlavorDish = LUNCH_FLAVOR_DISH_IDS.includes(d.id);
-  const isLunchSetDish = LUNCH_SET_DISH_IDS.includes(d.id);
-  const isHotpotBowlSet = d.id === HOTPOT_BOWL_SET_ID;
   const hasSoupBaseRow = SOUP_BASE_DISH_IDS.includes(d.id);
   const rows = `
     ${d.spicy && !isLunchFlavorDish && !inAddOnMode ? `
@@ -2896,8 +2822,11 @@ function dishExtendHTML(d){
           <button class="spice-pill ${it.spice===lvl?'active':''}" onclick="setSpice('${d.id}','${lvl}')">
             <span class="flames">${flameIcons(i+1)}</span><span class="spice-label">${tSpice(i)}</span>
           </button>`).join('')}
+        ${d.category==='soupBase' ? `
+          <button class="spice-pill pepper-pill ${it.excludes.noPepper?'active':''}" onclick="toggleExclude('${d.id}','noPepper')">
+            <span class="spice-label">${tOption('noPepper')}</span>
+          </button>` : ''}
       </div>` : ''}
-    ${isHotpotBowlSet && !inAddOnMode ? hotpotBowlMeatRowHTML(d, it) : ''}
     ${hasSoupBaseRow ? `
       <div class="spice-row">
         ${LUNCH_FLAVOR_SOUP_KEYS[d.id].map(key=>`
@@ -2906,7 +2835,6 @@ function dishExtendHTML(d){
           </button>`).join('')}
       </div>` : ''}
     ${isLunchFlavorDish && !inAddOnMode ? lunchSpiceRowHTML(d, it) : ''}
-    ${isLunchSetDish && !inAddOnMode ? lunchDrinkRowHTML(d, it) : ''}
     ${d.category==='dumplings' ? `
       <div class="spice-row">
         ${['steamed','panFried'].map(m=>`
@@ -3087,7 +3015,6 @@ function editableOrderSummaryHTML(items, total){
           ${it.sizeLabel ? `<span class="spice-tag">${it.sizeLabel}</span>` : ''}
           ${it.cookMethodLabel ? `<span class="spice-tag">${it.cookMethodLabel}</span>` : ''}
           ${it.soupBaseLabel ? `<span class="spice-tag">${it.soupBaseLabel}</span>` : ''}
-          ${it.drinkLabel ? `<span class="spice-tag">${it.drinkLabel}</span>` : ''}
           ${it.forDish ? `<span class="spice-tag add-on-tag">${t('addOnTagPrefix')}${it.forDish}</span>` : ''}
           ${it.excludeTags}
           <span class="stepper">
@@ -3147,7 +3074,6 @@ function cartItemsForCheckout(){
         sizeLabel: d.sizes ? tSize(it.size || d.sizes[0].key) : null,
         cookMethodLabel: d.category==='dumplings' ? tCookMethod(it.cookMethod || 'steamed') : null,
         soupBaseLabel: SOUP_BASE_DISH_IDS.includes(d.id) ? tSoupBase(it.soupBase) : null,
-        drinkLabel: LUNCH_FLAVOR_DISH_IDS.includes(d.id) ? tDrink(it.drink) : null,
         excludeTags: excludesTagsHTML(Object.keys(it.excludes||{}).filter(k=>it.excludes[k])),
       });
     }

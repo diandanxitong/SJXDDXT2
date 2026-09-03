@@ -698,6 +698,14 @@ function render(){
 
 render();
 setInterval(render, 1000);        // 每秒刷新一次等待时长与颜色提示（订单数据本身由 onSnapshot 实时推送）
+
+// 整页每 3 秒自动刷新一次：这块看板常年挂在后厨平板上没人管，onSnapshot 理论上是
+// 实时推送，但连接偶尔会静默卡死（不报错，只是不再收到新订单）——定时硬刷新兜底。
+// 员工正在输入系统密码或确认结账时跳过这一轮，避免刷新把没提交的输入冲掉。
+setInterval(() => {
+  if(confirmKeys || systemModalOpen) return;
+  location.reload();
+}, 3000);
 </script>
 </body>
 </html>

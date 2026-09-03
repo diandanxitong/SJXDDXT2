@@ -106,14 +106,16 @@
   .item-del-btn:hover{background:rgba(248,113,113,.24);}
 
   .action-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;}
-  .action-row button{
+  .action-row button, .action-row a{
     flex:1;min-width:180px;padding:14px;border-radius:10px;font-size:15px;cursor:pointer;font-weight:900;
-    font-family:inherit;
+    font-family:inherit;text-decoration:none;text-align:center;
+    display:flex;align-items:center;justify-content:center;
   }
   .confirm-btn{background:rgba(245,158,11,.14);border:1px solid var(--warn);color:var(--warn);}
   .confirm-btn:hover{background:rgba(245,158,11,.22);}
-  .checkout-btn{background:rgba(52,211,153,.14);border:1px solid var(--ok);color:var(--ok);}
-  .checkout-btn:hover{background:rgba(52,211,153,.24);}
+  /* 结账只在接单看板的桌号卡片上做，这里"已全部送入厨房"时改成一个纯返回链接 */
+  .back-to-board-btn{background:none;border:1px solid var(--line);color:var(--text-muted);}
+  .back-to-board-btn:hover{background:rgba(255,255,255,.04);color:var(--text);}
   .order-del-btn{background:none;border:1px solid rgba(248,113,113,.5);color:var(--urgent);}
   .order-del-btn:hover{background:rgba(248,113,113,.12);}
 
@@ -162,7 +164,6 @@
   <span class="status" id="status">加载中…</span>
 </header>
 <div id="app"></div>
-<div id="confirm-modal"></div>
 <div id="delete-modal"></div>
 
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-app-compat.js"></script>
@@ -247,87 +248,6 @@ async function confirmToKitchen(keys){
   }catch(e){ /* onSnapshot 会在下一次推送时自动纠正 */ }
 }
 
-// 结账/菜已上齐：彻底移出看板
-async function archiveOrder(keys){
-  orders = orders.filter(o => !keys.includes(o.key));
-  render();
-  try{
-    const batch = db.batch();
-    keys.forEach(key => batch.delete(ordersRef.doc(key)));
-    await batch.commit();
-  }catch(e){ /* onSnapshot 会在下一次推送时自动纠正 */ }
-}
-
-// “结账”会误删还在用餐的桌，先弹窗二次确认
-let confirmKeys = null;
-
-function confirmLeave(keys){
-  confirmKeys = keys;
-  renderConfirmModal();
-}
-
-function cancelLeave(){
-  confirmKeys = null;
-  renderConfirmModal();
-}
-
-function confirmLeaveYes(){
-  const keys = confirmKeys;
-  confirmKeys = null;
-  renderConfirmModal();
-  // 先把这一桌的流水记进“今日盘点”，再删单——记账失败也不能卡住移除看板，
-  // 所以这里不等它，且内部自己吞掉错误。这里不跳转页面：这两个请求还没落地
-  // 就跳走的话，页面一卸载，请求可能被浏览器直接中断，流水/日志就丢了。
-  // 结账后这一桌的订单会清空，下面 render() 自然会切到"暂无订单"的空状态，
-  // 里面已经带了返回看板的链接，不用强制跳转。
-  recordDailyCheckout(keys);
-  archiveOrder(keys);
-}
-
-function todayKey(d){
-  d = d || new Date();
-  const pad = n => String(n).padStart(2,'0');
-  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-}
-
-// “今日盘点”流水：#001、#002……每天从 1 开始，靠 Firestore 事务原子地读计数器+1，
-// 避免多个员工同时结账时编号冲突或重复
-async function recordDailyCheckout(keys){
-  const batchOrders = orders.filter(o => keys.includes(o.key));
-  const items = [];
-  batchOrders.forEach(o => (o.items || []).forEach(it => {
-    items.push({ name: it.name, qty: it.qty, price: it.price || 0 });
-  }));
-  if(items.length === 0) return;
-  const revenue = items.reduce((s, it) => s + it.price * it.qty, 0);
-  const date = todayKey();
-  try{
-    await db.runTransaction(async tx => {
-      const counterRef = db.collection('counters').doc('dailyOrderSeq');
-      const snap = await tx.get(counterRef);
-      const prev = snap.exists ? snap.data() : null;
-      const seq = (prev && prev.date === date) ? prev.seq + 1 : 1;
-      tx.set(counterRef, { date, seq });
-      const recordRef = db.collection('dailyOrders').doc();
-      tx.set(recordRef, { seq, date, table, items, revenue, archivedAt: Date.now() });
-    });
-  }catch(e){ /* 记账失败就不记了，不阻塞移除看板；今日盘点里会少这一笔，需要人工核对 */ }
-}
-
-function renderConfirmModal(){
-  const el = document.getElementById('confirm-modal');
-  if(!confirmKeys){ el.innerHTML = ''; return; }
-  el.innerHTML = `
-    <div class="confirm-overlay">
-      <div class="confirm-box">
-        <p class="confirm-question">确认顾客已经结账离开？</p>
-        <div class="confirm-actions">
-          <button class="confirm-cancel-btn" onclick="cancelLeave()">取消</button>
-          <button class="confirm-yes-btn" onclick="confirmLeaveYes()">确认已离开</button>
-        </div>
-      </div>
-    </div>`;
-}
 
 // 单品删除 / 整单删除：都要求先填操作人姓名才能确认，且都会记一条日志到
 // staffActionLogs，供"员工操作日志"页面查看
@@ -532,7 +452,7 @@ function render(){
 
   const actionBtn = anyPending
     ? `<button class="confirm-btn" data-keys="${pendingBatches.map(o=>o.key).join(',')}" onclick="confirmToKitchen(this.dataset.keys.split(','))">🍳 确认，送入厨房</button>`
-    : `<button class="checkout-btn" data-keys="${realBatch.map(o=>o.key).join(',')}" onclick="confirmLeave(this.dataset.keys.split(','))">💳 结账</button>`;
+    : `<a class="back-to-board-btn" href="sjxddxtygd.html">← 返回看板</a>`;
 
   app.innerHTML = `
     <div class="columns">

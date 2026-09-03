@@ -54,13 +54,28 @@
   .empty{margin-top:22vh;text-align:center;color:var(--text-muted);}
   .empty p{font-size:15px;margin-bottom:16px;}
 
-  .customer-block{
-    background:var(--card);border:1px solid var(--line);border-radius:16px;
-    padding:16px 16px 14px;margin-bottom:14px;
+  /* 两列布局：左边"新加菜品/待送入厨房"红框闪烁，右边"已处理/已送入厨房"绿框静止。
+     每个 order 文档（一次下单或一次加菜）就是一个批次，各自一个 batch-box，
+     不再跨批次合并同名菜品——批次本身已经是视觉上的分隔，合并反而会让"这批还没做"
+     和"那批早就上了"混在一起看不清楚 */
+  .columns{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;margin-bottom:8px;}
+  @media (max-width:760px){ .columns{grid-template-columns:1fr;} }
+  .column-title{font-size:14px;font-weight:900;color:var(--text-muted);margin-bottom:10px;}
+  .column-empty{font-size:13px;color:var(--text-muted);padding:6px 2px 18px;}
+  .batch-box{border-radius:16px;padding:14px 14px 12px;margin-bottom:12px;}
+  .batch-pending{background:rgba(210,80,47,.10);border:2px solid var(--urgent);}
+  @media (prefers-reduced-motion:no-preference){
+    .batch-pending{animation:batch-flash 1.1s ease-in-out infinite;}
   }
-  .customer-name{
-    font-size:14px;font-weight:900;color:var(--text-muted);margin-bottom:10px;
+  @keyframes batch-flash{
+    0%,100%{box-shadow:0 0 0 0 rgba(210,80,47,.5);}
+    50%{box-shadow:0 0 0 7px rgba(210,80,47,0);}
   }
+  .batch-processed{background:rgba(95,190,138,.08);border:2px solid var(--ok);}
+  .batch-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:10px;}
+  .batch-name{font-size:13px;font-weight:900;color:var(--text-muted);}
+  .batch-time{font-size:11.5px;color:var(--text-muted);white-space:nowrap;}
+  .batch-pending .batch-time{color:var(--urgent);font-weight:700;}
   .item-list{list-style:none;display:flex;flex-direction:column;gap:8px;}
   .item-list li{
     display:flex;justify-content:space-between;align-items:center;gap:10px;
@@ -70,11 +85,9 @@
   .item-list .qty{
     font-family:'Archivo Black',sans-serif;color:var(--warn);margin-right:8px;
   }
-  .item-list li.is-new{background:rgba(210,80,47,.14);}
   .spice-tag{font-size:11.5px;color:var(--text-muted);border:1px solid var(--line);border-radius:20px;padding:2px 9px;}
   .exclude-tag{font-size:11.5px;color:var(--urgent);border:1px solid rgba(210,80,47,.5);border-radius:20px;padding:2px 9px;font-weight:700;}
   .for-dish-tag{font-size:11.5px;color:var(--warn);border:1px solid rgba(232,162,61,.5);border-radius:20px;padding:2px 9px;font-weight:700;}
-  .new-tag{font-size:11.5px;color:var(--urgent);border:1px solid var(--urgent);border-radius:20px;padding:2px 9px;font-weight:700;}
   .item-del-btn{
     flex-shrink:0;width:26px;height:26px;border-radius:8px;
     border:1.5px solid var(--urgent);background:rgba(210,80,47,.12);color:var(--urgent);
@@ -183,13 +196,24 @@ function elapsedInfo(ts){
 
 let orders = [];
 let loaded = false;
+let firstDetailSnapshot = true;   // 首次快照不算“新到的加菜”，不用触发自动滚动
 
 if(table){
   ordersRef.where('table', '==', String(table)).onSnapshot(snap => {
+    if(!firstDetailSnapshot){
+      // 有新的待处理批次到达（新下单或新加菜，呼叫服务员的单子不算）：
+      // 自动把页面滚回顶部，让员工一眼看到红框闪烁的新菜品
+      const hasNewPending = snap.docChanges().some(ch =>
+        ch.type === 'added' && !ch.doc.data().call && ch.doc.data().status !== 'confirmed');
+      if(hasNewPending) window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    firstDetailSnapshot = false;
+
     orders = snap.docs.map(d => ({
       key: d.id, table: d.data().table, items: d.data().items, createdAt: d.data().createdAt,
       nickname: d.data().nickname || '', partySize: d.data().partySize || null,
       status: d.data().status || 'pending', call: !!d.data().call,
+      confirmedAt: d.data().confirmedAt || null,
     })).sort((a,b) => a.createdAt - b.createdAt);
     loaded = true;
     document.getElementById('status').textContent = '实时更新：' + new Date().toLocaleTimeString('zh-CN',{hour12:false});
@@ -201,13 +225,15 @@ if(table){
   loaded = true;
 }
 
-// 第一步：确认订单，推送给顾客端“已送入厨房”动画，但仍留在看板上等待上菜
+// 确认订单，推送给顾客端“已送入厨房”动画：这批菜从左边"新加菜品"红框
+// 移到右边"已处理"绿框，并记下 confirmedAt，用来算"几分钟前已处理"
 async function confirmToKitchen(keys){
-  orders = orders.map(o => keys.includes(o.key) ? Object.assign({}, o, { status: 'confirmed' }) : o);
+  const now = Date.now();
+  orders = orders.map(o => keys.includes(o.key) ? Object.assign({}, o, { status: 'confirmed', confirmedAt: now }) : o);
   render();
   try{
     const batch = db.batch();
-    keys.forEach(key => batch.update(ordersRef.doc(key), { status: 'confirmed' }));
+    keys.forEach(key => batch.update(ordersRef.doc(key), { status: 'confirmed', confirmedAt: now }));
     await batch.commit();
   }catch(e){ /* onSnapshot 会在下一次推送时自动纠正 */ }
 }
@@ -379,37 +405,19 @@ async function logStaffAction(entry){
   }catch(e){ /* 日志写入失败不影响已经执行完的删除操作 */ }
 }
 
-// 删掉某一道合并显示的菜：这道菜可能来自同一顾客的好几次加菜（好几个 order 文档各贡献
-// 一条 items 记录），所以要在这些文档里逐个找到匹配的那一条删掉，文档删空了就整份删除
+// 删掉某个批次（某个 order 文档）里的某一道菜：现在批次之间不再合并显示，
+// 直接按“这份文档的 items 数组第几项”定位删除，文档删空了就整份删除
 async function performDeleteItem(target, operatorName){
-  const { keys, name, spice, size, cookMethod, soupBase, drink, forDish, qty } = target;
-  const matches = it => it.name === name && (it.spice || '') === (spice || '')
-    && (it.size || '') === (size || '') && (it.cookMethod || '') === (cookMethod || '')
-    && (it.soupBase || '') === (soupBase || '') && (it.drink || '') === (drink || '') && (it.forDish || '') === (forDish || '');
-  const toDelete = [];
-  const toUpdate = [];
-  keys.forEach(key => {
-    const order = orders.find(o => o.key === key);
-    if(!order) return;
-    const items = order.items || [];
-    const idx = items.findIndex(matches);
-    if(idx === -1) return;
-    const newItems = items.slice(0, idx).concat(items.slice(idx + 1));
-    if(newItems.length === 0) toDelete.push(key);
-    else toUpdate.push({ key, items: newItems });
-  });
-  orders = orders
-    .filter(o => !toDelete.includes(o.key))
-    .map(o => {
-      const u = toUpdate.find(x => x.key === o.key);
-      return u ? Object.assign({}, o, { items: u.items }) : o;
-    });
+  const { docKey, itemIdx, name, qty } = target;
+  const order = orders.find(o => o.key === docKey);
+  if(!order) return;
+  const items = order.items || [];
+  const newItems = items.slice(0, itemIdx).concat(items.slice(itemIdx + 1));
+  orders = orders.map(o => o.key === docKey ? Object.assign({}, o, { items: newItems }) : o);
   render();
   try{
-    const batch = db.batch();
-    toDelete.forEach(key => batch.delete(ordersRef.doc(key)));
-    toUpdate.forEach(({ key, items }) => batch.update(ordersRef.doc(key), { items }));
-    await batch.commit();
+    if(newItems.length === 0) await ordersRef.doc(docKey).delete();
+    else await ordersRef.doc(docKey).update({ items: newItems });
   }catch(e){ /* onSnapshot 会在下一次推送时自动纠正 */ }
   logStaffAction({ action: 'deleteItem', operator: operatorName, table, detail: `${name} × ${qty}` });
 }
@@ -429,70 +437,52 @@ async function performDeleteOrder(target, operatorName){
   logStaffAction({ action: 'deleteOrder', operator: operatorName, table, detail });
 }
 
-// 同一桌可能坐了好几位各自扫码点单的顾客，按昵称把订单分开显示，方便分别记录
-function groupByNickname(batch){
-  const map = new Map();
-  batch.forEach(o => {
-    const name = (o.nickname || '').trim() || '匿名顾客';
-    if(!map.has(name)) map.set(name, []);
-    map.get(name).push(o);
-  });
-  const groups = [];
-  for(const [nickname, docs] of map){
-    docs.sort((a,b) => a.createdAt - b.createdAt);
-    const partySize = docs.slice().reverse().find(d => d.partySize)?.partySize || null;
-    groups.push({ nickname, partySize, items: mergeItems(docs), keys: docs.map(d => d.key) });
-  }
-  return groups;
-}
-
-// 按“菜名+辣度+份量”合并数量；只有第一批之后才出现的菜品标记为“新加”
-function mergeItems(batch){
-  const merged = new Map();
-  batch.forEach((o, batchIndex) => {
-    o.items.forEach(it => {
-      const itemKey = it.name + '__' + it.spice + '__' + (it.size || '') + '__' + (it.cookMethod || '') + '__' + (it.soupBase || '') + '__' + (it.drink || '') + '__' + (it.forDish || '');
-      if(!merged.has(itemKey)){
-        merged.set(itemKey, { name: it.name, spice: it.spice, size: it.size || null, cookMethod: it.cookMethod || null, soupBase: it.soupBase || null, drink: it.drink || null, forDish: it.forDish || null, excludes: it.excludes || [], qty: 0, isNew: batchIndex > 0 });
-      }
-      merged.get(itemKey).qty += it.qty;
-    });
-  });
-  return Array.from(merged.values());
-}
-
 // 每次 render() 会先清空这个登记表，itemLineHTML/orderDelBtnHTML 往里塞“删除这一项需要
-// 操作哪些 order 文档”，删除按钮的 onclick 只带一个数组下标，避免把菜名（有些酒款名字
-// 带英文单引号）直接拼进 onclick 属性里，那样字符串会被提前截断
+// 操作哪个 order 文档、文档里第几项”，删除按钮的 onclick 只带一个数组下标，避免把菜名
+// （有些酒款名字带英文单引号）直接拼进 onclick 属性里，那样字符串会被提前截断
 let itemDeleteTargets = [];
 let orderDeleteTargets = [];
 
-function itemLineHTML(it, orderKeys){
+function itemLineHTML(it, docKey, itemIdx){
   const tags = [];
   if(it.spice) tags.push(`<span class="spice-tag">${it.spice}</span>`);
   if(it.size) tags.push(`<span class="spice-tag">${SIZE_LABELS_ZH[it.size] || it.size}</span>`);
   if(it.cookMethod) tags.push(`<span class="spice-tag">${COOK_METHOD_LABELS_ZH[it.cookMethod] || it.cookMethod}</span>`);
   if(it.soupBase) tags.push(`<span class="spice-tag">${SOUP_BASE_LABELS_ZH[it.soupBase] || it.soupBase}</span>`);
   if(it.drink) tags.push(`<span class="spice-tag">${DRINK_LABELS_ZH[it.drink] || it.drink}</span>`);
-  it.excludes.forEach(k => tags.push(`<span class="exclude-tag">${OPTION_LABELS_ZH[k] || k}</span>`));
+  (it.excludes || []).forEach(k => tags.push(`<span class="exclude-tag">${OPTION_LABELS_ZH[k] || k}</span>`));
   if(it.forDish) tags.push(`<span class="for-dish-tag">加菜给：${it.forDish}</span>`);
-  if(it.isNew) tags.push('<span class="new-tag">新加</span>');
   const idx = itemDeleteTargets.length;
-  itemDeleteTargets.push({
-    table, keys: orderKeys,
-    name: it.name, spice: it.spice, size: it.size, cookMethod: it.cookMethod, soupBase: it.soupBase, drink: it.drink, forDish: it.forDish, qty: it.qty,
-  });
-  return `<li class="${it.isNew?'is-new':''}">
+  itemDeleteTargets.push({ table, docKey, itemIdx, name: it.name, qty: it.qty });
+  return `<li>
       <span class="item-main"><span><span class="qty">${it.qty}×</span>${it.name}</span><span style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">${tags.join('')}</span></span>
       <button class="item-del-btn" onclick="requestDeleteItem(${idx})" aria-label="删除这道菜">✕</button>
     </li>`;
 }
 
-function customerBlockHTML(nGroup){
-  return `
-    <div class="customer-block">
-      <p class="customer-name">${nGroup.nickname}${nGroup.partySize ? ` · ${nGroup.partySize}人` : ''}</p>
-      <ul class="item-list">${nGroup.items.map(it => itemLineHTML(it, nGroup.keys)).join('')}</ul>
+function batchNameLabel(o){
+  const name = (o.nickname || '').trim() || '匿名顾客';
+  return name + (o.partySize ? ` · ${o.partySize}人` : '');
+}
+
+// 左列：还没送入厨房的批次，红框闪烁，按下单时间倒序——最新加的菜永远排在最上面
+function pendingBatchHTML(o){
+  const { label } = elapsedInfo(o.createdAt);
+  const itemsHTML = (o.items || []).map((it, i) => itemLineHTML(it, o.key, i)).join('');
+  return `<div class="batch-box batch-pending">
+      <div class="batch-head"><span class="batch-name">${batchNameLabel(o)}</span><span class="batch-time">${label}</span></div>
+      <ul class="item-list">${itemsHTML}</ul>
+    </div>`;
+}
+
+// 右列：已经送入厨房的批次，绿框不闪烁，显示"几分钟前已处理"，同样按处理时间倒序
+function processedBatchHTML(o){
+  const mins = Math.floor((Date.now() - (o.confirmedAt || o.createdAt)) / 60000);
+  const processedLabel = mins < 1 ? '刚刚已处理' : mins + ' 分钟前已处理';
+  const itemsHTML = (o.items || []).map((it, i) => itemLineHTML(it, o.key, i)).join('');
+  return `<div class="batch-box batch-processed">
+      <div class="batch-head"><span class="batch-name">${batchNameLabel(o)}</span><span class="batch-time">${processedLabel}</span></div>
+      <ul class="item-list">${itemsHTML}</ul>
     </div>`;
 }
 
@@ -510,7 +500,7 @@ function render(){
   const app = document.getElementById('app');
   if(!loaded) return;
 
-  if(!table || orders.filter(o => !o.call).length === 0){
+  if(!table || orders.filter(o => !o.call && (o.items || []).length > 0).length === 0){
     document.getElementById('elapsed-pill').textContent = '';
     document.getElementById('confirmed-badge').hidden = true;
     app.innerHTML = `<div class="empty">
@@ -520,11 +510,11 @@ function render(){
     return;
   }
 
-  const realBatch = orders.filter(o => !o.call).sort((a,b) => a.createdAt - b.createdAt);
+  const realBatch = orders.filter(o => !o.call && (o.items || []).length > 0).sort((a,b) => a.createdAt - b.createdAt);
   const { label, level } = elapsedInfo(realBatch[0].createdAt);
-  const pendingKeys = realBatch.filter(o => o.status !== 'confirmed').map(o => o.key);
-  const anyPending = pendingKeys.length > 0;
-  const nicknameGroups = groupByNickname(realBatch).filter(g => g.items.length > 0);
+  const pendingBatches = realBatch.filter(o => o.status !== 'confirmed').slice().sort((a,b) => b.createdAt - a.createdAt);
+  const processedBatches = realBatch.filter(o => o.status === 'confirmed').slice().sort((a,b) => (b.confirmedAt||b.createdAt) - (a.confirmedAt||a.createdAt));
+  const anyPending = pendingBatches.length > 0;
 
   const elapsedPill = document.getElementById('elapsed-pill');
   elapsedPill.textContent = label;
@@ -532,11 +522,20 @@ function render(){
   document.getElementById('confirmed-badge').hidden = anyPending;
 
   const actionBtn = anyPending
-    ? `<button class="confirm-btn" data-keys="${pendingKeys.join(',')}" onclick="confirmToKitchen(this.dataset.keys.split(','))">🍳 确认，送入厨房</button>`
+    ? `<button class="confirm-btn" data-keys="${pendingBatches.map(o=>o.key).join(',')}" onclick="confirmToKitchen(this.dataset.keys.split(','))">🍳 确认，送入厨房</button>`
     : `<button class="checkout-btn" data-keys="${realBatch.map(o=>o.key).join(',')}" onclick="confirmLeave(this.dataset.keys.split(','))">💳 结账</button>`;
 
   app.innerHTML = `
-    ${nicknameGroups.map(customerBlockHTML).join('')}
+    <div class="columns">
+      <section>
+        <p class="column-title">🔴 新加菜品 · 待送入厨房</p>
+        ${pendingBatches.length ? pendingBatches.map(pendingBatchHTML).join('') : '<p class="column-empty">暂无待处理菜品</p>'}
+      </section>
+      <section>
+        <p class="column-title">✅ 已处理 · 已送入厨房</p>
+        ${processedBatches.length ? processedBatches.map(processedBatchHTML).join('') : '<p class="column-empty">暂无已处理菜品</p>'}
+      </section>
+    </div>
     <div class="action-row">
       ${actionBtn}
       ${orderDelBtnHTML(realBatch)}

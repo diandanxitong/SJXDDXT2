@@ -78,10 +78,23 @@
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
   .status{color:var(--text-muted);font-size:13px;}
   .count-pill{
-    background:var(--card);border:1px solid var(--line);border-radius:20px;
+    position:relative;background:var(--card);border:1px solid var(--line);border-radius:20px;
     padding:6px 16px;font-size:13px;color:var(--text-muted);
+    font-family:inherit;cursor:pointer;
   }
+  .count-pill:hover{border-color:var(--text-muted);color:var(--text);}
   .count-pill b{color:var(--text);font-size:15px;}
+  .count-pill.active{border-color:var(--urgent);color:var(--urgent);}
+  .count-pill.active b{color:var(--urgent);}
+  .pending-bubble{
+    position:absolute;top:-8px;right:-8px;background:var(--urgent);color:#fff;
+    font-size:11px;font-weight:900;min-width:18px;height:18px;border-radius:10px;
+    display:flex;align-items:center;justify-content:center;padding:0 4px;
+    box-shadow:0 0 0 2px var(--bg);
+  }
+  @media (prefers-reduced-motion:no-preference){
+    .pending-bubble{animation:pulse 1.8s ease-in-out infinite;}
+  }
 
   .empty{
     margin-top:22vh;text-align:center;color:var(--text-muted);
@@ -99,14 +112,26 @@
   .order-card.warn{border-left-color:var(--warn);}
   .order-card.urgent{border-left-color:var(--urgent);}
 
-  /* 看板卡片默认只是个"预览方框"：最多 5 道最新菜品，没有单品/整单的删除操作，
-     只留结账和查看详细订单两个入口——全部菜品、加菜、送入厨房、整单删除都挪去
-     单独的订单详情页面（ddxq.html），而不是弹窗，方便当成独立页面分享/返回 */
-  .preview-list li{cursor:default;}
-  .preview-hint{
-    font-size:12px;color:var(--text-muted);text-align:center;
-    padding-top:4px;border-top:1px dashed var(--line);
+  /* 看板卡片不再显示具体菜品：只是个"状态方框"——新订单/加菜用红字闪烁提醒，
+     已处理用绿字静止显示，单品/整单删除、加菜、送入厨房都在"查看详细订单"打开的
+     独立页面（ddxq.html）里，不放在这里，避免桌数一多、每张卡片信息量太大导致误操作 */
+  .status-panel{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:6px;padding:22px 8px;border-radius:12px;text-align:center;
   }
+  .status-panel.state-new, .status-panel.state-add{
+    background:rgba(210,80,47,.14);border:2px solid var(--urgent);
+  }
+  .status-panel.state-done{
+    background:rgba(95,190,138,.12);border:2px solid #5FBE8A;
+  }
+  .status-big{font-family:'Archivo Black',sans-serif;font-size:21px;letter-spacing:.02em;color:var(--urgent);}
+  .status-panel.state-done .status-big{color:#5FBE8A;}
+  @media (prefers-reduced-motion:no-preference){
+    .status-panel.state-new .status-big, .status-panel.state-add .status-big{animation:status-flash 1s ease-in-out infinite;}
+  }
+  @keyframes status-flash{0%,100%{opacity:1}50%{opacity:.25}}
+  .status-sub{font-size:12px;color:var(--text-muted);}
 
   .card-body-wrap{position:relative;display:flex;flex-direction:column;}
   .card-body{display:flex;flex-direction:column;gap:12px;}
@@ -161,24 +186,12 @@
   .order-card.warn .elapsed{color:var(--warn);}
   .order-card.urgent .elapsed{color:var(--urgent);}
 
-  .item-list{list-style:none;display:flex;flex-direction:column;gap:8px;}
-  .item-list li{
-    display:flex;justify-content:space-between;align-items:center;gap:10px;
-    font-size:16px;padding:9px 12px;background:rgba(255,255,255,.04);border-radius:10px;
-  }
-  .item-main{display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex:1;min-width:0;}
-  .item-list .qty{
-    font-family:'Archivo Black',sans-serif;color:var(--warn);margin-right:8px;
-  }
-  .spice-tag{font-size:11.5px;color:var(--text-muted);border:1px solid var(--line);border-radius:20px;padding:2px 9px;}
-  .for-dish-tag{font-size:11.5px;color:var(--warn);border:1px solid rgba(232,162,61,.5);border-radius:20px;padding:2px 9px;font-weight:700;}
-
   .confirmed-badge{
     font-size:11px;font-weight:700;color:#5FBE8A;border:1px solid rgba(95,190,138,.5);
     border-radius:20px;padding:3px 10px;white-space:nowrap;
   }
 
-  /* 预览方框底部两个大按钮：结账（常用、放绿色）+ 查看详细订单（次要、灰边框） */
+  /* 状态方框底部两个大按钮：结账（常用、放绿色）+ 查看详细订单（次要、灰边框） */
   .preview-actions{display:flex;gap:8px;margin-top:2px;}
   .checkout-btn, .view-detail-btn{
     flex:1;padding:13px 8px;border-radius:10px;font-size:14px;cursor:pointer;font-weight:900;
@@ -207,7 +220,7 @@
     <button class="control-btn" id="sound-toggle" onclick="unlockAudio()">🔊 开启提示音</button>
     <button class="control-btn system-toggle-btn" id="system-toggle-btn" onclick="openSystemModal()">⛔ 关闭系统</button>
     <span class="status" id="status">加载中…</span>
-    <span class="count-pill">待处理 <b id="count">0</b> 桌</span>
+    <button class="count-pill" id="pending-filter-btn" onclick="togglePendingFilter()">待处理 <b id="count">0</b> 桌<span class="pending-bubble" id="pending-bubble" hidden>0</span></button>
   </div>
 </header>
 <div id="app"></div>
@@ -507,70 +520,60 @@ function callOverlayHTML(callKeys, isAbs){
     </div>`;
 }
 
-const PREVIEW_ITEM_LIMIT = 5;
-
-// 预览方框里只显示"最新点的 5 道菜"：跟详情页的合并逻辑一样按菜名+口味合并数量，
-// 但不分顾客昵称（预览就是要短），并记下每道菜最后一次被点/加菜是本桌第几批
-// 订单（lastBatchIndex），用来排出"最近点的在前"的顺序
-function previewItemsForTable(realBatch){
-  const merged = new Map();
-  realBatch.forEach((o, batchIndex) => {
-    (o.items || []).forEach(it => {
-      const key = it.name + '__' + it.spice + '__' + (it.size || '') + '__' + (it.cookMethod || '') + '__' + (it.soupBase || '') + '__' + (it.drink || '') + '__' + (it.forDish || '');
-      if(!merged.has(key)){
-        merged.set(key, { name: it.name, spice: it.spice, size: it.size || null, cookMethod: it.cookMethod || null, soupBase: it.soupBase || null, drink: it.drink || null, forDish: it.forDish || null, qty: 0, lastBatchIndex: 0 });
-      }
-      const entry = merged.get(key);
-      entry.qty += it.qty;
-      entry.lastBatchIndex = batchIndex;
-    });
-  });
-  const all = Array.from(merged.values()).sort((a,b) => b.lastBatchIndex - a.lastBatchIndex);
-  return { latest: all.slice(0, PREVIEW_ITEM_LIMIT), totalDistinct: all.length };
+// 一桌的状态：new = 头一批订单还没送入厨房（红字"新订单"闪烁）；
+// add = 已经有送入厨房的批次，又来了新的加菜还没送入厨房（红字"加菜"闪烁）；
+// done = 所有批次都已送入厨房（绿字"已处理"静止）；empty = 这桌没有真实菜品（可能只有呼叫）
+function tableState(realBatch){
+  const pending = realBatch.some(o => o.status !== 'confirmed');
+  const confirmed = realBatch.some(o => o.status === 'confirmed');
+  if(pending) return confirmed ? 'add' : 'new';
+  return confirmed ? 'done' : 'empty';
 }
 
-// 预览行：纯展示，没有删除按钮
-function previewLineHTML(it){
-  const tags = [];
-  if(it.spice) tags.push(`<span class="spice-tag">${it.spice}</span>`);
-  if(it.size) tags.push(`<span class="spice-tag">${SIZE_LABELS_ZH[it.size] || it.size}</span>`);
-  if(it.cookMethod) tags.push(`<span class="spice-tag">${COOK_METHOD_LABELS_ZH[it.cookMethod] || it.cookMethod}</span>`);
-  if(it.soupBase) tags.push(`<span class="spice-tag">${SOUP_BASE_LABELS_ZH[it.soupBase] || it.soupBase}</span>`);
-  if(it.drink) tags.push(`<span class="spice-tag">${DRINK_LABELS_ZH[it.drink] || it.drink}</span>`);
-  if(it.forDish) tags.push(`<span class="for-dish-tag">加菜给：${it.forDish}</span>`);
-  return `<li>
-      <span class="item-main"><span><span class="qty">${it.qty}×</span>${it.name}</span><span style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">${tags.join('')}</span></span>
-    </li>`;
+// 卡片中间的状态方框：不再显示具体菜品，只显示这一桌现在处于哪个状态
+function statusPanelHTML(state){
+  if(state === 'new'){
+    return `<div class="status-panel state-new">
+        <span class="status-big">🔴 新订单</span>
+        <span class="status-sub">等待送入厨房</span>
+      </div>`;
+  }
+  if(state === 'add'){
+    return `<div class="status-panel state-add">
+        <span class="status-big">🔴 加菜</span>
+        <span class="status-sub">有新加菜品待处理</span>
+      </div>`;
+  }
+  return `<div class="status-panel state-done">
+      <span class="status-big">✅ 已处理</span>
+      <span class="status-sub">已全部送入厨房</span>
+    </div>`;
 }
 
-// 看板格子：只是个预览方框——最新 5 道菜 + 结账 / 查看详细订单两个按钮。
-// 加菜、单品删除、确认送入厨房、整单删除都在"查看详细订单"打开的独立页面（ddxq.html）里，
+// 看板格子：只是个状态方框——新订单/加菜（红字闪烁）或已处理（绿字静止）+ 结账 / 查看详细订单两个按钮。
+// 具体菜品、单品删除、加菜、确认送入厨房、整单删除都在"查看详细订单"打开的独立页面（ddxq.html）里，
 // 不放在这里，避免桌数一多、每张卡片信息量太大导致误操作
 function cardHTML(group){
   const { label, level } = elapsedInfo(group.createdAt);
-  const realBatch = group.batch.filter(o => !o.call);
+  const realBatch = group.batch.filter(o => !o.call && (o.items || []).length > 0);
   const callKeys = group.batch.filter(o => o.call).map(o => o.key);
   const hasCall = callKeys.length > 0;
-  const preview = previewItemsForTable(realBatch);
-  const hasRealContent = preview.totalDistinct > 0;
-  const pendingKeys = realBatch.filter(o => o.status !== 'confirmed').map(o => o.key);
-  const anyPending = pendingKeys.length > 0;
-  const moreCount = preview.totalDistinct - preview.latest.length;
+  const state = tableState(realBatch);
+  const hasRealContent = state !== 'empty';
   const detailHref = `ddxq.html?table=${encodeURIComponent(group.table)}`;
   return `
     <div class="order-card ${level}">
       <div class="card-top">
         <span class="table-num">桌 ${group.table}</span>
         <span style="display:flex;gap:8px;align-items:center;">
-          ${hasRealContent && !anyPending ? '<span class="confirmed-badge">已确认</span>' : ''}
+          ${state === 'done' ? '<span class="confirmed-badge">已确认</span>' : ''}
           <span class="elapsed">${label}</span>
         </span>
       </div>
       ${hasRealContent ? `
       <div class="card-body-wrap">
         <div class="card-body${hasCall ? ' blurred' : ''}">
-          <ul class="item-list preview-list">${preview.latest.map(previewLineHTML).join('')}</ul>
-          ${moreCount > 0 ? `<p class="preview-hint">还有 ${moreCount} 项</p>` : ''}
+          ${statusPanelHTML(state)}
           <div class="preview-actions">
             <button class="checkout-btn" data-keys="${realBatch.map(o=>o.key).join(',')}" onclick="confirmLeave(this.dataset.keys.split(','), '${group.table}')">💳 结账</button>
             <a class="view-detail-btn" href="${detailHref}">📋 查看详细订单</a>
@@ -581,16 +584,36 @@ function cardHTML(group){
     </div>`;
 }
 
+let pendingFilterOn = false;   // 点一次"待处理"只显示还有菜没送入厨房的桌，再点一次恢复显示全部
+
+function togglePendingFilter(){
+  pendingFilterOn = !pendingFilterOn;
+  render();
+}
+
 function render(){
   const groups = groupByTable(orders);
-  document.getElementById('count').textContent = groups.length;
+  const pendingGroups = groups.filter(g => {
+    const state = tableState(g.batch.filter(o => !o.call && (o.items || []).length > 0));
+    return state === 'new' || state === 'add';
+  });
+
+  document.getElementById('count').textContent = pendingGroups.length;
+  const bubble = document.getElementById('pending-bubble');
+  bubble.hidden = pendingGroups.length === 0;
+  bubble.textContent = pendingGroups.length;
+  document.getElementById('pending-filter-btn').classList.toggle('active', pendingFilterOn);
+
+  const shown = pendingFilterOn ? pendingGroups : groups;
   const app = document.getElementById('app');
   if(!loaded){ app.innerHTML = ''; return; }
-  if(groups.length === 0){
-    app.innerHTML = `<div class="empty"><p>暂无订单，等待顾客点单中…</p></div>`;
+  if(shown.length === 0){
+    app.innerHTML = pendingFilterOn
+      ? `<div class="empty"><p>暂无待处理的桌号</p><p style="margin-top:14px;"><button class="control-btn" onclick="togglePendingFilter()">← 查看全部</button></p></div>`
+      : `<div class="empty"><p>暂无订单，等待顾客点单中…</p></div>`;
     return;
   }
-  app.innerHTML = `<div class="grid">${groups.map(cardHTML).join('')}</div>`;
+  app.innerHTML = `<div class="grid">${shown.map(cardHTML).join('')}</div>`;
 }
 
 render();

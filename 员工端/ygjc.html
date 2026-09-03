@@ -403,8 +403,9 @@ function closeModal(){
   renderModal();
 }
 
-// 加菜：生成一笔新的待处理订单，昵称固定标成"员工代加"，方便在看板/详情页里
-// 跟顾客自己扫码点的区分开；下单后直接跳回订单详情页，还是要走一遍"确认送入厨房"
+// 加菜：生成一笔新订单，昵称固定标成"员工代加"，方便在看板/详情页里跟顾客自己
+// 扫码点的区分开。员工代加是员工当面下的单，不需要再走一遍"确认送入厨房"，
+// 直接标记成已处理（status:'confirmed'），落进订单详情页右边的绿框
 async function confirmAdd(){
   if(!table || selected.size === 0) return;
   const items = [];
@@ -416,9 +417,10 @@ async function confirmAdd(){
     items.push(entry);
   });
   try{
+    const now = Date.now();
     await ordersRef.add({
-      table: String(table), items, createdAt: Date.now(),
-      nickname: '员工代加', partySize: 1, status: 'pending',
+      table: String(table), items, createdAt: now,
+      nickname: '员工代加', partySize: 1, status: 'confirmed', confirmedAt: now,
     });
   }catch(e){
     alert('加菜失败，请重试');

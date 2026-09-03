@@ -52,6 +52,12 @@
   }
   .control-btn:hover{color:var(--text);border-color:var(--text-muted);}
   .control-btn:disabled{color:var(--ok);border-color:var(--ok);cursor:default;opacity:.9;}
+  .sound-toggle-alert{
+    background:rgba(245,158,11,.16);border-color:var(--warn);color:var(--warn-bright);
+  }
+  @media (prefers-reduced-motion:no-preference){
+    .sound-toggle-alert{animation:status-flash 1.2s ease-in-out infinite;}
+  }
   .sold-out-entry-btn{
     background:rgba(245,158,11,.16);border-color:var(--warn);color:var(--warn);font-weight:900;
   }
@@ -362,13 +368,47 @@ function unlockAudio(){
     a.play().then(()=>{ a.pause(); a.currentTime = 0; a.muted = false; }).catch(()=>{ a.muted = false; });
   });
   const btn = document.getElementById('sound-toggle');
-  if(btn){ btn.textContent = '🔔 提示音已开启'; btn.disabled = true; }
+  if(btn){ btn.textContent = '🔔 提示音已开启'; btn.disabled = true; btn.classList.remove('sound-toggle-alert'); }
 }
 
 // 浏览器规定必须先有一次用户交互才允许播放音频，这一条挡不掉——但员工不用非得
 // 记得去点那颗"开启提示音"按钮：随手点一下页面上任何地方（点结账、点查看详情、
-// 随便点哪儿）都会顺带把音频解锁，按钮只是留着给个"提示音已开启"的视觉反馈
-['pointerdown', 'keydown'].forEach(evt => document.addEventListener(evt, unlockAudio, { once: true, passive: true }));
+// 随便点哪儿）都会顺带把音频解锁。iPad Safari 熄屏一次就会把已经解锁的播放权限
+// 收回（Windows/桌面浏览器不会），而且收回时不报错，只有真的想放声音时 play()
+// 才会被拒绝——所以这个监听要能重新挂上，不能只挂一次
+let globalUnlockArmed = false;
+function armGlobalAudioUnlock(){
+  if(globalUnlockArmed) return;
+  globalUnlockArmed = true;
+  const handler = () => { globalUnlockArmed = false; unlockAudio(); };
+  ['pointerdown', 'keydown'].forEach(evt => document.addEventListener(evt, handler, { once: true, passive: true }));
+}
+armGlobalAudioUnlock();
+
+// 发现播放权限被收回了：把按钮打回"点此重新开启"的可点状态并高亮，让员工一眼
+// 看到、随手一点就能恢复，而不是背地里一直放不出声音自己都不知道
+function markAudioLocked(){
+  if(!audioUnlocked) return;
+  audioUnlocked = false;
+  const btn = document.getElementById('sound-toggle');
+  if(btn){
+    btn.textContent = '🔊 提示音已断开，点此重新开启';
+    btn.disabled = false;
+    btn.classList.add('sound-toggle-alert');
+  }
+  armGlobalAudioUnlock();
+}
+
+// 屏幕重新亮起时主动试播一下（静音），提前发现权限是否已经被收回，
+// 不用等到真的漏放一次提示音才发现
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState !== 'visible' || !audioUnlocked) return;
+  const probe = callPool[0];
+  if(!probe) return;
+  probe.muted = true;
+  probe.play().then(()=>{ probe.pause(); probe.currentTime = 0; probe.muted = false; })
+    .catch(()=>{ probe.muted = false; markAudioLocked(); });
+});
 
 function playSound(kind){
   const pool = kind === 'call' ? callPool : orderPool;
@@ -377,8 +417,8 @@ function playSound(kind){
   poolCursor[kind]++;
   try{
     a.currentTime = 0;
-    a.play().catch(()=>{});
-  }catch(e){}
+    a.play().catch(() => markAudioLocked());
+  }catch(e){ markAudioLocked(); }
 }
 
 const SIZE_LABELS_ZH = { half:'半份', whole:'整份', large:'大份', small:'小份', glass:'杯', bottle:'瓶' };

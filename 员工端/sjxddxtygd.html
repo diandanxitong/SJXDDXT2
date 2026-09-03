@@ -365,6 +365,11 @@ function unlockAudio(){
   if(btn){ btn.textContent = '🔔 提示音已开启'; btn.disabled = true; }
 }
 
+// 浏览器规定必须先有一次用户交互才允许播放音频，这一条挡不掉——但员工不用非得
+// 记得去点那颗"开启提示音"按钮：随手点一下页面上任何地方（点结账、点查看详情、
+// 随便点哪儿）都会顺带把音频解锁，按钮只是留着给个"提示音已开启"的视觉反馈
+['pointerdown', 'keydown'].forEach(evt => document.addEventListener(evt, unlockAudio, { once: true, passive: true }));
+
 function playSound(kind){
   const pool = kind === 'call' ? callPool : orderPool;
   if(pool.length === 0) return;

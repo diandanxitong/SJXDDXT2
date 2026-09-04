@@ -312,6 +312,7 @@
     box-shadow:0 2px 6px rgba(150,55,29,.35);
   }
   .dish-body .tag{font-size:12.5px;color:var(--text-muted);margin-top:3px;line-height:1.4;overflow-wrap:break-word;}
+  .dish-body .tag.pot-note{color:var(--gold-ink);font-weight:700;}
   .dish-card.sold-out .dish-photo-wrap::after{
     content:"";position:absolute;inset:0;z-index:2;
     background:rgba(245,241,236,.6);
@@ -1099,6 +1100,7 @@ const I18N = {
     soldOutMsg:"Sorry, temporarily sold out~",
     perPieceSuffix:" / piece",
     soupBaseNote:"Two-Flavour Pot: choose Extra/Medium/Mild spicy",
+    soupPotNote:"Not a dish — comes with a giant pot for your food to swim in!",
     missingSoupBaseMsg:"Don't forget to pick a soup base~",
     addOnTagPrefix:"Add-on for: ",
   },
@@ -1128,6 +1130,7 @@ const I18N = {
     soldOutMsg:"Siamo spiacenti, momentaneamente esaurito~",
     perPieceSuffix:" / pezzo",
     soupBaseNote:"Pentola a Due Sapori: piccante extra/medio/leggero a scelta",
+    soupPotNote:"Non è un piatto — arriva con una pentola gigante dove il tuo cibo andrà a nuotare!",
     missingSoupBaseMsg:"Non dimenticare di scegliere una base zuppa~",
     addOnTagPrefix:"Extra per: ",
   },
@@ -1157,6 +1160,7 @@ const I18N = {
     soldOutMsg:"Désolé, temporairement épuisé~",
     perPieceSuffix:" / pièce",
     soupBaseNote:"Marmite Deux Saveurs : extra/moyen/léger épicé au choix",
+    soupPotNote:"Pas un plat — livré avec une marmite géante où votre nourriture ira nager !",
     missingSoupBaseMsg:"N'oubliez pas de choisir une base de bouillon~",
     addOnTagPrefix:"Extra pour : ",
   },
@@ -1186,6 +1190,7 @@ const I18N = {
     soldOutMsg:"Lo sentimos, agotado temporalmente~",
     perPieceSuffix:" / pieza",
     soupBaseNote:"Olla de Dos Sabores: extra/medio/suave picante a elegir",
+    soupPotNote:"No es un plato — viene con una olla gigante donde tu comida irá a nadar!",
     missingSoupBaseMsg:"No olvides elegir una base de sopa~",
     addOnTagPrefix:"Extra para: ",
   },
@@ -2496,6 +2501,14 @@ function dishExtendHTML(d){
   return rows.trim() ? `<div class="dish-extend"><div class="dish-extend-note">${rows}</div></div>` : '';
 }
 
+// A customer once ordered an extra soup-base pot near the end of a meal,
+// thinking it was a dish/soup to eat rather than the shared broth the table
+// already had — the "Soup Base" category label alone wasn't enough to stop
+// that. This note only fires for actual pot dishes (not the dipping sauce)
+// and only for non-Chinese languages — Chinese speakers already know what
+// 锅底 is, this is purely for guests reading a translated menu.
+function isSoupPot(d){ return d.category === 'soupBase' && d.sub !== 'dipSauce'; }
+
 function dishBodyHTML(d){
   const it = getItem(d.id);
   const name = dishDisplayName(d, it);
@@ -2512,6 +2525,7 @@ function dishBodyHTML(d){
             <span class="dish-price">${dishPriceLabel(d, it)}</span>
           </div>
           ${tag && !hasDeferredSpiceTag ? `<p class="tag">${tag}</p>` : ''}
+          ${isSoupPot(d) && state.lang !== 'zh' && state.lang !== 'zhHant' ? `<p class="tag pot-note">${t('soupPotNote')}</p>` : ''}
           ${allergenChipsHTML(d.allergens)}
           ${d.sizes ? sizeRowHTML(d, it) : ''}
           <div class="dish-actions">
@@ -2534,6 +2548,7 @@ function soldOutBodyHTML(d){
             <h3 class="dish-name">${name}</h3>
           </div>
           ${tag ? `<p class="tag">${tag}</p>` : ''}
+          ${isSoupPot(d) && state.lang !== 'zh' && state.lang !== 'zhHant' ? `<p class="tag pot-note">${t('soupPotNote')}</p>` : ''}
           <p class="sold-out-msg">${t('soldOutMsg')}</p>`;
 }
 

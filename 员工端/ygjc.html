@@ -78,17 +78,31 @@
     background:var(--card);border:1px solid var(--line);border-radius:10px;
   }
   .dish-row.checked{border-color:var(--ok);background:rgba(95,190,138,.08);}
-  .dish-row label{
-    display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;
+  .dish-row-main{
+    display:flex;flex-direction:column;gap:8px;padding:12px 14px;
   }
-  .dish-row input[type="checkbox"]{width:18px;height:18px;flex-shrink:0;accent-color:var(--ok);cursor:pointer;}
-  .dish-row-name{font-size:14px;font-weight:700;flex:1;line-height:1.35;}
-  .dish-row-price{font-size:12.5px;color:var(--text-muted);font-weight:700;white-space:nowrap;margin-left:6px;}
+  .dish-row-top{display:flex;align-items:flex-start;gap:8px;}
+  .dish-row-bottom{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .qty-stepper{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+  .qty-btn{
+    width:28px;height:28px;border-radius:50%;background:none;
+    font-size:17px;font-weight:900;cursor:pointer;font-family:inherit;line-height:1;
+    display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;
+    border:1.5px solid;
+  }
+  .qty-btn.minus{border-color:var(--urgent);color:var(--urgent);}
+  .qty-btn.minus:hover{background:rgba(210,80,47,.18);}
+  .qty-btn.plus{border-color:var(--ok);color:var(--ok);}
+  .qty-btn.plus:hover{background:rgba(95,190,138,.18);}
+  .qty-num{min-width:16px;text-align:center;font-size:14px;font-weight:900;color:var(--text);}
+  .dish-row-name{font-size:14px;font-weight:700;flex:1;line-height:1.35;min-width:0;}
+  .dish-row-price{font-size:12.5px;color:var(--text-muted);font-weight:700;white-space:nowrap;}
   .sold-out-badge{
     font-size:11px;font-weight:700;color:var(--urgent);border:1px solid rgba(210,80,47,.5);
     border-radius:20px;padding:2px 9px;white-space:nowrap;
   }
-  .size-picker{display:flex;gap:6px;flex-wrap:wrap;padding:0 14px 12px;}
+  .size-btn-group{display:flex;gap:6px;flex-wrap:wrap;}
+  .dish-row-qty-row{display:flex;justify-content:flex-end;}
   .size-opt-btn{
     font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;
     padding:6px 12px;border-radius:20px;background:none;border:1px solid var(--line);color:var(--text-muted);
@@ -385,7 +399,8 @@ const DISH_BY_ID = {};
 DISH_LIST.forEach(d => { DISH_BY_ID[d.id] = d; });
 
 let soldOutIds = new Set();
-let selected = new Map();   // id -> { size: string|null }
+let selected = new Map();   // id -> { size: string|null, qty: number }
+let dishSizeChoice = new Map();   // id -> size key，就算数量还是 0 也记住上次选的大小份/杯瓶
 let modalOpen = false;
 let loaded = false;
 let searchQuery = '';
@@ -416,20 +431,36 @@ menuStatusRef.onSnapshot(snap => {
   render();
 }, err => { loaded = true; render(); });
 
-function toggleSelect(id){
-  if(selected.has(id)){
-    selected.delete(id);
+function incrementQty(id){
+  const d = DISH_BY_ID[id];
+  if(!d) return;
+  const sel = selected.get(id);
+  if(sel){
+    sel.qty += 1;
   }else{
-    const d = DISH_BY_ID[id];
-    selected.set(id, { size: d && d.sizes ? d.sizes[0].key : null });
+    selected.set(id, { size: d.sizes ? currentSizeKey(d) : null, qty: 1 });
   }
   render();
 }
 
-function setDishSize(id, key){
+function decrementQty(id){
   const sel = selected.get(id);
   if(!sel) return;
-  sel.size = key;
+  sel.qty -= 1;
+  if(sel.qty <= 0) selected.delete(id);
+  render();
+}
+
+function currentSizeKey(d){
+  const sel = selected.get(d.id);
+  if(sel && sel.size) return sel.size;
+  return dishSizeChoice.get(d.id) || d.sizes[0].key;
+}
+
+function setDishSize(id, key){
+  dishSizeChoice.set(id, key);
+  const sel = selected.get(id);
+  if(sel) sel.size = key;
   renderList();
 }
 
@@ -442,8 +473,14 @@ function dishPrice(d, sel){
 }
 
 function priceLabelHTML(d){
-  if(d.sizes) return d.sizes.map(s => `${t('sizeLabels')[s.key] || s.key} €${s.price.toFixed(2)}`).join(' / ');
   return `€${d.price.toFixed(2)}${d.unit === 'person' ? t('perPersonSuffix') : ''}`;
+}
+
+function sizeButtonsHTML(d){
+  const activeKey = currentSizeKey(d);
+  return `<div class="size-btn-group">${d.sizes.map(s => `
+    <button type="button" class="size-opt-btn ${activeKey === s.key ? 'active' : ''}" onclick="setDishSize('${d.id}','${s.key}')">${t('sizeLabels')[s.key] || s.key} €${s.price.toFixed(2)}</button>
+  `).join('')}</div>`;
 }
 
 function openAddModal(){
@@ -466,7 +503,7 @@ async function confirmAdd(){
   selected.forEach((sel, id) => {
     const d = DISH_BY_ID[id];
     if(!d) return;
-    const entry = { name: d.name, qty: 1, price: dishPrice(d, sel) };
+    const entry = { name: d.name, qty: sel.qty, price: dishPrice(d, sel) };
     if(d.sizes) entry.size = (sel && sel.size) || d.sizes[0].key;
     items.push(entry);
   });
@@ -485,21 +522,31 @@ async function confirmAdd(){
 
 function dishRowHTML(d){
   const sel = selected.get(d.id);
-  const checked = !!sel;
+  const qty = sel ? sel.qty : 0;
+  const checked = qty > 0;
   const soldOut = soldOutIds.has(d.id);
-  const sizePicker = (checked && d.sizes) ? `
-    <div class="size-picker">${d.sizes.map(s => `
-      <button type="button" class="size-opt-btn ${sel.size === s.key ? 'active' : ''}" onclick="setDishSize('${d.id}','${s.key}')">${t('sizeLabels')[s.key] || s.key} €${s.price.toFixed(2)}</button>
-    `).join('')}</div>` : '';
+  const qtyStepper = `
+    <div class="qty-stepper">
+      <button type="button" class="qty-btn minus" onclick="decrementQty('${d.id}')">−</button>
+      <span class="qty-num">${qty}</span>
+      <button type="button" class="qty-btn plus" onclick="incrementQty('${d.id}')">+</button>
+    </div>`;
+  const priceAndQty = d.sizes ? `
+    ${sizeButtonsHTML(d)}
+    <div class="dish-row-qty-row">${qtyStepper}</div>` : `
+    <div class="dish-row-bottom">
+      <span class="dish-row-price">${priceLabelHTML(d)}</span>
+      ${qtyStepper}
+    </div>`;
   return `
     <li class="dish-row ${checked ? 'checked' : ''}">
-      <label>
-        <input type="checkbox" ${checked ? 'checked' : ''} onchange="toggleSelect('${d.id}')">
-        <span class="dish-row-name">${staffDishName(d.id, d.name)}</span>
-        <span class="dish-row-price">${priceLabelHTML(d)}</span>
-        ${soldOut ? `<span class="sold-out-badge">${t('soldOutBadge')}</span>` : ''}
-      </label>
-      ${sizePicker}
+      <div class="dish-row-main">
+        <div class="dish-row-top">
+          <span class="dish-row-name">${staffDishName(d.id, d.name)}</span>
+          ${soldOut ? `<span class="sold-out-badge">${t('soldOutBadge')}</span>` : ''}
+        </div>
+        ${priceAndQty}
+      </div>
     </li>`;
 }
 
@@ -509,7 +556,7 @@ function selectedRowsHTML(){
     if(!d) return '';
     const price = dishPrice(d, sel);
     const sizeLabel = d.sizes ? `（${t('sizeLabels')[sel.size] || sel.size}）` : '';
-    return `<li><span>${staffDishName(d.id, d.name)}${sizeLabel}</span><span>€${price.toFixed(2)}</span></li>`;
+    return `<li><span>${staffDishName(d.id, d.name)}${sizeLabel} × ${sel.qty}</span><span>€${(price * sel.qty).toFixed(2)}</span></li>`;
   }).join('');
 }
 

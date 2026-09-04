@@ -130,6 +130,9 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
 db.settings({ experimentalAutoDetectLongPolling: true });
 const logsRef = db.collection('staffActionLogs');
 
@@ -220,9 +223,9 @@ function logRowHTML(log){
     <li class="log-row">
       <span class="log-time">${formatDateTime(log.createdAt)}</span>
       <span class="action-badge ${log.action}">${ACTION_LABELS[log.action] || log.action}</span>
-      <span class="log-table">桌 ${log.table}</span>
-      <span class="log-operator">操作人：<b>${log.operator}</b></span>
-      <span class="log-detail">${log.detail}</span>
+      <span class="log-table">桌 ${escapeHtml(log.table)}</span>
+      <span class="log-operator">操作人：<b>${escapeHtml(log.operator)}</b></span>
+      <span class="log-detail">${escapeHtml(log.detail)}</span>
     </li>`;
 }
 

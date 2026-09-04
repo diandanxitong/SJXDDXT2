@@ -135,15 +135,16 @@
 </head>
 <body>
 <nav class="top-nav">
-  <a class="control-btn" href="sjxddxtygd.html">← 接单看板</a>
+  <a class="control-btn" href="sjxddxtygd.html" id="back-to-board-nav">← 接单看板</a>
+  <button class="control-btn" id="lang-toggle-btn" onclick="toggleStaffLang()">EN</button>
 </nav>
 <header>
   <div class="title-block">
-    <h1>沽清菜品</h1>
-    <span class="status-pill">已沽清 <b id="soldOutCount">0</b> 项</span>
+    <h1 id="page-title">沽清菜品</h1>
+    <span class="status-pill"><span id="sold-out-count-label">已沽清</span> <b id="soldOutCount">0</b> <span id="sold-out-count-suffix">项</span></span>
   </div>
   <div class="header-actions">
-    <span class="sel-count">已选 <b id="selCount">0</b> 项</span>
+    <span class="sel-count"><span id="sel-count-label">已选</span> <b id="selCount">0</b> <span id="sel-count-suffix">项</span></span>
     <button class="action-btn sold-out-btn" id="soldOutBtn" onclick="openSoldOutModal()" disabled>暂停售卖</button>
     <button class="action-btn restore-btn" id="restoreBtn" onclick="openRestoreModal()" disabled>恢复售卖</button>
   </div>
@@ -160,6 +161,7 @@
 
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-compat.js"></script>
+<script src="staff-i18n.js"></script>
 <script>
 const firebaseConfig = {
   apiKey: 'AIzaSyBaFx1ZYKzEKfQLKbnD9YE_X_EJnFXrxOE',
@@ -173,6 +175,60 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 db.settings({ experimentalAutoDetectLongPolling: true });
 const menuStatusRef = db.collection('menuStatus').doc('soldOut');
+
+// 员工端英文版：语言状态跟接单看板共用同一个 localStorage 开关（staff-i18n.js）
+const UI = {
+  zh: {
+    pageTitle: '沽清菜品', backToBoard: '← 接单看板',
+    soldOutCountLabel: '已沽清', soldOutCountSuffix: '项',
+    selCountLabel: '已选', selCountSuffix: '项',
+    pauseSaleBtn: '暂停售卖', restoreSaleBtn: '恢复售卖',
+    searchPlaceholder: '搜索菜品或酒水名称…',
+    showSoldOutOnly: '显示已沽清菜品', showAll: '展示所有菜品',
+    noSoldOutYet: '目前没有已沽清的菜品', noMatch: '没有找到匹配的菜品',
+    soldOutBadge: '已沽清',
+    soldOutWarning: '注意：确认沽清后此菜品将不可点单，请务必与后厨确认！',
+    restoreWarning: '注意：确认恢复售卖后此菜品将立即恢复可点单，请确认无误！',
+    cancel: '取消', confirmSoldOutBtn: '我已确认无误', confirmRestoreBtn: '我已确认无误',
+    langToggleLabel: 'EN',
+  },
+  en: {
+    pageTitle: 'Mark Sold Out', backToBoard: '← Order Board',
+    soldOutCountLabel: 'Sold Out:', soldOutCountSuffix: 'items',
+    selCountLabel: 'Selected:', selCountSuffix: 'items',
+    pauseSaleBtn: 'Mark Sold Out', restoreSaleBtn: 'Restore Sale',
+    searchPlaceholder: 'Search dish or drink name…',
+    showSoldOutOnly: 'Show Sold Out Only', showAll: 'Show All Dishes',
+    noSoldOutYet: 'No sold-out dishes right now', noMatch: 'No matching dishes found',
+    soldOutBadge: 'Sold Out',
+    soldOutWarning: 'Note: once confirmed, this dish can no longer be ordered — please confirm with the kitchen first!',
+    restoreWarning: 'Note: once confirmed, this dish becomes orderable again immediately — please double check!',
+    cancel: 'Cancel', confirmSoldOutBtn: 'Confirmed', confirmRestoreBtn: 'Confirmed',
+    langToggleLabel: '中',
+  },
+};
+function t(key){ return UI[getStaffLang()][key]; }
+
+function toggleStaffLang(){
+  setStaffLang(getStaffLang() === 'en' ? 'zh' : 'en');
+  applyStaticI18n();
+  render();
+}
+
+function applyStaticI18n(){
+  document.title = t('pageTitle');
+  document.getElementById('back-to-board-nav').textContent = t('backToBoard');
+  document.getElementById('lang-toggle-btn').textContent = t('langToggleLabel');
+  document.getElementById('page-title').textContent = t('pageTitle');
+  document.getElementById('sold-out-count-label').textContent = t('soldOutCountLabel');
+  document.getElementById('sold-out-count-suffix').textContent = t('soldOutCountSuffix');
+  document.getElementById('sel-count-label').textContent = t('selCountLabel');
+  document.getElementById('sel-count-suffix').textContent = t('selCountSuffix');
+  document.getElementById('soldOutBtn').textContent = t('pauseSaleBtn');
+  document.getElementById('restoreBtn').textContent = t('restoreSaleBtn');
+  document.getElementById('searchInput').placeholder = t('searchPlaceholder');
+  document.getElementById('viewToggleBtn').textContent = showSoldOutOnly ? t('showAll') : t('showSoldOutOnly');
+}
 
 // 菜品清单：id / 分类 / 中文名，跟顾客端 customer.html 里的 DISH_DATA 保持一致
 const DISH_LIST = [
@@ -349,7 +405,7 @@ let showSoldOutOnly = false;
 function toggleSoldOutOnlyView(){
   showSoldOutOnly = !showSoldOutOnly;
   const btn = document.getElementById('viewToggleBtn');
-  btn.textContent = showSoldOutOnly ? '展示所有菜品' : '显示已沽清菜品';
+  btn.textContent = showSoldOutOnly ? t('showAll') : t('showSoldOutOnly');
   btn.classList.toggle('active', showSoldOutOnly);
   renderList();
 }
@@ -371,7 +427,7 @@ function clearSearch(){
 function matchesFilters(d){
   if(showSoldOutOnly && !soldOutIds.has(d.id)) return false;
   if(!searchQuery.trim()) return true;
-  return d.name.toLowerCase().includes(searchQuery.trim().toLowerCase());
+  return staffDishName(d.id, d.name).toLowerCase().includes(searchQuery.trim().toLowerCase());
 }
 
 menuStatusRef.onSnapshot(snap => {
@@ -430,14 +486,14 @@ function dishRowHTML(d){
     <li class="dish-row ${checked ? 'checked' : ''}">
       <label>
         <input type="checkbox" ${checked ? 'checked' : ''} onchange="toggleSelect('${d.id}')">
-        <span class="dish-row-name">${d.name}</span>
-        ${soldOut ? '<span class="sold-out-badge">已沽清</span>' : ''}
+        <span class="dish-row-name">${staffDishName(d.id, d.name)}</span>
+        ${soldOut ? `<span class="sold-out-badge">${t('soldOutBadge')}</span>` : ''}
       </label>
     </li>`;
 }
 
 function selectedNamesHTML(){
-  return DISH_LIST.filter(d => selected.has(d.id)).map(d => `<li>${d.name}</li>`).join('');
+  return DISH_LIST.filter(d => selected.has(d.id)).map(d => `<li>${staffDishName(d.id, d.name)}</li>`).join('');
 }
 
 function renderModal(){
@@ -448,10 +504,10 @@ function renderModal(){
       <div class="modal-overlay">
         <div class="modal-box">
           <ul class="modal-dish-list">${selectedNamesHTML()}</ul>
-          <p class="modal-warning">注意：确认沽清后此菜品将不可点单，请务必与后厨确认！</p>
+          <p class="modal-warning">${t('soldOutWarning')}</p>
           <div class="modal-actions">
-            <button class="modal-cancel-btn" onclick="closeModal()">取消</button>
-            <button class="modal-confirm-btn urgent" onclick="confirmSoldOut()">我已确认无误</button>
+            <button class="modal-cancel-btn" onclick="closeModal()">${t('cancel')}</button>
+            <button class="modal-confirm-btn urgent" onclick="confirmSoldOut()">${t('confirmSoldOutBtn')}</button>
           </div>
         </div>
       </div>`;
@@ -460,10 +516,10 @@ function renderModal(){
       <div class="modal-overlay">
         <div class="modal-box">
           <ul class="modal-dish-list">${selectedNamesHTML()}</ul>
-          <p class="modal-warning">注意：确认恢复售卖后此菜品将立即恢复可点单，请确认无误！</p>
+          <p class="modal-warning">${t('restoreWarning')}</p>
           <div class="modal-actions">
-            <button class="modal-cancel-btn" onclick="closeModal()">取消</button>
-            <button class="modal-confirm-btn ok" onclick="confirmRestore()">我已确认无误</button>
+            <button class="modal-cancel-btn" onclick="closeModal()">${t('cancel')}</button>
+            <button class="modal-confirm-btn ok" onclick="confirmRestore()">${t('confirmRestoreBtn')}</button>
           </div>
         </div>
       </div>`;
@@ -479,9 +535,9 @@ function renderList(){
   const sections = CATEGORY_ORDER.map(cat => {
     const items = DISH_LIST.filter(d => d.category === cat && matchesFilters(d));
     if(items.length === 0) return '';
-    return `<section class="cat-section"><h2>${CATEGORY_LABELS[cat]}</h2><ul class="dish-list">${items.map(dishRowHTML).join('')}</ul></section>`;
+    return `<section class="cat-section"><h2>${staffCategoryLabel(cat, CATEGORY_LABELS[cat])}</h2><ul class="dish-list">${items.map(dishRowHTML).join('')}</ul></section>`;
   }).join('');
-  app.innerHTML = sections || `<p class="no-results">${showSoldOutOnly ? '目前没有已沽清的菜品' : '没有找到匹配的菜品'}</p>`;
+  app.innerHTML = sections || `<p class="no-results">${showSoldOutOnly ? t('noSoldOutYet') : t('noMatch')}</p>`;
 }
 
 function render(){
@@ -494,6 +550,7 @@ function render(){
   renderModal();
 }
 
+applyStaticI18n();
 render();
 </script>
 </body>

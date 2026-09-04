@@ -152,8 +152,11 @@
 </head>
 <body>
 <nav class="top-nav">
-  <a class="control-btn" href="sjxddxtygd.html">← 接单看板</a>
-  <a class="control-btn add-dish-btn" id="add-dish-link" href="#">+ 加菜</a>
+  <a class="control-btn" href="sjxddxtygd.html" id="back-to-board-nav">← 接单看板</a>
+  <span style="display:flex;gap:10px;align-items:center;">
+    <button class="control-btn" id="lang-toggle-btn" onclick="toggleStaffLang()">EN</button>
+    <a class="control-btn add-dish-btn" id="add-dish-link" href="#">+ 加菜</a>
+  </span>
 </nav>
 <header>
   <div class="title-block">
@@ -168,6 +171,7 @@
 
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-compat.js"></script>
+<script src="staff-i18n.js"></script>
 <script>
 const firebaseConfig = {
   apiKey: 'AIzaSyBaFx1ZYKzEKfQLKbnD9YE_X_EJnFXrxOE',
@@ -182,22 +186,87 @@ const db = firebase.firestore();
 db.settings({ experimentalAutoDetectLongPolling: true });
 const ordersRef = db.collection('orders');
 
+// 桌号、顾客昵称都是外部输入，塞进 innerHTML 前必须转义
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
 const params = new URLSearchParams(location.search);
 const table = params.get('table');
-document.getElementById('table-title').textContent = table ? `桌 ${table}` : '未指定桌号';
-document.getElementById('add-dish-link').href = `ygjc.html?table=${encodeURIComponent(table || '')}`;
 
-const SIZE_LABELS_ZH = { half:'半份', whole:'整份', large:'大份', small:'小份', glass:'杯', bottle:'瓶' };
-const OPTION_LABELS_ZH = { onion:'不要洋葱', scallion:'不要葱', ginger:'不要姜', cilantro:'不要香菜', meat:'不要肉' };
-const COOK_METHOD_LABELS_ZH = { steamed:'蒸', panFried:'煎' };
-const SOUP_BASE_LABELS_ZH = { tomato:'番茄', classicMala:'经典川味麻辣', boneBrothSpicy:'骨汤（辣）', boneBrothMild:'骨汤（不辣）', mushroom:'菌汤', malaBan:'麻辣拌' };
-const DRINK_LABELS_ZH = { cola:'可乐/无糖可乐/健怡可乐', sevenUp:'七喜/无糖七喜', fanta:'芬达', jdb:'加多宝', aloe:'芦荟汁' };
+// 员工端英文版：语言状态跟接单看板共用同一个 localStorage 开关（staff-i18n.js）
+const UI = {
+  zh: {
+    backToBoard: '← 接单看板', addDish: '+ 加菜', confirmedBadge: '已确认', loading: '加载中…',
+    connError: '连接异常，正在重试…', liveStatusPrefix: '实时更新：',
+    noTableOrders: '这一桌暂无订单，可能已经结账或被移出看板', noTable: '没有指定桌号',
+    backToBoardLong: '← 返回接单看板', backToBoardShort: '← 返回看板',
+    pendingColumnTitle: '🔴 新加菜品 · 待送入厨房', processedColumnTitle: '✅ 已处理 · 已送入厨房',
+    noPendingItems: '暂无待处理菜品', noProcessedItems: '暂无已处理菜品',
+    confirmToKitchen: '🍳 确认，送入厨房', deleteOrderBtn: '🗑 整单删除', deleteItemAria: '删除这道菜',
+    justOrdered: '刚刚下单', minutesAgo: n => `${n} 分钟前`,
+    justProcessed: '刚刚已处理', minutesAgoProcessed: n => `${n} 分钟前已处理`,
+    anonymousGuest: '匿名顾客', partySizeSuffix: n => ` · ${n}人`,
+    addOnForPrefix: '加菜给：',
+    deleteItemQuestion: '确认删除这道菜？', deleteOrderQuestion: '确认整单删除？',
+    tablePrefix: '桌 ', itemsCountLabel: n => `共 ${n} 项：`,
+    operatorPlaceholder: '请输入操作人员姓名，不填不能删除', operatorHint: '仅支持汉字和英文字母',
+    cancel: '取消', confirmDeleteBtn: '确认删除', langToggleLabel: 'EN',
+    sizeLabels: { half:'半份', whole:'整份', large:'大份', small:'小份', glass:'杯', bottle:'瓶' },
+    optionLabels: { onion:'不要洋葱', scallion:'不要葱', ginger:'不要姜', cilantro:'不要香菜', meat:'不要肉' },
+    cookMethodLabels: { steamed:'蒸', panFried:'煎' },
+    soupBaseLabels: { tomato:'番茄', classicMala:'经典川味麻辣', boneBrothSpicy:'骨汤（辣）', boneBrothMild:'骨汤（不辣）', mushroom:'菌汤', malaBan:'麻辣拌' },
+    drinkLabels: { cola:'可乐/无糖可乐/健怡可乐', sevenUp:'七喜/无糖七喜', fanta:'芬达', jdb:'加多宝', aloe:'芦荟汁' },
+    spiceLabels: { '微辣':'微辣', '中辣':'中辣', '特辣':'特辣' },
+  },
+  en: {
+    backToBoard: '← Order Board', addDish: '+ Add Dish', confirmedBadge: 'Confirmed', loading: 'Loading…',
+    connError: 'Connection lost, retrying…', liveStatusPrefix: 'Live: ',
+    noTableOrders: 'No orders for this table — it may have checked out or been removed from the board', noTable: 'No table specified',
+    backToBoardLong: '← Back to Order Board', backToBoardShort: '← Back to Board',
+    pendingColumnTitle: '🔴 New Items · Awaiting Kitchen', processedColumnTitle: '✅ Done · Sent to Kitchen',
+    noPendingItems: 'No pending items', noProcessedItems: 'No processed items',
+    confirmToKitchen: '🍳 Confirm, Send to Kitchen', deleteOrderBtn: '🗑 Delete Entire Order', deleteItemAria: 'Delete this item',
+    justOrdered: 'Just ordered', minutesAgo: n => `${n} min ago`,
+    justProcessed: 'Just processed', minutesAgoProcessed: n => `${n} min ago`,
+    anonymousGuest: 'Anonymous Guest', partySizeSuffix: n => ` · ${n} guests`,
+    addOnForPrefix: 'Add-on for: ',
+    deleteItemQuestion: 'Delete this item?', deleteOrderQuestion: 'Delete the entire order?',
+    tablePrefix: 'Table ', itemsCountLabel: n => `${n} items:`,
+    operatorPlaceholder: "Enter staff name (required to delete)", operatorHint: 'Chinese characters and English letters only',
+    cancel: 'Cancel', confirmDeleteBtn: 'Confirm Delete', langToggleLabel: '中',
+    sizeLabels: { half:'Half', whole:'Whole', large:'Large', small:'Small', glass:'Glass', bottle:'Bottle' },
+    optionLabels: { onion:'No Onion', scallion:'No Spring Onion', ginger:'No Ginger', cilantro:'No Coriander', meat:'No Meat' },
+    cookMethodLabels: { steamed:'Steamed', panFried:'Pan-Fried' },
+    soupBaseLabels: { tomato:'Tomato', classicMala:'Classic Sichuan Mala', boneBrothSpicy:'Pork Bone (Spicy)', boneBrothMild:'Pork Bone (Mild)', mushroom:'Mushroom', malaBan:'Mixed Mala' },
+    drinkLabels: { cola:'Coke / Diet Coke / Coke Zero', sevenUp:'7 Up / Diet 7 Up', fanta:'Fanta', jdb:'Jiaduobao', aloe:'Aloe Juice' },
+    spiceLabels: { '微辣':'Mild', '中辣':'Medium', '特辣':'Extra Spicy' },
+  },
+};
+function t(key){ return UI[getStaffLang()][key]; }
+
+function toggleStaffLang(){
+  setStaffLang(getStaffLang() === 'en' ? 'zh' : 'en');
+  applyStaticI18n();
+  render();
+}
+
+function applyStaticI18n(){
+  document.title = getStaffLang() === 'en' ? 'Order Details' : '订单详情';
+  document.getElementById('back-to-board-nav').textContent = t('backToBoard');
+  document.getElementById('add-dish-link').textContent = t('addDish');
+  document.getElementById('confirmed-badge').textContent = t('confirmedBadge');
+  document.getElementById('lang-toggle-btn').textContent = t('langToggleLabel');
+  document.getElementById('table-title').textContent = table ? `${t('tablePrefix')}${escapeHtml(table)}` : t('noTable');
+  if(!loaded) document.getElementById('status').textContent = t('loading');
+}
+document.getElementById('add-dish-link').href = `ygjc.html?table=${encodeURIComponent(table || '')}`;
 
 function elapsedInfo(ts){
   const diffMs = Date.now() - ts;
   const mins = Math.floor(diffMs / 60000);
   let label, level;
-  if(mins < 1){ label = '刚刚下单'; } else { label = mins + ' 分钟前'; }
+  if(mins < 1){ label = t('justOrdered'); } else { label = t('minutesAgo')(mins); }
   if(mins < 3){ level = 'normal'; }
   else if(mins < 6){ level = 'warn'; }
   else { level = 'urgent'; }
@@ -207,6 +276,7 @@ function elapsedInfo(ts){
 let orders = [];
 let loaded = false;
 let firstDetailSnapshot = true;   // 首次快照不算“新到的加菜”，不用触发自动滚动
+applyStaticI18n();
 
 if(table){
   ordersRef.where('table', '==', String(table)).onSnapshot(snap => {
@@ -226,10 +296,10 @@ if(table){
       confirmedAt: d.data().confirmedAt || null,
     })).sort((a,b) => a.createdAt - b.createdAt);
     loaded = true;
-    document.getElementById('status').textContent = '实时更新：' + new Date().toLocaleTimeString('zh-CN',{hour12:false});
+    document.getElementById('status').textContent = t('liveStatusPrefix') + new Date().toLocaleTimeString('zh-CN',{hour12:false});
     render();
   }, err => {
-    document.getElementById('status').textContent = '连接异常，正在重试…';
+    document.getElementById('status').textContent = t('connError');
   });
 }else{
   loaded = true;
@@ -302,22 +372,22 @@ function renderDeleteModal(){
   const el = document.getElementById('delete-modal');
   if(!deleteModalCtx){ el.innerHTML = ''; return; }
   const { type, target, operatorName } = deleteModalCtx;
-  const question = type === 'item' ? '确认删除这道菜？' : '确认整单删除？';
+  const question = type === 'item' ? t('deleteItemQuestion') : t('deleteOrderQuestion');
   const detail = type === 'item'
-    ? `桌 ${target.table} · ${target.name} × ${target.qty}`
-    : `桌 ${target.table} · 共 ${target.items.length} 项：${target.items.map(it => `${it.name}×${it.qty}`).join('、')}`;
+    ? `${t('tablePrefix')}${escapeHtml(target.table)} · ${escapeHtml(staffDishNameByZh(target.name))} × ${target.qty}`
+    : `${t('tablePrefix')}${escapeHtml(target.table)} · ${t('itemsCountLabel')(target.items.length)}${target.items.map(it => `${escapeHtml(staffDishNameByZh(it.name))}×${it.qty}`).join('、')}`;
   el.innerHTML = `
     <div class="confirm-overlay">
       <div class="confirm-box">
         <p class="confirm-question">${question}</p>
         <p class="delete-modal-detail">${detail}</p>
-        <input type="text" class="operator-input" id="operator-name-input" placeholder="请输入操作人员姓名，不填不能删除"
+        <input type="text" class="operator-input" id="operator-name-input" placeholder="${t('operatorPlaceholder')}"
                value="${operatorName}" oninput="updateDeleteOperatorName(this.value)"
                onkeydown="if(event.key==='Enter' && this.value.trim()) confirmDelete()" autocomplete="off">
-        <p class="operator-hint">仅支持汉字和英文字母</p>
+        <p class="operator-hint">${t('operatorHint')}</p>
         <div class="confirm-actions">
-          <button class="confirm-cancel-btn" onclick="cancelDelete()">取消</button>
-          <button class="confirm-yes-btn" id="delete-confirm-btn" onclick="confirmDelete()" ${operatorName.trim() ? '' : 'disabled'}>确认删除</button>
+          <button class="confirm-cancel-btn" onclick="cancelDelete()">${t('cancel')}</button>
+          <button class="confirm-yes-btn" id="delete-confirm-btn" onclick="confirmDelete()" ${operatorName.trim() ? '' : 'disabled'}>${t('confirmDeleteBtn')}</button>
         </div>
       </div>
     </div>`;
@@ -374,24 +444,24 @@ let orderDeleteTargets = [];
 
 function itemLineHTML(it, docKey, itemIdx){
   const tags = [];
-  if(it.spice) tags.push(`<span class="spice-tag">${it.spice}</span>`);
-  if(it.size) tags.push(`<span class="spice-tag">${SIZE_LABELS_ZH[it.size] || it.size}</span>`);
-  if(it.cookMethod) tags.push(`<span class="spice-tag">${COOK_METHOD_LABELS_ZH[it.cookMethod] || it.cookMethod}</span>`);
-  if(it.soupBase) tags.push(`<span class="spice-tag">${SOUP_BASE_LABELS_ZH[it.soupBase] || it.soupBase}</span>`);
-  if(it.drink) tags.push(`<span class="spice-tag">${DRINK_LABELS_ZH[it.drink] || it.drink}</span>`);
-  (it.excludes || []).forEach(k => tags.push(`<span class="exclude-tag">${OPTION_LABELS_ZH[k] || k}</span>`));
-  if(it.forDish) tags.push(`<span class="for-dish-tag">加菜给：${it.forDish}</span>`);
+  if(it.spice) tags.push(`<span class="spice-tag">${escapeHtml(t('spiceLabels')[it.spice] || it.spice)}</span>`);
+  if(it.size) tags.push(`<span class="spice-tag">${t('sizeLabels')[it.size] || it.size}</span>`);
+  if(it.cookMethod) tags.push(`<span class="spice-tag">${t('cookMethodLabels')[it.cookMethod] || it.cookMethod}</span>`);
+  if(it.soupBase) tags.push(`<span class="spice-tag">${t('soupBaseLabels')[it.soupBase] || it.soupBase}</span>`);
+  if(it.drink) tags.push(`<span class="spice-tag">${t('drinkLabels')[it.drink] || it.drink}</span>`);
+  (it.excludes || []).forEach(k => tags.push(`<span class="exclude-tag">${t('optionLabels')[k] || k}</span>`));
+  if(it.forDish) tags.push(`<span class="for-dish-tag">${t('addOnForPrefix')}${escapeHtml(staffDishNameByZh(it.forDish))}</span>`);
   const idx = itemDeleteTargets.length;
   itemDeleteTargets.push({ table, docKey, itemIdx, name: it.name, qty: it.qty });
   return `<li>
-      <span class="item-main"><span><span class="qty">${it.qty}×</span>${it.name}</span><span style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">${tags.join('')}</span></span>
-      <button class="item-del-btn" onclick="requestDeleteItem(${idx})" aria-label="删除这道菜">✕</button>
+      <span class="item-main"><span><span class="qty">${it.qty}×</span>${escapeHtml(staffDishNameByZh(it.name))}</span><span style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">${tags.join('')}</span></span>
+      <button class="item-del-btn" onclick="requestDeleteItem(${idx})" aria-label="${t('deleteItemAria')}">✕</button>
     </li>`;
 }
 
 function batchNameLabel(o){
-  const name = (o.nickname || '').trim() || '匿名顾客';
-  return name + (o.partySize ? ` · ${o.partySize}人` : '');
+  const name = escapeHtml((o.nickname || '').trim() || t('anonymousGuest'));
+  return name + (o.partySize ? t('partySizeSuffix')(o.partySize) : '');
 }
 
 // 左列：还没送入厨房的批次，红框闪烁，按下单时间倒序——最新加的菜永远排在最上面
@@ -407,7 +477,7 @@ function pendingBatchHTML(o){
 // 右列：已经送入厨房的批次，绿框不闪烁，显示"几分钟前已处理"，同样按处理时间倒序
 function processedBatchHTML(o){
   const mins = Math.floor((Date.now() - (o.confirmedAt || o.createdAt)) / 60000);
-  const processedLabel = mins < 1 ? '刚刚已处理' : mins + ' 分钟前已处理';
+  const processedLabel = mins < 1 ? t('justProcessed') : t('minutesAgoProcessed')(mins);
   const itemsHTML = (o.items || []).map((it, i) => itemLineHTML(it, o.key, i)).join('');
   return `<div class="batch-box batch-processed">
       <div class="batch-head"><span class="batch-name">${batchNameLabel(o)}</span><span class="batch-time">${processedLabel}</span></div>
@@ -420,7 +490,7 @@ function orderDelBtnHTML(realBatch){
   realBatch.forEach(o => (o.items || []).forEach(it => items.push({ name: it.name, qty: it.qty })));
   const idx = orderDeleteTargets.length;
   orderDeleteTargets.push({ table, keys: realBatch.map(o => o.key), items });
-  return `<button class="order-del-btn" onclick="requestDeleteOrder(${idx})">🗑 整单删除</button>`;
+  return `<button class="order-del-btn" onclick="requestDeleteOrder(${idx})">${t('deleteOrderBtn')}</button>`;
 }
 
 function render(){
@@ -433,8 +503,8 @@ function render(){
     document.getElementById('elapsed-pill').textContent = '';
     document.getElementById('confirmed-badge').hidden = true;
     app.innerHTML = `<div class="empty">
-      <p>${table ? '这一桌暂无订单，可能已经结账或被移出看板' : '没有指定桌号'}</p>
-      <a class="control-btn" href="sjxddxtygd.html">← 返回接单看板</a>
+      <p>${table ? t('noTableOrders') : t('noTable')}</p>
+      <a class="control-btn" href="sjxddxtygd.html">${t('backToBoardLong')}</a>
     </div>`;
     return;
   }
@@ -451,18 +521,18 @@ function render(){
   document.getElementById('confirmed-badge').hidden = anyPending;
 
   const actionBtn = anyPending
-    ? `<button class="confirm-btn" data-keys="${pendingBatches.map(o=>o.key).join(',')}" onclick="confirmToKitchen(this.dataset.keys.split(','))">🍳 确认，送入厨房</button>`
-    : `<a class="back-to-board-btn" href="sjxddxtygd.html">← 返回看板</a>`;
+    ? `<button class="confirm-btn" data-keys="${pendingBatches.map(o=>o.key).join(',')}" onclick="confirmToKitchen(this.dataset.keys.split(','))">${t('confirmToKitchen')}</button>`
+    : `<a class="back-to-board-btn" href="sjxddxtygd.html">${t('backToBoardShort')}</a>`;
 
   app.innerHTML = `
     <div class="columns">
       <section>
-        <p class="column-title">🔴 新加菜品 · 待送入厨房</p>
-        ${pendingBatches.length ? pendingBatches.map(pendingBatchHTML).join('') : '<p class="column-empty">暂无待处理菜品</p>'}
+        <p class="column-title">${t('pendingColumnTitle')}</p>
+        ${pendingBatches.length ? pendingBatches.map(pendingBatchHTML).join('') : `<p class="column-empty">${t('noPendingItems')}</p>`}
       </section>
       <section>
-        <p class="column-title">✅ 已处理 · 已送入厨房</p>
-        ${processedBatches.length ? processedBatches.map(processedBatchHTML).join('') : '<p class="column-empty">暂无已处理菜品</p>'}
+        <p class="column-title">${t('processedColumnTitle')}</p>
+        ${processedBatches.length ? processedBatches.map(processedBatchHTML).join('') : `<p class="column-empty">${t('noProcessedItems')}</p>`}
       </section>
     </div>
     <div class="action-row">

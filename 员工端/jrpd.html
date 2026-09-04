@@ -184,6 +184,9 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
 db.settings({ experimentalAutoDetectLongPolling: true });
 const dailyOrdersRef = db.collection('dailyOrders');
 
@@ -589,7 +592,7 @@ function tableGroupHTML(g){
   return `
     <section class="table-group">
       <div class="table-group-head">
-        <span class="table-group-num">桌 ${g.table}</span>
+        <span class="table-group-num">桌 ${escapeHtml(g.table)}</span>
         <span class="table-group-meta">共 ${g.records.length} 笔 · 今日小计 <b>${formatPrice(g.revenue)}</b></span>
       </div>
       <ul class="record-list">${g.records.map(recordRowHTML).join('')}</ul>

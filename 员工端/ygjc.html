@@ -127,8 +127,9 @@
 </style>
 </head>
 <body>
-<nav class="top-nav">
+<nav class="top-nav" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
   <a class="control-btn" id="back-link" href="sjxddxtygd.html">← 返回订单详情</a>
+  <button class="control-btn" id="lang-toggle-btn" onclick="toggleStaffLang()">EN</button>
 </nav>
 <header>
   <div class="title-block">
@@ -136,7 +137,7 @@
     <span class="status-pill" id="table-pill"></span>
   </div>
   <div class="header-actions">
-    <span class="sel-count">已选 <b id="selCount">0</b> 项</span>
+    <span class="sel-count"><span id="sel-count-label">已选</span> <b id="selCount">0</b> <span id="sel-count-suffix">项</span></span>
     <button class="action-btn add-btn" id="addBtn" onclick="openAddModal()" disabled>确认加菜</button>
   </div>
 </header>
@@ -149,6 +150,7 @@
 
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-compat.js"></script>
+<script src="staff-i18n.js"></script>
 <script>
 const firebaseConfig = {
   apiKey: 'AIzaSyBaFx1ZYKzEKfQLKbnD9YE_X_EJnFXrxOE',
@@ -167,12 +169,58 @@ const menuStatusRef = db.collection('menuStatus').doc('soldOut');
 const params = new URLSearchParams(location.search);
 const table = params.get('table');
 document.getElementById('back-link').href = table ? `ddxq.html?table=${encodeURIComponent(table)}` : 'sjxddxtygd.html';
-document.getElementById('table-pill').textContent = table ? `桌 ${table}` : '未指定桌号';
+
+// 员工端英文版：语言状态跟接单看板共用同一个 localStorage 开关（staff-i18n.js）
+const UI = {
+  zh: {
+    pageTitle: '员工加菜', backToDetail: '← 返回订单详情', tablePrefix: '桌 ', noTable: '未指定桌号',
+    selCountLabel: '已选', selCountSuffix: '项', confirmAddBtn: '确认加菜',
+    searchPlaceholder: '搜索菜品或酒水名称…', soldOutBadge: '已沽清',
+    perPersonSuffix: '/人',
+    noTableMsg: '没有指定桌号，请从接单看板的订单详情页进入。', noMatch: '没有找到匹配的菜品',
+    modalNote: (tbl) => `确认后会给桌 ${escapeHtml(tbl)} 生成一笔新的待处理订单，仍需要在订单详情页里手动"确认送入厨房"。`,
+    cancel: '取消', addFailedMsg: '加菜失败，请重试', langToggleLabel: 'EN',
+    sizeLabels: { large:'大份', small:'小份', glass:'杯', bottle:'瓶' },
+  },
+  en: {
+    pageTitle: 'Add Dish', backToDetail: '← Back to Order Details', tablePrefix: 'Table ', noTable: 'No table specified',
+    selCountLabel: 'Selected:', selCountSuffix: 'items', confirmAddBtn: 'Confirm Add',
+    searchPlaceholder: 'Search dish or drink name…', soldOutBadge: 'Sold Out',
+    perPersonSuffix: '/person',
+    noTableMsg: 'No table specified — please enter from the order detail page on the order board.', noMatch: 'No matching dishes found',
+    modalNote: (tbl) => `Confirming creates a new pending order for Table ${escapeHtml(tbl)} — you'll still need to manually "Confirm, Send to Kitchen" on the order detail page.`,
+    cancel: 'Cancel', addFailedMsg: 'Failed to add dish, please try again', langToggleLabel: '中',
+    sizeLabels: { large:'Large', small:'Small', glass:'Glass', bottle:'Bottle' },
+  },
+};
+function t(key){ return UI[getStaffLang()][key]; }
+
+function toggleStaffLang(){
+  setStaffLang(getStaffLang() === 'en' ? 'zh' : 'en');
+  applyStaticI18n();
+  renderList();
+}
+
+function applyStaticI18n(){
+  document.title = t('pageTitle');
+  document.getElementById('back-link').textContent = t('backToDetail');
+  document.getElementById('lang-toggle-btn').textContent = t('langToggleLabel');
+  document.getElementById('page-title').textContent = t('pageTitle');
+  document.getElementById('table-pill').textContent = table ? `${t('tablePrefix')}${escapeHtml(table)}` : t('noTable');
+  document.getElementById('sel-count-label').textContent = t('selCountLabel');
+  document.getElementById('sel-count-suffix').textContent = t('selCountSuffix');
+  document.getElementById('addBtn').textContent = t('confirmAddBtn');
+  document.getElementById('searchInput').placeholder = t('searchPlaceholder');
+}
+
+// 桌号来自 URL 参数，属于外部输入，塞进 innerHTML 前必须转义
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
 
 // 员工加菜：接单看板订单详情页的"+ 加菜"入口，只覆盖火锅生食材/凉菜/甜品/饮品/酒水
 // 这些"选中即可加"的菜，不含锅底、午市套餐这些需要额外挑口味/辣度的品类——
 // 这本来就不是给顾客用的点单流程，只是员工代客下单、补一笔营业额用，够简单够快就行
-const SIZE_LABELS_ZH = { large:'大份', small:'小份', glass:'杯', bottle:'瓶' };
 const CATEGORY_ORDER = ["houseSpecial", "seafood", "premiumBeef", "meatballs", "mushrooms", "vegetables", "snacks", "desserts", "drinks", "wine"];
 const CATEGORY_LABELS = { houseSpecial:"招牌必点", seafood:"海鲜", premiumBeef:"精品肉类", meatballs:"丸子", mushrooms:"菌菇", vegetables:"素菜", snacks:"凉菜/小吃", desserts:"甜品", drinks:"果香鲜饮", wine:"酒水" };
 
@@ -352,7 +400,7 @@ function clearSearch(){
 
 function matchesFilters(d){
   if(!searchQuery.trim()) return true;
-  return d.name.toLowerCase().includes(searchQuery.trim().toLowerCase());
+  return staffDishName(d.id, d.name).toLowerCase().includes(searchQuery.trim().toLowerCase());
 }
 
 menuStatusRef.onSnapshot(snap => {
@@ -388,8 +436,8 @@ function dishPrice(d, sel){
 }
 
 function priceLabelHTML(d){
-  if(d.sizes) return d.sizes.map(s => `${SIZE_LABELS_ZH[s.key] || s.key} €${s.price.toFixed(2)}`).join(' / ');
-  return `€${d.price.toFixed(2)}${d.unit === 'person' ? '/人' : ''}`;
+  if(d.sizes) return d.sizes.map(s => `${t('sizeLabels')[s.key] || s.key} €${s.price.toFixed(2)}`).join(' / ');
+  return `€${d.price.toFixed(2)}${d.unit === 'person' ? t('perPersonSuffix') : ''}`;
 }
 
 function openAddModal(){
@@ -423,7 +471,7 @@ async function confirmAdd(){
       nickname: '员工代加', partySize: 1, status: 'confirmed', confirmedAt: now,
     });
   }catch(e){
-    alert('加菜失败，请重试');
+    alert(t('addFailedMsg'));
     return;
   }
   location.href = `ddxq.html?table=${encodeURIComponent(table)}`;
@@ -435,15 +483,15 @@ function dishRowHTML(d){
   const soldOut = soldOutIds.has(d.id);
   const sizePicker = (checked && d.sizes) ? `
     <div class="size-picker">${d.sizes.map(s => `
-      <button type="button" class="size-opt-btn ${sel.size === s.key ? 'active' : ''}" onclick="setDishSize('${d.id}','${s.key}')">${SIZE_LABELS_ZH[s.key] || s.key} €${s.price.toFixed(2)}</button>
+      <button type="button" class="size-opt-btn ${sel.size === s.key ? 'active' : ''}" onclick="setDishSize('${d.id}','${s.key}')">${t('sizeLabels')[s.key] || s.key} €${s.price.toFixed(2)}</button>
     `).join('')}</div>` : '';
   return `
     <li class="dish-row ${checked ? 'checked' : ''}">
       <label>
         <input type="checkbox" ${checked ? 'checked' : ''} onchange="toggleSelect('${d.id}')">
-        <span class="dish-row-name">${d.name}</span>
+        <span class="dish-row-name">${staffDishName(d.id, d.name)}</span>
         <span class="dish-row-price">${priceLabelHTML(d)}</span>
-        ${soldOut ? '<span class="sold-out-badge">已沽清</span>' : ''}
+        ${soldOut ? `<span class="sold-out-badge">${t('soldOutBadge')}</span>` : ''}
       </label>
       ${sizePicker}
     </li>`;
@@ -454,8 +502,8 @@ function selectedRowsHTML(){
     const d = DISH_BY_ID[id];
     if(!d) return '';
     const price = dishPrice(d, sel);
-    const sizeLabel = d.sizes ? `（${SIZE_LABELS_ZH[sel.size] || sel.size}）` : '';
-    return `<li><span>${d.name}${sizeLabel}</span><span>€${price.toFixed(2)}</span></li>`;
+    const sizeLabel = d.sizes ? `（${t('sizeLabels')[sel.size] || sel.size}）` : '';
+    return `<li><span>${staffDishName(d.id, d.name)}${sizeLabel}</span><span>€${price.toFixed(2)}</span></li>`;
   }).join('');
 }
 
@@ -466,10 +514,10 @@ function renderModal(){
     <div class="modal-overlay">
       <div class="modal-box">
         <ul class="modal-dish-list">${selectedRowsHTML()}</ul>
-        <p class="modal-note">确认后会给桌 ${table} 生成一笔新的待处理订单，仍需要在订单详情页里手动"确认送入厨房"。</p>
+        <p class="modal-note">${t('modalNote')(table)}</p>
         <div class="modal-actions">
-          <button class="modal-cancel-btn" onclick="closeModal()">取消</button>
-          <button class="modal-confirm-btn ok" onclick="confirmAdd()">确认加菜</button>
+          <button class="modal-cancel-btn" onclick="closeModal()">${t('cancel')}</button>
+          <button class="modal-confirm-btn ok" onclick="confirmAdd()">${t('confirmAddBtn')}</button>
         </div>
       </div>
     </div>`;
@@ -479,15 +527,15 @@ function renderList(){
   const app = document.getElementById('app');
   if(!loaded){ app.innerHTML = ''; return; }
   if(!table){
-    app.innerHTML = `<p class="no-results">没有指定桌号，请从接单看板的订单详情页进入。</p>`;
+    app.innerHTML = `<p class="no-results">${t('noTableMsg')}</p>`;
     return;
   }
   const sections = CATEGORY_ORDER.map(cat => {
     const items = DISH_LIST.filter(d => d.category === cat && matchesFilters(d));
     if(items.length === 0) return '';
-    return `<section class="cat-section"><h2>${CATEGORY_LABELS[cat]}</h2><ul class="dish-list">${items.map(dishRowHTML).join('')}</ul></section>`;
+    return `<section class="cat-section"><h2>${staffCategoryLabel(cat, CATEGORY_LABELS[cat])}</h2><ul class="dish-list">${items.map(dishRowHTML).join('')}</ul></section>`;
   }).join('');
-  app.innerHTML = sections || `<p class="no-results">没有找到匹配的菜品</p>`;
+  app.innerHTML = sections || `<p class="no-results">${t('noMatch')}</p>`;
 }
 
 function render(){
@@ -497,6 +545,7 @@ function render(){
   renderModal();
 }
 
+applyStaticI18n();
 render();
 </script>
 </body>

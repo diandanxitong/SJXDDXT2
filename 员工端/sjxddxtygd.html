@@ -119,6 +119,7 @@
     display:flex;align-items:center;justify-content:center;padding:0 4px;
     box-shadow:0 0 0 2px var(--bg);
   }
+  .pending-bubble[hidden]{display:none;}
   @media (prefers-reduced-motion:no-preference){
     .pending-bubble{animation:pulse 1.8s ease-in-out infinite;}
   }
@@ -129,7 +130,7 @@
   .empty p{font-size:15px;}
 
   .grid{
-    display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;
   }
   .order-card{
     background:var(--card);border-radius:16px;border:1px solid var(--line);
@@ -218,6 +219,9 @@
 
   .card-top{display:flex;justify-content:space-between;align-items:flex-start;}
   .table-num{font-family:'Archivo Black',sans-serif;font-size:30px;line-height:1;}
+  /* 英文版 "Table 12" 比中文 "桌 12" 长不少，Archivo Black 又是个很粗重的字体，
+     30px 直接照搬会显得又大又挤——縮小号+去掉字间距撑开的空隙，视觉重量跟中文版对齐 */
+  body.lang-en .table-num{font-size:22px;letter-spacing:0;}
   .elapsed{
     font-size:12px;padding:4px 10px;border-radius:20px;
     background:rgba(255,255,255,.06);color:var(--text-muted);white-space:nowrap;
@@ -233,38 +237,59 @@
   /* 状态方框底部两个大按钮：结账（常用、放绿色）+ 查看详细订单（次要、灰边框） */
   .preview-actions{display:flex;gap:8px;margin-top:2px;}
   .checkout-btn, .view-detail-btn{
-    flex:1;padding:13px 8px;border-radius:10px;font-size:14px;cursor:pointer;font-weight:900;
+    flex:1;min-width:0;padding:13px 6px;border-radius:10px;font-size:14px;cursor:pointer;font-weight:900;
     font-family:inherit;text-decoration:none;text-align:center;
-    display:flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;
+    display:flex;align-items:center;justify-content:center;gap:6px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   }
   .checkout-btn{background:rgba(52,211,153,.14);border:1px solid var(--ok);color:var(--ok);}
   .checkout-btn:hover{background:rgba(52,211,153,.24);}
   .checkout-btn:active{background:rgba(52,211,153,.32);}
   .view-detail-btn{background:none;border:1px solid var(--line);color:var(--text-muted);}
   .view-detail-btn:hover{border-color:var(--text-muted);color:var(--text);}
+
+  /* 记账失败提示：结账本身照样立刻把桌子移出看板（不能因为记账失败卡住服务），
+     但这一笔流水会悄悄漏记，所以需要一个不会被无视、要手动点掉才会消失的条子，
+     提醒员工去"今日盘点"里人工补录 */
+  .checkout-fail-stack{
+    position:fixed;left:16px;bottom:16px;z-index:200;display:flex;flex-direction:column;gap:8px;
+    max-width:320px;
+  }
+  .checkout-fail-card{
+    background:var(--card);border:1px solid var(--urgent);border-radius:12px;
+    padding:12px 14px;font-size:13px;line-height:1.5;box-shadow:0 8px 20px rgba(0,0,0,.35);
+  }
+  .checkout-fail-card b{color:var(--urgent);}
+  .checkout-fail-dismiss{
+    margin-top:8px;width:100%;padding:7px;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;
+    background:none;border:1px solid var(--line);color:var(--text-muted);font-family:inherit;
+  }
+  .checkout-fail-dismiss:hover{border-color:var(--text-muted);color:var(--text);}
 </style>
 </head>
 <body>
-<div class="warn-banner">！顾客未结账时禁止点击结账！</div>
+<div class="warn-banner" id="warn-banner">！顾客未结账时禁止点击结账！</div>
 <nav class="top-nav">
-  <a class="control-btn" href="../index.html">← 控制系统</a>
+  <a class="control-btn" href="../index.html" id="back-to-control">← 控制系统</a>
 </nav>
+<div class="checkout-fail-stack" id="checkout-fail-stack"></div>
 <header>
-  <h1><span class="live-dot"></span>接单看板</h1>
+  <h1><span class="live-dot"></span><span id="board-title">接单看板</span></h1>
   <div class="header-center">
-    <a class="control-btn sold-out-entry-btn" href="gqcp.html">🚫 沽清菜品</a>
-    <button class="control-btn" onclick="location.reload()">🔄 刷新</button>
+    <a class="control-btn sold-out-entry-btn" href="gqcp.html" id="sold-out-entry">🚫 沽清菜品</a>
+    <button class="control-btn" onclick="location.reload()" id="refresh-btn">🔄 刷新</button>
     <button class="control-btn" id="sound-toggle" onclick="unlockAudio()">🔊 开启提示音</button>
     <button class="control-btn system-toggle-btn" id="system-toggle-btn" onclick="openSystemModal()">⛔ 关闭系统</button>
+    <button class="control-btn" id="lang-toggle-btn" onclick="toggleStaffLang()">EN</button>
     <span class="status" id="status">加载中…</span>
-    <button class="count-pill" id="pending-filter-btn" onclick="togglePendingFilter()">待处理 <b id="count">0</b> 桌<span class="pending-bubble" id="pending-bubble" hidden>0</span></button>
+    <button class="count-pill" id="pending-filter-btn" onclick="togglePendingFilter()"><span id="pending-label">待处理</span> <b id="count">0</b><span id="pending-suffix"> 桌</span><span class="pending-bubble" id="pending-bubble" hidden>0</span></button>
   </div>
   <div class="gear-menu-wrap">
     <button class="control-btn gear-btn" id="gear-btn" onclick="toggleGearMenu()" aria-haspopup="true" aria-expanded="false" aria-label="更多">⚙️</button>
     <div class="gear-dropdown" id="gear-dropdown" hidden>
-      <a href="jrpd.html">📊 今日盘点</a>
-      <a href="lspd.html">📅 历史盘点</a>
-      <a href="ygczrz.html">🗒 员工操作日志</a>
+      <a href="jrpd.html" id="gear-jrpd">📊 今日盘点</a>
+      <a href="lspd.html" id="gear-lspd">📅 历史盘点</a>
+      <a href="ygczrz.html" id="gear-ygczrz">🗒 员工操作日志</a>
     </div>
   </div>
 </header>
@@ -274,6 +299,7 @@
 
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-compat.js"></script>
+<script src="staff-i18n.js"></script>
 <script>
 const firebaseConfig = {
   apiKey: 'AIzaSyBaFx1ZYKzEKfQLKbnD9YE_X_EJnFXrxOE',
@@ -287,6 +313,97 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 db.settings({ experimentalAutoDetectLongPolling: true });
 const ordersRef = db.collection('orders');
+
+// 桌号来自顾客扫码点单时的 URL 参数，属于外部输入，塞进 innerHTML 前必须转义，
+// 否则顾客一个特制链接就能在看板上跑任意脚本
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+// 英文版：只是给员工看板换一套界面文字，不影响任何业务逻辑或数据。语言状态存在
+// localStorage 里（staff-i18n.js 里定义），沽清菜品/员工加菜/订单详情几个页面共用
+// 同一个开关，接单看板点一次就全部切过去，不用每个页面各点一次
+const UI = {
+  zh: {
+    warnBanner: '！顾客未结账时禁止点击结账！',
+    backToControl: '← 控制系统', boardTitle: '接单看板',
+    soldOutEntry: '🚫 沽清菜品', refresh: '🔄 刷新',
+    soundOff: '🔊 开启提示音', soundOn: '🔔 提示音已开启', soundLocked: '🔊 提示音已断开，点此重新开启',
+    systemDisableBtn: '⛔ 关闭系统', systemEnableBtn: '🔓 重新开启系统',
+    loading: '加载中…', connError: '连接异常，正在重试…', liveStatusPrefix: '实时更新：',
+    pendingLabel: '待处理', pendingSuffix: ' 桌', gearMore: '更多',
+    gearToday: '📊 今日盘点', gearHistory: '📅 历史盘点', gearLog: '🗒 员工操作日志',
+    emptyPending: '暂无待处理的桌号', viewAll: '← 查看全部', emptyAll: '暂无订单，等待顾客点单中…',
+    confirmedBadge: '已确认', statusNewBig: '🔴 新订单', statusNewSub: '等待送入厨房',
+    statusAddBig: '🔴 加菜', statusAddSub: '有新加菜品待处理',
+    statusDoneBig: '✅ 已处理', statusDoneSub: '已全部送入厨房',
+    callCaption: '顾客呼叫', callDismiss: '✓ 已处理',
+    checkoutBtn: '💳 结账', viewDetailBtn: '📋 查看详细订单',
+    justOrdered: '刚刚下单', minutesAgo: n => `${n} 分钟前`,
+    sysConfirmEnable: '确认重新开启系统？', sysConfirmDisable: '确认关闭系统？',
+    sysDetailEnable: '开启后，顾客扫码将恢复正常点单页面。',
+    sysDetailDisable: '关闭后，所有桌的顾客扫码只会看到"暂停服务"提示，无法点单，请谨慎操作。',
+    passwordPlaceholder: '请输入密码', passwordError: '密码错误，请重新输入',
+    cancel: '取消', confirm: '确认',
+    leaveConfirmQuestion: '确认顾客已经结账离开？', leaveConfirmYes: '确认已离开',
+    checkoutFailMsg: (table, revenue) => `⚠️ 桌 ${escapeHtml(table)} 记账失败（¥${revenue.toFixed(2)}），已从看板移除但今日盘点里少了这一笔，请去"今日盘点"里人工补录。`,
+    checkoutFailDismiss: '已知晓，关闭提示', langToggleLabel: 'EN', tablePrefix: '桌 ',
+  },
+  en: {
+    warnBanner: '! Do NOT tap Checkout before the customer has paid !',
+    backToControl: '← Control Panel', boardTitle: 'Order Board',
+    soldOutEntry: '🚫 Mark Sold Out', refresh: '🔄 Refresh',
+    soundOff: '🔊 Enable Sound', soundOn: '🔔 Sound Enabled', soundLocked: '🔊 Sound disconnected, tap to re-enable',
+    systemDisableBtn: '⛔ Close System', systemEnableBtn: '🔓 Reopen System',
+    loading: 'Loading…', connError: 'Connection lost, retrying…', liveStatusPrefix: 'Live: ',
+    pendingLabel: 'Pending', pendingSuffix: ' tables', gearMore: 'More',
+    gearToday: "📊 Today's Report", gearHistory: '📅 History', gearLog: '🗒 Staff Log',
+    emptyPending: 'No tables pending', viewAll: '← View All', emptyAll: 'No orders yet, waiting for customers…',
+    confirmedBadge: 'Confirmed', statusNewBig: '🔴 New Order', statusNewSub: 'Waiting to send to kitchen',
+    statusAddBig: '🔴 Add-on', statusAddSub: 'New add-on items pending',
+    statusDoneBig: '✅ Done', statusDoneSub: 'All sent to kitchen',
+    callCaption: 'Customer Calling', callDismiss: '✓ Resolved',
+    checkoutBtn: '💳 Checkout', viewDetailBtn: '📋 Details',
+    justOrdered: 'Just ordered', minutesAgo: n => `${n} min ago`,
+    sysConfirmEnable: 'Confirm reopening the system?', sysConfirmDisable: 'Confirm closing the system?',
+    sysDetailEnable: 'Once reopened, guests scanning the QR code will see the normal ordering page again.',
+    sysDetailDisable: 'Once closed, every table will only see a "Service Paused" notice and cannot order. Use with care.',
+    passwordPlaceholder: 'Enter password', passwordError: 'Incorrect password, please try again',
+    cancel: 'Cancel', confirm: 'Confirm',
+    leaveConfirmQuestion: 'Confirm the customer has paid and left?', leaveConfirmYes: 'Confirm Left',
+    checkoutFailMsg: (table, revenue) => `⚠️ Table ${escapeHtml(table)} failed to record (¥${revenue.toFixed(2)}), removed from the board but missing from today's report — please add it manually in "Today's Report".`,
+    checkoutFailDismiss: 'Got it, dismiss', langToggleLabel: '中', tablePrefix: 'Table ',
+  },
+};
+function t(key){ return UI[getStaffLang()][key]; }
+
+function toggleStaffLang(){
+  setStaffLang(getStaffLang() === 'en' ? 'zh' : 'en');
+  applyStaticI18n();
+  render();
+}
+
+function applyStaticI18n(){
+  document.title = t('boardTitle');
+  document.body.classList.toggle('lang-en', getStaffLang() === 'en');
+  document.getElementById('warn-banner').textContent = t('warnBanner');
+  document.getElementById('back-to-control').textContent = t('backToControl');
+  document.getElementById('board-title').textContent = t('boardTitle');
+  document.getElementById('sold-out-entry').textContent = t('soldOutEntry');
+  document.getElementById('refresh-btn').textContent = t('refresh');
+  document.getElementById('lang-toggle-btn').textContent = t('langToggleLabel');
+  document.getElementById('pending-label').textContent = t('pendingLabel');
+  document.getElementById('pending-suffix').textContent = t('pendingSuffix');
+  document.getElementById('gear-jrpd').textContent = t('gearToday');
+  document.getElementById('gear-lspd').textContent = t('gearHistory');
+  document.getElementById('gear-ygczrz').textContent = t('gearLog');
+  if(!audioUnlocked){
+    document.getElementById('sound-toggle').textContent = document.getElementById('sound-toggle').disabled ? t('soundOn') : t('soundOff');
+  }
+  updateSystemToggleBtn();
+  renderSystemModal();
+  renderConfirmModal();
+}
 
 // "关闭系统"：写这个文档，扫码点单端 (customer.html) 实时监听到 disabled:true 后
 // 整站切换成"暂停服务"提示页。按钮需要输入密码才能切换，密码只在前端做简单校验，
@@ -308,7 +425,7 @@ function updateSystemToggleBtn(){
   const btn = document.getElementById('system-toggle-btn');
   if(!btn) return;
   btn.classList.toggle('is-disabled', systemDisabled);
-  btn.textContent = systemDisabled ? '🔓 重新开启系统' : '⛔ 关闭系统';
+  btn.textContent = systemDisabled ? t('systemEnableBtn') : t('systemDisableBtn');
 }
 
 // 齿轮下拉：收着今日盘点/历史盘点/员工操作日志这几个不常用的入口，点齿轮开合，
@@ -347,7 +464,7 @@ function updateSystemPassword(v){
 function confirmSystemToggle(){
   if(systemPasswordValue !== SYSTEM_PASSWORD){
     systemPasswordValue = '';
-    systemPasswordError = '密码错误，请重新输入';
+    systemPasswordError = t('passwordError');
     renderSystemModal();
     return;
   }
@@ -364,22 +481,20 @@ function confirmSystemToggle(){
 function renderSystemModal(){
   const el = document.getElementById('system-modal');
   if(!systemModalOpen){ el.innerHTML = ''; return; }
-  const question = systemDisabled ? '确认重新开启系统？' : '确认关闭系统？';
-  const detail = systemDisabled
-    ? '开启后，顾客扫码将恢复正常点单页面。'
-    : '关闭后，所有桌的顾客扫码只会看到"暂停服务"提示，无法点单，请谨慎操作。';
+  const question = systemDisabled ? t('sysConfirmEnable') : t('sysConfirmDisable');
+  const detail = systemDisabled ? t('sysDetailEnable') : t('sysDetailDisable');
   el.innerHTML = `
     <div class="confirm-overlay">
       <div class="confirm-box">
         <p class="confirm-question">${question}</p>
         <p class="delete-modal-detail">${detail}</p>
-        <input type="password" class="password-input" id="system-password-input" placeholder="请输入密码"
+        <input type="password" class="password-input" id="system-password-input" placeholder="${t('passwordPlaceholder')}"
                oninput="updateSystemPassword(this.value)"
                onkeydown="if(event.key==='Enter') confirmSystemToggle()" autocomplete="off">
         <p class="password-error">${systemPasswordError}</p>
         <div class="confirm-actions">
-          <button class="confirm-cancel-btn" onclick="closeSystemModal()">取消</button>
-          <button class="confirm-yes-btn" onclick="confirmSystemToggle()">确认</button>
+          <button class="confirm-cancel-btn" onclick="closeSystemModal()">${t('cancel')}</button>
+          <button class="confirm-yes-btn" onclick="confirmSystemToggle()">${t('confirm')}</button>
         </div>
       </div>
     </div>`;
@@ -415,7 +530,7 @@ function unlockAudio(){
     a.play().then(()=>{ a.pause(); a.currentTime = 0; a.muted = false; }).catch(()=>{ a.muted = false; });
   });
   const btn = document.getElementById('sound-toggle');
-  if(btn){ btn.textContent = '🔔 提示音已开启'; btn.disabled = true; btn.classList.remove('sound-toggle-alert'); }
+  if(btn){ btn.textContent = t('soundOn'); btn.disabled = true; btn.classList.remove('sound-toggle-alert'); }
 }
 
 // 浏览器规定必须先有一次用户交互才允许播放音频，这一条挡不掉——但员工不用非得
@@ -448,7 +563,7 @@ function markAudioLocked(){
   audioUnlocked = false;
   const btn = document.getElementById('sound-toggle');
   if(btn){
-    btn.textContent = '🔊 提示音已断开，点此重新开启';
+    btn.textContent = t('soundLocked');
     btn.disabled = false;
     btn.classList.add('sound-toggle-alert');
   }
@@ -486,7 +601,7 @@ function elapsedInfo(ts){
   const diffMs = Date.now() - ts;
   const mins = Math.floor(diffMs / 60000);
   let label, level;
-  if(mins < 1){ label = '刚刚下单'; } else { label = mins + ' 分钟前'; }
+  if(mins < 1){ label = t('justOrdered'); } else { label = t('minutesAgo')(mins); }
   if(mins < 3){ level = 'normal'; }
   else if(mins < 6){ level = 'warn'; }
   else { level = 'urgent'; }
@@ -515,10 +630,10 @@ ordersRef.onSnapshot(snap => {
   results.sort((a,b) => a.createdAt - b.createdAt);
   orders = results;
   loaded = true;
-  document.getElementById('status').textContent = '实时更新：' + new Date().toLocaleTimeString('zh-CN',{hour12:false});
+  document.getElementById('status').textContent = t('liveStatusPrefix') + new Date().toLocaleTimeString('zh-CN',{hour12:false});
   render();
 }, err => {
-  document.getElementById('status').textContent = '连接异常，正在重试…';
+  document.getElementById('status').textContent = t('connError');
 });
 
 // 菜已上齐/顾客结账离开：彻底移出看板
@@ -587,7 +702,33 @@ async function recordDailyCheckout(keys, table){
       const recordRef = db.collection('dailyOrders').doc();
       tx.set(recordRef, { seq, date, table, items, revenue, archivedAt: Date.now() });
     });
-  }catch(e){ /* 记账失败就不记了，不阻塞移除看板；今日盘点里会少这一笔，需要人工核对 */ }
+  }catch(e){
+    // 记账失败就不记了，不阻塞移除看板；但不能让这一笔悄无声息地消失，
+    // 得有个员工必须手动点掉的提示，逼着他们去"今日盘点"里人工补录
+    showCheckoutFailAlert(table, revenue);
+  }
+}
+
+let checkoutFailAlerts = [];   // { id, table, revenue }
+let checkoutFailSeq = 0;
+
+function showCheckoutFailAlert(table, revenue){
+  checkoutFailAlerts.push({ id: ++checkoutFailSeq, table, revenue });
+  renderCheckoutFailAlerts();
+}
+
+function dismissCheckoutFailAlert(id){
+  checkoutFailAlerts = checkoutFailAlerts.filter(a => a.id !== id);
+  renderCheckoutFailAlerts();
+}
+
+function renderCheckoutFailAlerts(){
+  const stack = document.getElementById('checkout-fail-stack');
+  stack.innerHTML = checkoutFailAlerts.map(a => `
+    <div class="checkout-fail-card">
+      ${t('checkoutFailMsg')(a.table, a.revenue)}
+      <button class="checkout-fail-dismiss" onclick="dismissCheckoutFailAlert(${a.id})">${t('checkoutFailDismiss')}</button>
+    </div>`).join('');
 }
 
 function renderConfirmModal(){
@@ -596,10 +737,10 @@ function renderConfirmModal(){
   el.innerHTML = `
     <div class="confirm-overlay">
       <div class="confirm-box">
-        <p class="confirm-question">确认顾客已经结账离开？</p>
+        <p class="confirm-question">${t('leaveConfirmQuestion')}</p>
         <div class="confirm-actions">
-          <button class="confirm-cancel-btn" onclick="cancelLeave()">取消</button>
-          <button class="confirm-yes-btn" onclick="confirmLeaveYes()">确认已离开</button>
+          <button class="confirm-cancel-btn" onclick="cancelLeave()">${t('cancel')}</button>
+          <button class="confirm-yes-btn" onclick="confirmLeaveYes()">${t('leaveConfirmYes')}</button>
         </div>
       </div>
     </div>`;
@@ -625,8 +766,8 @@ function callOverlayHTML(callKeys, isAbs){
   return `
     <div class="call-overlay ${isAbs ? 'call-overlay-abs' : 'call-overlay-inline'}">
       <span class="call-bell">🔔</span>
-      <p class="call-caption">顾客呼叫</p>
-      <button class="call-dismiss-btn" data-keys="${callKeys.join(',')}" onclick="archiveOrder(this.dataset.keys.split(','))">✓ 已处理</button>
+      <p class="call-caption">${t('callCaption')}</p>
+      <button class="call-dismiss-btn" data-keys="${callKeys.join(',')}" onclick="archiveOrder(this.dataset.keys.split(','))">${t('callDismiss')}</button>
     </div>`;
 }
 
@@ -644,19 +785,19 @@ function tableState(realBatch){
 function statusPanelHTML(state){
   if(state === 'new'){
     return `<div class="status-panel state-new">
-        <span class="status-big">🔴 新订单</span>
-        <span class="status-sub">等待送入厨房</span>
+        <span class="status-big">${t('statusNewBig')}</span>
+        <span class="status-sub">${t('statusNewSub')}</span>
       </div>`;
   }
   if(state === 'add'){
     return `<div class="status-panel state-add">
-        <span class="status-big">🔴 加菜</span>
-        <span class="status-sub">有新加菜品待处理</span>
+        <span class="status-big">${t('statusAddBig')}</span>
+        <span class="status-sub">${t('statusAddSub')}</span>
       </div>`;
   }
   return `<div class="status-panel state-done">
-      <span class="status-big">✅ 已处理</span>
-      <span class="status-sub">已全部送入厨房</span>
+      <span class="status-big">${t('statusDoneBig')}</span>
+      <span class="status-sub">${t('statusDoneSub')}</span>
     </div>`;
 }
 
@@ -675,9 +816,9 @@ function cardHTML(group){
   return `
     <div class="order-card ${level}${flashingClass}">
       <div class="card-top">
-        <span class="table-num">桌 ${group.table}</span>
+        <span class="table-num">${t('tablePrefix')}${escapeHtml(group.table)}</span>
         <span style="display:flex;gap:8px;align-items:center;">
-          ${state === 'done' ? '<span class="confirmed-badge">已确认</span>' : ''}
+          ${state === 'done' ? `<span class="confirmed-badge">${t('confirmedBadge')}</span>` : ''}
           <span class="elapsed">${label}</span>
         </span>
       </div>
@@ -686,8 +827,8 @@ function cardHTML(group){
         <div class="card-body${hasCall ? ' blurred' : ''}">
           ${statusPanelHTML(state)}
           <div class="preview-actions">
-            <button class="checkout-btn" data-keys="${realBatch.map(o=>o.key).join(',')}" onclick="confirmLeave(this.dataset.keys.split(','), '${group.table}')">💳 结账</button>
-            <a class="view-detail-btn" href="${detailHref}">📋 查看详细订单</a>
+            <button class="checkout-btn" data-keys="${realBatch.map(o=>o.key).join(',')}" data-table="${escapeHtml(group.table)}" onclick="confirmLeave(this.dataset.keys.split(','), this.dataset.table)">${t('checkoutBtn')}</button>
+            <a class="view-detail-btn" href="${detailHref}">${t('viewDetailBtn')}</a>
           </div>
         </div>
         ${hasCall ? callOverlayHTML(callKeys, true) : ''}
@@ -733,13 +874,14 @@ function render(){
   if(!loaded){ app.innerHTML = ''; return; }
   if(shown.length === 0){
     app.innerHTML = pendingFilterOn
-      ? `<div class="empty"><p>暂无待处理的桌号</p><p style="margin-top:14px;"><button class="control-btn" onclick="togglePendingFilter()">← 查看全部</button></p></div>`
-      : `<div class="empty"><p>暂无订单，等待顾客点单中…</p></div>`;
+      ? `<div class="empty"><p>${t('emptyPending')}</p><p style="margin-top:14px;"><button class="control-btn" onclick="togglePendingFilter()">${t('viewAll')}</button></p></div>`
+      : `<div class="empty"><p>${t('emptyAll')}</p></div>`;
     return;
   }
   app.innerHTML = `<div class="grid">${shown.map(cardHTML).join('')}</div>`;
 }
 
+applyStaticI18n();
 render();
 setInterval(render, 1000);        // 每秒刷新一次等待时长与颜色提示（订单数据本身由 onSnapshot 实时推送）
 </script>

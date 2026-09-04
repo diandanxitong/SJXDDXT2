@@ -959,6 +959,13 @@ const menuStatusRef = db.collection('menuStatus').doc('soldOut');
 // 文档 id 就是桌号，字段 items 结构跟 state.items 一模一样，按菜品 id 逐条存。
 const tableCartsRef = db.collection('tableCarts');
 
+// 桌号来自 URL 参数，顾客昵称是自由输入——两者都可能被塞进 innerHTML 的场合
+// (state.table/order.table 显示、之后流入员工看板) 必须先转义，否则相当于
+// 一个反射型 XSS 入口
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
 // 给一个 promise 加超时：网络很差时 Firestore 请求可能一直挂着不 resolve 也不 reject，
 // 页面就会卡在"下单中"出不来。超时后统一当失败处理，好歹能提示顾客重试。
 function withTimeout(promise, ms){
@@ -2572,7 +2579,7 @@ function menuHTML(){
         <div class="table-badge">
           <span class="eyebrow">${t('tableEyebrow')}</span>
           <div class="table-badge-row">
-            <span class="num">${state.table}</span>
+            <span class="num">${escapeHtml(state.table)}</span>
             ${!state.lockedByUrl ? `<button class="change-table" onclick="changeTable()">${t('changeTable')}</button>` : ''}
           </div>
         </div>
@@ -2667,7 +2674,7 @@ function myOrderHTML(){
   return `
     ${backRowHTML()}
     <div class="confirm-screen">
-      <p class="eyebrow">${t('tableEyebrow')} ${state.table}</p>
+      <p class="eyebrow">${t('tableEyebrow')} ${escapeHtml(state.table)}</p>
       <h2 style="margin-top:6px;">${t('myOrder')}</h2>
       ${state.myOrderLoading
         ? `<p class="hint">${t('loading')}</p>`
@@ -2738,7 +2745,7 @@ function cartHTML(){
   return `
     ${backRowHTML()}
     <div class="confirm-screen">
-      <p class="eyebrow">${t('tableEyebrow')} ${state.table}</p>
+      <p class="eyebrow">${t('tableEyebrow')} ${escapeHtml(state.table)}</p>
       <h2 style="margin-top:6px;">${t('cart')}</h2>
       ${items.length === 0
         ? `<p class="hint">${t('emptyCart')}</p>`
@@ -2764,7 +2771,7 @@ function orderReviewHTML(){
   return `
     ${backRowHTML()}
     <div class="confirm-screen">
-      <p class="eyebrow">${t('tableEyebrow')} ${state.table}</p>
+      <p class="eyebrow">${t('tableEyebrow')} ${escapeHtml(state.table)}</p>
       <h2 style="margin-top:6px;">${t('orderReviewTitle')}</h2>
       ${items.length === 0
         ? `<p class="hint">${t('emptyCart')}</p>`
@@ -2865,7 +2872,7 @@ function confirmHTML(order){
     <div class="confirm-screen">
       ${backRowHTML()}
       <div class="stamp-ring"><span>${order.isAddOn ? t('addOnSuccess') : t('orderPlaced')}</span></div>
-      <h2>${t('tableEyebrow')} ${order.table}</h2>
+      <h2>${t('tableEyebrow')} ${escapeHtml(order.table)}</h2>
       ${order.removed ? `<p class="order-removed-notice">${t('orderRemovedNotice')}</p>` : (isConfirmed ? `
         ${chefCookingHTML()}
         <p class="kitchen-sent-title">${t('kitchenSentTitle')}</p>

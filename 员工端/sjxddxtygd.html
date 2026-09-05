@@ -140,6 +140,20 @@
   .order-card.warn{border-left-color:var(--warn);}
   .order-card.urgent{border-left-color:var(--urgent);}
 
+  /* 测试桌卡片整块标成亮黄色，跟一整版正式桌的深色卡片一眼区分开 */
+  .order-card.test-table{background:#FDE047;border-color:#EAB308;}
+  .order-card.test-table.warn, .order-card.test-table.urgent{border-left-color:#B45309;}
+  .order-card.test-table .table-num, .order-card.test-table .status-sub{color:#3F2D00;}
+  .order-card.test-table .elapsed{background:rgba(0,0,0,.1);color:#3F2D00;}
+  .order-card.test-table.warn .elapsed, .order-card.test-table.urgent .elapsed{color:#3F2D00;}
+  .order-card.test-table .confirmed-badge{background:rgba(255,255,255,.55);}
+  .order-card.test-table .test-table-note{background:rgba(255,255,255,.6);color:#7C2D12;border-color:rgba(124,45,18,.5);}
+  .order-card.test-table .status-panel.state-new, .order-card.test-table .status-panel.state-add,
+  .order-card.test-table .status-panel.state-done{background:rgba(255,255,255,.4);}
+  .order-card.test-table .checkout-btn{background:rgba(255,255,255,.6);}
+  .order-card.test-table .view-detail-btn{background:rgba(255,255,255,.35);border-color:rgba(63,45,0,.35);color:#3F2D00;}
+  .order-card.test-table .view-detail-btn:hover{border-color:#3F2D00;color:#3F2D00;}
+
   /* 桌号模块（整张卡片）外框跟着状态方框里的"新订单/加菜"文字一起闪红光——
      用 box-shadow 叠一层扩散的红色光圈，和 status-flash 用同样的时长/节奏，
      视觉上像是同一次呼吸在闪，而不是两个各闪各的动画 */
@@ -232,6 +246,11 @@
   .confirmed-badge{
     font-size:11px;font-weight:700;color:var(--ok);border:1px solid rgba(52,211,153,.5);
     border-radius:20px;padding:3px 10px;white-space:nowrap;
+  }
+  .test-table-note{
+    font-size:11px;font-weight:700;color:var(--warn);border:1px solid rgba(245,158,11,.5);
+    border-radius:20px;padding:3px 10px;display:inline-block;margin-top:8px;
+    max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   }
 
   /* 状态方框底部两个大按钮：结账（常用、放绿色）+ 查看详细订单（次要、灰边框） */
@@ -338,7 +357,7 @@ const UI = {
     statusAddBig: '🔴 加菜', statusAddSub: '有新加菜品待处理',
     statusDoneBig: '✅ 已处理', statusDoneSub: '已全部送入厨房',
     callCaption: '顾客呼叫', callDismiss: '✓ 已处理',
-    checkoutBtn: '💳 结账', testCompleteBtn: '✅ 测试完成，移除看板', viewDetailBtn: '📋 查看详细订单',
+    checkoutBtn: '💳 结账', testCompleteBtn: '移除', testTableNote: '不计入营业额，请忽略', viewDetailBtn: '📋 查看详细订单',
     justOrdered: '刚刚下单', minutesAgo: n => `${n} 分钟前`,
     sysConfirmEnable: '确认重新开启系统？', sysConfirmDisable: '确认关闭系统？',
     sysDetailEnable: '开启后，顾客扫码将恢复正常点单页面。',
@@ -363,7 +382,7 @@ const UI = {
     statusAddBig: '🔴 Add-on', statusAddSub: 'New add-on items pending',
     statusDoneBig: '✅ Done', statusDoneSub: 'All sent to kitchen',
     callCaption: 'Customer Calling', callDismiss: '✓ Resolved',
-    checkoutBtn: '💳 Checkout', testCompleteBtn: '✅ Test Complete, Remove', viewDetailBtn: '📋 Details',
+    checkoutBtn: '💳 Checkout', testCompleteBtn: 'Remove', testTableNote: 'Not counted in revenue — please ignore', viewDetailBtn: '📋 Details',
     justOrdered: 'Just ordered', minutesAgo: n => `${n} min ago`,
     sysConfirmEnable: 'Confirm reopening the system?', sysConfirmDisable: 'Confirm closing the system?',
     sysDetailEnable: 'Once reopened, guests scanning the QR code will see the normal ordering page again.',
@@ -817,8 +836,9 @@ function cardHTML(group){
   const hasRealContent = state !== 'empty';
   const detailHref = `ddxq.html?table=${encodeURIComponent(group.table)}`;
   const flashingClass = (state === 'new' || state === 'add') ? ' flashing' : '';
+  const testClass = isTestTable(group.table) ? ' test-table' : '';
   return `
-    <div class="order-card ${level}${flashingClass}">
+    <div class="order-card ${level}${flashingClass}${testClass}">
       <div class="card-top">
         <span class="table-num">${t('tablePrefix')}${escapeHtml(group.table)}</span>
         <span style="display:flex;gap:8px;align-items:center;">
@@ -826,6 +846,7 @@ function cardHTML(group){
           <span class="elapsed">${label}</span>
         </span>
       </div>
+      ${isTestTable(group.table) ? `<span class="test-table-note">${t('testTableNote')}</span>` : ''}
       ${hasRealContent ? `
       <div class="card-body-wrap">
         <div class="card-body${hasCall ? ' blurred' : ''}">

@@ -453,7 +453,7 @@
   /* one unified pill spanning most of the screen width, split unevenly into two actions;
      fixed (not fully-round) radius so wrapping to extra lines in other languages just
      lengthens the pill instead of making it look like it's ballooning wider */
-  .action-pill-wrap{position:relative;width:84%;max-width:380px;min-width:280px;margin:0 auto;}
+  .action-pill-wrap{position:relative;width:74%;max-width:340px;min-width:250px;margin:0 auto;}
   .action-pill{
     position:relative;display:flex;align-items:stretch;
     border-radius:26px;overflow:hidden;
@@ -476,9 +476,12 @@
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
     padding:10px 8px;text-align:center;
   }
-  .cart-btn{flex:2;background:rgba(184,64,42,.1);color:var(--cinnabar);}
+  /* 呼叫服务员字多，分到的宽度比立即下单大一点；整条按钮（pill）本身也整体
+     缩窄一些，让左边不再压到分类栏。颜色保持不变：呼叫服务员仍是朱红色毛
+     玻璃，立即下单仍是深红棕色毛玻璃 */
+  .cart-btn{flex:3;background:rgba(184,64,42,.1);color:var(--cinnabar);}
   .order-now-btn{
-    flex:3;color:#fff;
+    flex:2;color:#fff;
     background:linear-gradient(160deg, rgba(150,55,29,.86) 0%, rgba(105,38,20,.86) 100%);
   }
   .cart-btn-title{text-shadow:0 1px 1px rgba(255,255,255,.5);}
@@ -490,6 +493,10 @@
   .order-now-btn:not(:disabled):active{background:linear-gradient(160deg, rgba(150,55,29,.96) 0%, rgba(105,38,20,.96) 100%);}
   .cart-btn-title, .order-now-title{font-size:16px;font-weight:900;letter-spacing:.02em;overflow-wrap:break-word;}
   .cart-btn-sub, .order-now-sub{font-size:10px;font-weight:700;opacity:.85;overflow-wrap:break-word;}
+  /* 立即下单分到的宽度变小了，字号跟着缩小一档，避免文字被挤到换行超框。
+     英文版靠已有的 .latin.lang-en 规则（选择器更精确）继续保持原尺寸，不受影响 */
+  .order-now-btn .order-now-title{font-size:14px;letter-spacing:0;line-height:1.15;}
+  .order-now-btn .order-now-sub{font-size:9px;line-height:1.15;}
   .cart-btn.latin, .order-now-btn.latin{padding:9px 6px;}
   .cart-btn.latin .cart-btn-title, .order-now-btn.latin .order-now-title{font-size:13px;letter-spacing:0;line-height:1.15;}
   .cart-btn.latin .cart-btn-sub, .order-now-btn.latin .order-now-sub{font-size:9px;line-height:1.15;}
@@ -1528,9 +1535,9 @@ const DISH_DATA = [
 {"id": "wineHeineken00", "img": "../image/菜品/beers.webp", "category": "beer", "price": 5.5, "allergens": ["1"], "i18n": {"zh": {"name": "喜力0.0 330ml", "tag": ""}, "zhHant": {"name": "喜力0.0 330ml", "tag": ""}, "en": {"name": "Heineken 0.0 330ml", "tag": ""}, "it": {"name": "Heineken 0.0 330ml", "tag": ""}, "fr": {"name": "Heineken 0.0 330ml", "tag": ""}, "es": {"name": "Heineken 0.0 330ml", "tag": ""}}},
 {"id": "wineGuinness", "img": "../image/菜品/beers.webp", "category": "beer", "price": 7.95, "allergens": ["1"], "i18n": {"zh": {"name": "健力士 500ml", "tag": ""}, "zhHant": {"name": "健力士 500ml", "tag": ""}, "en": {"name": "Guinness 500ml", "tag": ""}, "it": {"name": "Guinness 500ml", "tag": ""}, "fr": {"name": "Guinness 500ml", "tag": ""}, "es": {"name": "Guinness 500ml", "tag": ""}}},
 {"id": "wineGuinness00", "img": "../image/菜品/beers.webp", "category": "beer", "price": 7.5, "allergens": ["1"], "i18n": {"zh": {"name": "健力士0.0 500ml", "tag": ""}, "zhHant": {"name": "健力士0.0 500ml", "tag": ""}, "en": {"name": "Guinness 0.0 500ml", "tag": ""}, "it": {"name": "Guinness 0.0 500ml", "tag": ""}, "fr": {"name": "Guinness 0.0 500ml", "tag": ""}, "es": {"name": "Guinness 0.0 500ml", "tag": ""}}},
-{"id": "teaDianhong", "category": "tea", "price": 8.8, "unit": "person", "allergens": [], "i18n": {"zh": {"name": "滇红茶", "tag": ""}, "zhHant": {"name": "滇紅茶", "tag": ""}, "en": {"name": "Dianhong Black Tea", "tag": ""}, "it": {"name": "Tè Nero Dianhong", "tag": ""}, "fr": {"name": "Thé Noir Dianhong", "tag": ""}, "es": {"name": "Té Negro Dianhong", "tag": ""}}},
-{"id": "teaZhuyeqing", "category": "tea", "price": 8.8, "unit": "person", "allergens": [], "i18n": {"zh": {"name": "竹叶青茶", "tag": ""}, "zhHant": {"name": "竹葉青茶", "tag": ""}, "en": {"name": "Zhuyeqing Green Tea", "tag": ""}, "it": {"name": "Tè Verde Zhuyeqing", "tag": ""}, "fr": {"name": "Thé Vert Zhuyeqing", "tag": ""}, "es": {"name": "Té Verde Zhuyeqing", "tag": ""}}},
-{"id": "teaKuqiao", "category": "tea", "price": 6.8, "unit": "person", "allergens": [], "i18n": {"zh": {"name": "苦荞茶", "tag": ""}, "zhHant": {"name": "苦蕎茶", "tag": ""}, "en": {"name": "Tartary Buckwheat Tea", "tag": ""}, "it": {"name": "Tè di Grano Saraceno Tartaro", "tag": ""}, "fr": {"name": "Thé de Sarrasin Tartare", "tag": ""}, "es": {"name": "Té de Trigo Sarraceno Tártaro", "tag": ""}}},
+{"id": "teaDianhong", "img": "../image/菜品/茶.png", "category": "tea", "price": 8.8, "unit": "person", "allergens": [], "i18n": {"zh": {"name": "滇红茶", "tag": ""}, "zhHant": {"name": "滇紅茶", "tag": ""}, "en": {"name": "Dianhong Black Tea", "tag": ""}, "it": {"name": "Tè Nero Dianhong", "tag": ""}, "fr": {"name": "Thé Noir Dianhong", "tag": ""}, "es": {"name": "Té Negro Dianhong", "tag": ""}}},
+{"id": "teaZhuyeqing", "img": "../image/菜品/茶.png", "category": "tea", "price": 8.8, "unit": "person", "allergens": [], "i18n": {"zh": {"name": "竹叶青茶", "tag": ""}, "zhHant": {"name": "竹葉青茶", "tag": ""}, "en": {"name": "Zhuyeqing Green Tea", "tag": ""}, "it": {"name": "Tè Verde Zhuyeqing", "tag": ""}, "fr": {"name": "Thé Vert Zhuyeqing", "tag": ""}, "es": {"name": "Té Verde Zhuyeqing", "tag": ""}}},
+{"id": "teaKuqiao", "img": "../image/菜品/茶.png", "category": "tea", "price": 6.8, "unit": "person", "allergens": [], "i18n": {"zh": {"name": "苦荞茶", "tag": ""}, "zhHant": {"name": "苦蕎茶", "tag": ""}, "en": {"name": "Tartary Buckwheat Tea", "tag": ""}, "it": {"name": "Tè di Grano Saraceno Tartaro", "tag": ""}, "fr": {"name": "Thé de Sarrasin Tartare", "tag": ""}, "es": {"name": "Té de Trigo Sarraceno Tártaro", "tag": ""}}},
 ];
 
 // 用常识从中文配料/菜名里判断：这道菜是否可调辣度
@@ -1584,6 +1591,7 @@ let state = {
   upsellShown: false,     // whether the drinks/dessert upsell has already been resolved for this checkout attempt
   upsellItems: [],        // 4 randomly-picked dish ids currently shown in the upsell modal
   upsellSelected: {},     // { dishId: true }
+  upsellQueue: [],        // "换一批"要按这个队列走：洗过牌、还没展示过的菜品 id，取完一轮再重新洗牌
 };
 
 let screenHistory = [];   // 记录来源页面，供“返回”按钮回退用
@@ -2198,8 +2206,43 @@ function handlePlaceOrderClick(){
   }
 }
 
+// 忘点提醒按三档优先级往下找：第一档(果饮/甜品/小吃凉菜)优先推；这三类都点过了
+// 才轮到第二档(软饮水/茶)；第二档也点过了才轮到第三档(酒水/啤酒)。每一档内部，
+// 哪个类别已经点过就从这一档里去掉那个类别，不推重复类型。真要是连酒水啤酒都
+// 点全了，池子会是空的，openUpsell 已有的"池子为空就直接下单"逻辑会接住
+const UPSELL_TIERS = [
+  ['drinks', 'desserts', 'snacks'],
+  ['softDrinks', 'tea'],
+  ['fineWines', 'beer'],
+];
+function orderedCategories(){
+  return new Set(MENU.filter(d => getItem(d.id).qty > 0).map(d => d.category));
+}
 function upsellPool(){
-  return MENU.filter(d => (d.category === 'desserts' || d.category === 'drinks' || d.category === 'softDrinks' || d.category === 'fineWines' || d.category === 'beer' || d.category === 'tea') && !dishFullySoldOut(d));
+  const ordered = orderedCategories();
+  let cats = [];
+  for(const tier of UPSELL_TIERS){
+    cats = tier.filter(c => !ordered.has(c));
+    if(cats.length > 0) break;
+  }
+  return MENU.filter(d => cats.includes(d.category) && !dishFullySoldOut(d));
+}
+
+// 从"没展示过"的洗牌队列里取 4 个：队列不够了就把（除了这一批已经选中的）
+// 剩下菜品重新洗牌接上去，保证同一轮里不重复、一轮展示完了才无限循环重来
+function nextUpsellBatch(){
+  const poolIds = upsellPool().map(d => d.id);
+  if(poolIds.length === 0) return [];
+  const batch = [];
+  while(batch.length < 4 && batch.length < poolIds.length){
+    if(state.upsellQueue.length === 0){
+      const remaining = poolIds.filter(id => !batch.includes(id));
+      if(remaining.length === 0) break;
+      state.upsellQueue = shuffle(remaining);
+    }
+    batch.push(state.upsellQueue.shift());
+  }
+  return batch;
 }
 
 function openUpsell(){
@@ -2209,18 +2252,19 @@ function openUpsell(){
     submitOrder();
     return;
   }
-  state.upsellItems = shuffle(pool.map(d => d.id)).slice(0, 4);
+  state.upsellQueue = shuffle(pool.map(d => d.id));
+  state.upsellItems = nextUpsellBatch();
   state.upsellSelected = {};
   state.upsellOpen = true;
   render();
 }
 
-// “换一批”：换成另外 4 个随机推荐，规则跟打开弹窗时一样。
+// “换一批”：从洗牌队列里接着取下 4 个，规则见 nextUpsellBatch。
 // 只重画格子本身，弹窗其余部分（标题、按钮）不用跟着重建。
 function shuffleUpsell(event){
   const pool = upsellPool();
   if(pool.length === 0) return;
-  state.upsellItems = shuffle(pool.map(d => d.id)).slice(0, 4);
+  state.upsellItems = nextUpsellBatch();
   state.upsellSelected = {};
   const grid = document.querySelector('.upsell-grid');
   if(grid) grid.innerHTML = upsellTilesHTML();

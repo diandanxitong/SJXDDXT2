@@ -231,7 +231,7 @@ const UI = {
     deleteItemQuestion: '确认删除这道菜？', deleteOrderQuestion: '确认整单删除？',
     tablePrefix: '桌 ', itemsCountLabel: n => `共 ${n} 项：`,
     operatorPlaceholder: '请输入操作人员姓名，不填不能删除', operatorHint: '仅支持汉字和英文字母',
-    cancel: '取消', confirmDeleteBtn: '确认删除', langToggleLabel: 'EN',
+    cancel: '取消', confirmDeleteBtn: '确认删除', confirmQtyChangeBtn: '确认修改', langToggleLabel: 'EN',
     sizeLabels: { half:'半份', whole:'整份', large:'大份', small:'小份', glass:'杯', bottle:'瓶', drinkSmall:'小', drinkLarge:'大' },
     optionLabels: { onion:'不要洋葱', scallion:'不要葱', ginger:'不要姜', cilantro:'不要香菜', meat:'不要肉' },
     cookMethodLabels: { steamed:'蒸', panFried:'煎' },
@@ -257,7 +257,7 @@ const UI = {
     deleteItemQuestion: 'Delete this item?', deleteOrderQuestion: 'Delete the entire order?',
     tablePrefix: 'Table ', itemsCountLabel: n => `${n} items:`,
     operatorPlaceholder: "Enter staff name (required to delete)", operatorHint: 'Chinese characters and English letters only',
-    cancel: 'Cancel', confirmDeleteBtn: 'Confirm Delete', langToggleLabel: '中',
+    cancel: 'Cancel', confirmDeleteBtn: 'Confirm Delete', confirmQtyChangeBtn: 'Confirm Change', langToggleLabel: '中',
     sizeLabels: { half:'Half', whole:'Whole', large:'Large', small:'Small', glass:'Glass', bottle:'Bottle', drinkSmall:'Small', drinkLarge:'Large' },
     optionLabels: { onion:'No Onion', scallion:'No Spring Onion', ginger:'No Ginger', cilantro:'No Coriander', meat:'No Meat' },
     cookMethodLabels: { steamed:'Steamed', panFried:'Pan-Fried' },
@@ -457,13 +457,16 @@ function renderDeleteModal(){
   }
 
   const { target, operatorName } = deleteModalCtx;
-  let question, detail;
+  let question, detail, confirmBtnLabel;
   if(type === 'item'){
     const { target: it, newQty } = deleteModalCtx;
-    question = newQty === 0 ? t('deleteItemQuestion') : t('editQtyConfirmQuestion');
+    const isQtyChange = newQty > 0;
+    question = isQtyChange ? t('editQtyConfirmQuestion') : t('deleteItemQuestion');
+    confirmBtnLabel = isQtyChange ? t('confirmQtyChangeBtn') : t('confirmDeleteBtn');
     detail = `${t('tablePrefix')}${escapeHtml(it.table)} · ${escapeHtml(staffDishNameByZh(it.name))} · ${it.qty} → ${newQty}`;
   }else{
     question = t('deleteOrderQuestion');
+    confirmBtnLabel = t('confirmDeleteBtn');
     detail = `${t('tablePrefix')}${escapeHtml(target.table)} · ${t('itemsCountLabel')(target.items.length)}${target.items.map(it => `${escapeHtml(staffDishNameByZh(it.name))}×${it.qty}`).join('、')}`;
   }
   el.innerHTML = `
@@ -477,7 +480,7 @@ function renderDeleteModal(){
         <p class="operator-hint">${t('operatorHint')}</p>
         <div class="confirm-actions">
           <button class="confirm-cancel-btn" onclick="cancelDelete()">${t('cancel')}</button>
-          <button class="confirm-yes-btn" id="delete-confirm-btn" onclick="confirmDelete()" ${operatorName.trim() ? '' : 'disabled'}>${t('confirmDeleteBtn')}</button>
+          <button class="confirm-yes-btn" id="delete-confirm-btn" onclick="confirmDelete()" ${operatorName.trim() ? '' : 'disabled'}>${confirmBtnLabel}</button>
         </div>
       </div>
     </div>`;

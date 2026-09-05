@@ -85,6 +85,13 @@
   .batch-time{font-size:11.5px;color:var(--text-muted);white-space:nowrap;}
   .batch-pending .batch-time{color:var(--warn-bright);font-weight:700;}
   .batch-processed .batch-time{color:var(--ok-bright);}
+  .pos-cat-group{margin-bottom:10px;}
+  .pos-cat-group:last-child{margin-bottom:0;}
+  .pos-cat-label{
+    font-size:10.5px;font-weight:900;color:var(--text-muted);letter-spacing:.04em;
+    text-transform:uppercase;margin-bottom:6px;padding-left:2px;
+    overflow-wrap:break-word;
+  }
   .item-list{list-style:none;display:flex;flex-direction:column;gap:8px;}
   .item-list li{
     display:flex;justify-content:space-between;align-items:center;gap:10px;
@@ -225,12 +232,13 @@ const UI = {
     tablePrefix: '桌 ', itemsCountLabel: n => `共 ${n} 项：`,
     operatorPlaceholder: '请输入操作人员姓名，不填不能删除', operatorHint: '仅支持汉字和英文字母',
     cancel: '取消', confirmDeleteBtn: '确认删除', langToggleLabel: 'EN',
-    sizeLabels: { half:'半份', whole:'整份', large:'大份', small:'小份', glass:'杯', bottle:'瓶' },
+    sizeLabels: { half:'半份', whole:'整份', large:'大份', small:'小份', glass:'杯', bottle:'瓶', drinkSmall:'小', drinkLarge:'大' },
     optionLabels: { onion:'不要洋葱', scallion:'不要葱', ginger:'不要姜', cilantro:'不要香菜', meat:'不要肉' },
     cookMethodLabels: { steamed:'蒸', panFried:'煎' },
     soupBaseLabels: { tomato:'番茄', classicMala:'经典川味麻辣', boneBrothSpicy:'骨汤（辣）', boneBrothMild:'骨汤（不辣）', mushroom:'菌汤', malaBan:'麻辣拌' },
     drinkLabels: { cola:'可乐/无糖可乐/健怡可乐', sevenUp:'七喜/无糖七喜', fanta:'芬达', jdb:'加多宝', aloe:'芦荟汁' },
     spiceLabels: { '微辣':'微辣', '中辣':'中辣', '特辣':'特辣' },
+    otherCategoryLabel: '其他',
   },
   en: {
     backToBoard: '← Order Board', addDish: '+ Add Dish', confirmedBadge: 'Confirmed', loading: 'Loading…',
@@ -250,14 +258,31 @@ const UI = {
     tablePrefix: 'Table ', itemsCountLabel: n => `${n} items:`,
     operatorPlaceholder: "Enter staff name (required to delete)", operatorHint: 'Chinese characters and English letters only',
     cancel: 'Cancel', confirmDeleteBtn: 'Confirm Delete', langToggleLabel: '中',
-    sizeLabels: { half:'Half', whole:'Whole', large:'Large', small:'Small', glass:'Glass', bottle:'Bottle' },
+    sizeLabels: { half:'Half', whole:'Whole', large:'Large', small:'Small', glass:'Glass', bottle:'Bottle', drinkSmall:'Small', drinkLarge:'Large' },
     optionLabels: { onion:'No Onion', scallion:'No Spring Onion', ginger:'No Ginger', cilantro:'No Coriander', meat:'No Meat' },
     cookMethodLabels: { steamed:'Steamed', panFried:'Pan-Fried' },
     soupBaseLabels: { tomato:'Tomato', classicMala:'Classic Sichuan Mala', boneBrothSpicy:'Pork Bone (Spicy)', boneBrothMild:'Pork Bone (Mild)', mushroom:'Mushroom', malaBan:'Mixed Mala' },
     drinkLabels: { cola:'Coke / Diet Coke / Coke Zero', sevenUp:'7 Up / Diet 7 Up', fanta:'Fanta', jdb:'Jiaduobao', aloe:'Aloe Juice' },
     spiceLabels: { '微辣':'Mild', '中辣':'Medium', '特辣':'Extra Spicy' },
+    otherCategoryLabel: 'Other',
   },
 };
+
+// POS 分类展示：只影响员工端订单详情页，客户端点单不受影响。
+// 门店收银机(POS)上菜品本来就分布在不同的按钮分类里，订单打到员工端却是乱序的一条条菜，
+// 员工找起来慢；这里把同一批次里的菜按 POS 按钮的分类重新分组显示，批次(大框)不变，
+// 分类(小框)是新加的。分类名照搬收银机按钮上的原文，不跟着中英文切换走。
+const POS_CATEGORY_ORDER = ['soupBase','beefLamb','seafood','vegetables','specialDish','meat','meatballsBalls','mushrooms','stapleFoodSnack','desserts','softDrinkWater','freshJuices','chineseTeaPot','openFood','whiteWine','redWine','sparkling','rose','shavedIce'];
+const POS_CATEGORY_LABELS = {
+  soupBase: 'Soup Base', beefLamb: 'Beef Lamb', seafood: 'Seafood', vegetables: 'Vegetables',
+  specialDish: 'Special Dish', meat: 'Meat', meatballsBalls: 'Meatballs/Balls', mushrooms: 'Mushrooms',
+  stapleFoodSnack: 'Staple Food Snack', desserts: 'Desserts', softDrinkWater: 'Soft Drink+Water',
+  freshJuices: 'Fresh Juices', chineseTeaPot: 'Chinese Tea (Pot)', openFood: 'Open Food',
+  whiteWine: 'White Wine', redWine: 'Red Wine', sparkling: 'Sparkling', rose: 'Rose', shavedIce: 'Shaved Ice',
+};
+// 菜名(下单时存的中文名) -> POS 分类。新增/改名菜品时要跟着补一条，不然会掉进"其他"。
+const POS_ITEM_CATEGORY = {"牛油锅":"soupBase","番茄锅（素）":"soupBase","菌汤锅（素）":"soupBase","骨汤锅":"soupBase","牛油汤 + 骨汤锅":"soupBase","牛油汤 + 菌汤锅":"soupBase","牛油汤 + 番茄锅":"soupBase","番茄锅 + 骨汤锅":"soupBase","番茄锅 + 菌汤锅":"soupBase","菌汤锅 + 骨汤锅":"soupBase","蘸料":"soupBase","极品雪花肥牛":"beefLamb","特色肥腿筋":"beefLamb","现切五花肉":"beefLamb","原切肥牛":"beefLamb","安格斯吊龙":"beefLamb","私房嫩牛肉":"beefLamb","麻辣牛肉":"beefLamb","现切牛舌":"beefLamb","日本和牛":"beefLamb","羔羊卷":"beefLamb","带头大虾":"seafood","海鲈鱼片":"seafood","手打虾滑":"seafood","墨鱼仔":"seafood","鱿鱼":"seafood","虾饺":"seafood","蔬菜拼盘":"vegetables","西兰花苔":"vegetables","年糕":"vegetables","甜玉米":"vegetables","生菜":"vegetables","豆腐":"vegetables","武隆粉丝":"vegetables","海带":"vegetables","豆芽":"vegetables","油豆腐":"vegetables","魔芋丝":"vegetables","藕片":"vegetables","土豆":"vegetables","茼蒿菜":"vegetables","干豆皮":"vegetables","龙口粉丝":"vegetables","海带芽":"vegetables","上海青":"vegetables","腐竹":"vegetables","山药":"vegetables","千丝土豆":"vegetables","菠菜":"vegetables","响铃卷":"vegetables","蜀南竹笋片":"vegetables","大白菜":"vegetables","方便面":"vegetables","白萝卜":"vegetables","极品鲜毛肚":"specialDish","特色肥鸡爪":"specialDish","草原千层肚":"specialDish","大刀腰片":"specialDish","麻辣鸡腿肉":"specialDish","特色肥肠":"specialDish","鸭血":"specialDish","特色肥牛筋儿":"specialDish","梅林午餐肉":"meat","现切老肉片":"meat","生鸡蛋":"meat","特色小郡肝":"meat","网红炸蛋":"meat","蟹肉棒":"meat","嫩滋猪肝":"meat","鲜绿脑花":"meat","丸子拼盘":"meatballsBalls","香菜猪肉丸":"meatballsBalls","日式脆皮肠":"meatballsBalls","福州鱼丸":"meatballsBalls","撒尿牛丸":"meatballsBalls","鸡肉丸":"meatballsBalls","菌类拼盘":"mushrooms","香菇":"mushrooms","金针菇":"mushrooms","杏鲍菇":"mushrooms","平菇":"mushrooms","黑木耳":"mushrooms","凉拌黄瓜":"stapleFoodSnack","油条":"stapleFoodSnack","红糖糍粑":"stapleFoodSnack","炸虾":"stapleFoodSnack","现炸酥肉":"stapleFoodSnack","特色蛋炒饭":"stapleFoodSnack","开胃黑木耳":"stapleFoodSnack","白米饭":"stapleFoodSnack","秘制泡菜":"stapleFoodSnack","韩国泡菜":"stapleFoodSnack","春卷":"stapleFoodSnack","辣袋":"stapleFoodSnack","杨枝甘露":"desserts","老成都醪糟汤圆（黑芝麻）":"desserts","特色冰粉":"desserts","炸馒头":"desserts","芝士蛋糕":"desserts","布朗尼":"desserts","可乐 330ml":"softDrinkWater","无糖可乐 330ml":"softDrinkWater","健怡可乐 330ml":"softDrinkWater","七喜 300ml":"softDrinkWater","无糖七喜 300ml":"softDrinkWater","芬达 Fanta 300ml":"softDrinkWater","加多宝 Jiaduobao":"softDrinkWater","芦荟汁 Aloe Juice":"softDrinkWater","芦荟汁(大) Aloe Juice":"softDrinkWater","维他豆奶(小) Soy Drink":"softDrinkWater","椰树牌椰汁":"softDrinkWater","纯净水":"softDrinkWater","气泡水":"softDrinkWater","小纯净水 330ml":"softDrinkWater","小气泡水 330ml":"softDrinkWater","大纯净水 750ml":"softDrinkWater","大气泡水 750ml":"softDrinkWater","芝芝莓莓":"freshJuices","芝芝芒芒":"freshJuices","芝芝葡萄":"freshJuices","草莓养乐多":"freshJuices","芒果柠檬茶":"freshJuices","茉莉草莓":"freshJuices","百香果柠檬茶":"freshJuices","猕猴桃柠檬茶":"freshJuices","蜜香轻乳茶":"freshJuices","红石榴柠檬茶":"freshJuices","茉莉青提":"freshJuices","杨梅柠檬茶":"freshJuices","茉莉轻乳茶":"freshJuices","酸梅汤":"freshJuices","蜂蜜柠檬茶":"freshJuices","苹果汁":"freshJuices","橙汁":"freshJuices","蔓越莓汁":"freshJuices","滇红茶":"chineseTeaPot","竹叶青茶":"chineseTeaPot","苦荞茶":"chineseTeaPot","青岛啤酒 330ml":"openFood","朝日啤酒 330ml":"openFood","喜力啤酒 330ml":"openFood","喜力0.0 330ml":"openFood","健力士 500ml":"openFood","健力士0.0 500ml":"openFood","Murari Pinot Grigio 卡斯特拉尼灰皮诺":"whiteWine","Bouchard Aine & Fils Sauvignon Blanc 长相思":"whiteWine","Peter & Peter Riesling":"whiteWine","Nau Mai Sauvignon Blanc":"whiteWine","Casal de Ventozela Alvarinho 阿瓦里诺":"whiteWine","Domäne Wachau Grüner Veltliner Federspiel":"whiteWine","Louis Jadot Bourgogne Chardonnay 'Couvent des Jacobins' 勃艮第霞多丽":"whiteWine","Marquis de Goulaine Sancerre 'Les Lorys' 桑塞尔":"whiteWine","Orquestra Tempranillo 丹魄乐团":"redWine","Reserve de L'Aube Syrah Merlot 奥布西拉梅洛珍藏":"redWine","Château Les Grand Vallons 波尔多-城堡":"redWine","Finca Mónica Crianza":"redWine","Fin del Mundo Reserva Malbec 珍藏马尔贝克":"redWine","Surani Primitivo di Manduria":"redWine","Louis Jadot Bourgogne Pinot Noir 'Couvent des Jacobins' 勃艮第黑皮诺":"redWine","Les Hauts de Lynch Moussas 上梦多克":"redWine","Serena Prosecco Frizzante 罗普罗蜜克(单人装20cl)":"sparkling","Montegrande Bianco Frizzante 蒙特格兰德(瓶)":"sparkling","Champagne Theophile Brut NV 香槟(瓶)":"sparkling","Domaine La Colombette Grenache Rosé 歌海娜玫瑰庄":"rose","Château de Berne Romance Rosé 普罗旺斯玫瑰":"rose","抹茶绵绵冰":"shavedIce","巧克力绵绵冰":"shavedIce","草莓绵绵冰":"shavedIce","芒果绵绵冰":"shavedIce","牛奶绵绵冰":"shavedIce"};
+function posCategoryFor(name){ return POS_ITEM_CATEGORY[name] || null; }
 function t(key){ return UI[getStaffLang()][key]; }
 
 function toggleStaffLang(){
@@ -532,13 +557,37 @@ function batchNameLabel(o){
   return name + (o.partySize ? t('partySizeSuffix')(o.partySize) : '');
 }
 
+// 批次(大框)不变，里面的菜按 POS 分类拆成一个个小框——员工照着收银机上的按钮分类找菜会更快
+function groupedItemsHTML(items, docKey){
+  const OTHER = '__other__';
+  const buckets = {};
+  (items || []).forEach((it, i) => {
+    const cat = posCategoryFor(it.name) || OTHER;
+    (buckets[cat] = buckets[cat] || []).push(itemLineHTML(it, docKey, i));
+  });
+  let html = '';
+  POS_CATEGORY_ORDER.forEach(cat => {
+    if(!buckets[cat] || buckets[cat].length === 0) return;
+    html += `<div class="pos-cat-group">
+        <p class="pos-cat-label">${POS_CATEGORY_LABELS[cat]}</p>
+        <ul class="item-list">${buckets[cat].join('')}</ul>
+      </div>`;
+  });
+  if(buckets[OTHER] && buckets[OTHER].length){
+    html += `<div class="pos-cat-group">
+        <p class="pos-cat-label">${t('otherCategoryLabel')}</p>
+        <ul class="item-list">${buckets[OTHER].join('')}</ul>
+      </div>`;
+  }
+  return html;
+}
+
 // 左列：还没送入厨房的批次，红框闪烁，按下单时间倒序——最新加的菜永远排在最上面
 function pendingBatchHTML(o){
   const { label } = elapsedInfo(o.createdAt);
-  const itemsHTML = (o.items || []).map((it, i) => itemLineHTML(it, o.key, i)).join('');
   return `<div class="batch-box batch-pending">
       <div class="batch-head"><span class="batch-name">${batchNameLabel(o)}</span><span class="batch-time">${label}</span></div>
-      <ul class="item-list">${itemsHTML}</ul>
+      ${groupedItemsHTML(o.items, o.key)}
     </div>`;
 }
 
@@ -546,10 +595,9 @@ function pendingBatchHTML(o){
 function processedBatchHTML(o){
   const mins = Math.floor((Date.now() - (o.confirmedAt || o.createdAt)) / 60000);
   const processedLabel = mins < 1 ? t('justProcessed') : t('minutesAgoProcessed')(mins);
-  const itemsHTML = (o.items || []).map((it, i) => itemLineHTML(it, o.key, i)).join('');
   return `<div class="batch-box batch-processed">
       <div class="batch-head"><span class="batch-name">${batchNameLabel(o)}</span><span class="batch-time">${processedLabel}</span></div>
-      <ul class="item-list">${itemsHTML}</ul>
+      ${groupedItemsHTML(o.items, o.key)}
     </div>`;
 }
 

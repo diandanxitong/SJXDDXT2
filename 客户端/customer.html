@@ -2403,7 +2403,7 @@ function flameIcons(n){
   return out;
 }
 
-const PICKABLE_TABLES = [...Array.from({length:30},(_,i)=>i+1), 888];
+const PICKABLE_TABLES = [...Array.from({length:30},(_,i)=>i+1), 888, '测试'];
 
 function tablePickHTML(){
   return `
@@ -2412,7 +2412,7 @@ function tablePickHTML(){
       <h1>${t('pickTitle')}</h1>
       <p class="pick-hint">${t('pickHint')}</p>
       <div class="table-grid">
-        ${PICKABLE_TABLES.map(n=>`<button onclick="selectTable(${n})">${t('tablePrefix')}${n}</button>`).join('')}
+        ${PICKABLE_TABLES.map(n=>`<button onclick="selectTable('${n}')">${t('tablePrefix')}${n}</button>`).join('')}
       </div>
     </div>`;
 }

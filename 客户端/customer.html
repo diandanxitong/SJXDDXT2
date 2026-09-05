@@ -975,6 +975,11 @@ function escapeHtml(s){
   return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 }
 
+// "测试"桌是内部专用的英文名字，切到非中文界面时显示"Test"而不是原样中文
+function displayTableName(tbl){
+  return (tbl === '测试' && state.lang !== 'zh' && state.lang !== 'zhHant') ? 'Test' : tbl;
+}
+
 // 给一个 promise 加超时：网络很差时 Firestore 请求可能一直挂着不 resolve 也不 reject，
 // 页面就会卡在"下单中"出不来。超时后统一当失败处理，好歹能提示顾客重试。
 function withTimeout(promise, ms){
@@ -2364,8 +2369,46 @@ function resetToMenu(){
 async function fetchTableOrders(table){
   try{
     const snap = await withTimeout(ordersRef.where('table', '==', String(table)).get(), 8000);
-    return snap.docs.map(d => d.data());
+    return snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
   }catch(e){ return []; }
+}
+
+// 判断两份菜品列表是不是完全一样的内容（忽略数组顺序），用来识别"重复提交"
+function itemsSignature(items){
+  return JSON.stringify((items || []).map(it =>
+    [it.name, it.qty, it.price, it.spice || '', it.size || '', it.cookMethod || '', (it.excludes || []).slice().sort().join(',')]
+  ).sort());
+}
+
+// 去重保护①：这一桌最近 windowMs 毫秒内，是不是已经有一笔菜品完全一样的订单——
+// 同一台设备手抖点了两下、或者请求卡住后又点了一次，都可能出现这种情况
+function findRecentDuplicateOrder(candidateOrders, items, windowMs){
+  const now = Date.now();
+  const sig = itemsSignature(items);
+  return candidateOrders.find(o => (now - o.createdAt) < windowMs && itemsSignature(o.items) === sig) || null;
+}
+
+// 去重保护②：真正建单前先在一个事务里抢共享购物车草稿——如果草稿里这次要提交的
+// 菜品已经不在了（说明同桌另一台设备已经抢先提交并清空过这份草稿），这次事务就
+// 什么也不写，不重复建单；只有确认草稿还在，才会在同一个事务里把"建单"和"清空
+// 草稿"一起做掉，保证不会被另一台设备的同一次操作插队
+async function claimSharedCartAndSubmit(order){
+  const cartRef = tableCartsRef.doc(order.table);
+  const newOrderRef = ordersRef.doc();
+  let created = false;
+  await db.runTransaction(async tx => {
+    const cartSnap = await tx.get(cartRef);
+    const cartItems = (cartSnap.exists && cartSnap.data().items) || {};
+    const draftStillHasItems = Object.keys(cartItems).some(id => cartItems[id] && cartItems[id].qty > 0);
+    if(!draftStillHasItems) return;
+    tx.set(newOrderRef, {
+      table: order.table, items: order.items, createdAt: order.createdAt,
+      nickname: order.nickname, partySize: order.partySize, status: 'pending',
+    });
+    tx.set(cartRef, { items: {}, updatedAt: Date.now() });
+    created = true;
+  });
+  return created ? newOrderRef.id : null;
 }
 
 // 同一桌可能有多笔未处理订单（加菜），按“菜名+辣度+份量”合并数量，方便顾客看到本桌目前的点单全貌
@@ -2408,14 +2451,30 @@ async function submitOrder(){
     const priorOrders = await fetchTableOrders(state.table);
     const isAddOn = priorOrders.length > 0;
 
-    const docRef = await withTimeout(ordersRef.add({
-      table: order.table,
-      items: order.items,
-      createdAt: order.createdAt,
-      nickname: order.nickname,
-      partySize: order.partySize,
-      status: 'pending',
-    }), 12000);
+    // 两道去重保护：命中任何一道，都不再重复建单，直接借用已经存在的那一笔当作
+    // 这次提交的结果——不提示、不报错，安安静静跳去下单成功页，反正前面已经下成了
+    let docId = findRecentDuplicateOrder(priorOrders, items, 3000);
+    docId = docId && docId.id;
+    if(!docId){
+      docId = await claimSharedCartAndSubmit(order);
+      if(!docId){
+        const freshOrders = await fetchTableOrders(state.table);
+        const borrowed = findRecentDuplicateOrder(freshOrders, items, 15000);
+        docId = borrowed && borrowed.id;
+      }
+    }
+
+    if(!docId){
+      const docRef = await withTimeout(ordersRef.add({
+        table: order.table,
+        items: order.items,
+        createdAt: order.createdAt,
+        nickname: order.nickname,
+        partySize: order.partySize,
+        status: 'pending',
+      }), 12000);
+      docId = docRef.id;
+    }
 
     const tableOrders = await fetchTableOrders(state.table);
     const summaryItems = mergeItems(tableOrders.length > 0 ? tableOrders : [...priorOrders, order]);
@@ -2423,7 +2482,7 @@ async function submitOrder(){
     state.lastOrder = {
       table: order.table, items: order.items, summaryItems, isAddOn,
       nickname: order.nickname, partySize: order.partySize,
-      docId: docRef.id, status: 'pending', removed: false,
+      docId, status: 'pending', removed: false,
     };
     // 这一轮共享购物车草稿已经变成正式订单了，立刻清空——不然同桌其他设备还会
     // 看着这些菜"待点"，容易重复加、重复下单
@@ -2456,7 +2515,7 @@ function tablePickHTML(){
       <h1>${t('pickTitle')}</h1>
       <p class="pick-hint">${t('pickHint')}</p>
       <div class="table-grid">
-        ${PICKABLE_TABLES.map(n=>`<button onclick="selectTable('${n}')">${t('tablePrefix')}${n}</button>`).join('')}
+        ${PICKABLE_TABLES.map(n=>`<button onclick="selectTable('${n}')">${t('tablePrefix')}${displayTableName(String(n))}</button>`).join('')}
       </div>
     </div>`;
 }
@@ -2673,7 +2732,7 @@ function menuHTML(){
         <div class="table-badge">
           <span class="eyebrow">${t('tableEyebrow')}</span>
           <div class="table-badge-row">
-            <span class="num">${escapeHtml(state.table)}</span>
+            <span class="num">${escapeHtml(displayTableName(state.table))}</span>
             ${!state.lockedByUrl ? `<button class="change-table" onclick="changeTable()">${t('changeTable')}</button>` : ''}
           </div>
         </div>
@@ -2768,7 +2827,7 @@ function myOrderHTML(){
   return `
     ${backRowHTML()}
     <div class="confirm-screen">
-      <p class="eyebrow">${t('tableEyebrow')} ${escapeHtml(state.table)}</p>
+      <p class="eyebrow">${t('tableEyebrow')} ${escapeHtml(displayTableName(state.table))}</p>
       <h2 style="margin-top:6px;">${t('myOrder')}</h2>
       ${state.myOrderLoading
         ? `<p class="hint">${t('loading')}</p>`
@@ -2839,7 +2898,7 @@ function cartHTML(){
   return `
     ${backRowHTML()}
     <div class="confirm-screen">
-      <p class="eyebrow">${t('tableEyebrow')} ${escapeHtml(state.table)}</p>
+      <p class="eyebrow">${t('tableEyebrow')} ${escapeHtml(displayTableName(state.table))}</p>
       <h2 style="margin-top:6px;">${t('cart')}</h2>
       ${items.length === 0
         ? `<p class="hint">${t('emptyCart')}</p>`
@@ -2865,7 +2924,7 @@ function orderReviewHTML(){
   return `
     ${backRowHTML()}
     <div class="confirm-screen">
-      <p class="eyebrow">${t('tableEyebrow')} ${escapeHtml(state.table)}</p>
+      <p class="eyebrow">${t('tableEyebrow')} ${escapeHtml(displayTableName(state.table))}</p>
       <h2 style="margin-top:6px;">${t('orderReviewTitle')}</h2>
       ${items.length === 0
         ? `<p class="hint">${t('emptyCart')}</p>`

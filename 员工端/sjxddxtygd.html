@@ -339,6 +339,11 @@ function escapeHtml(s){
   return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 }
 
+// "测试"桌是英文名字，切到英文界面时显示"Test"而不是原样中文
+function displayTableName(tbl){
+  return (tbl === '测试' && getStaffLang() === 'en') ? 'Test' : tbl;
+}
+
 // 英文版：只是给员工看板换一套界面文字，不影响任何业务逻辑或数据。语言状态存在
 // localStorage 里（staff-i18n.js 里定义），沽清菜品/员工加菜/订单详情几个页面共用
 // 同一个开关，接单看板点一次就全部切过去，不用每个页面各点一次
@@ -840,7 +845,7 @@ function cardHTML(group){
   return `
     <div class="order-card ${level}${flashingClass}${testClass}">
       <div class="card-top">
-        <span class="table-num">${t('tablePrefix')}${escapeHtml(group.table)}</span>
+        <span class="table-num">${t('tablePrefix')}${escapeHtml(displayTableName(group.table))}</span>
         <span style="display:flex;gap:8px;align-items:center;">
           ${state === 'done' ? `<span class="confirmed-badge">${t('confirmedBadge')}</span>` : ''}
           <span class="elapsed">${label}</span>

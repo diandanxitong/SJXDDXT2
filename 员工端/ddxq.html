@@ -59,18 +59,30 @@
     border-radius:20px;padding:3px 10px;white-space:nowrap;
   }
 
+  .checkout-reminder-banner{
+    background:var(--urgent);color:#fff;border:1px solid var(--urgent);
+    border-radius:12px;padding:10px 14px;font-size:13px;font-weight:800;text-align:center;
+    margin-bottom:16px;
+  }
+
   .empty{margin-top:22vh;text-align:center;color:var(--text-muted);}
   .empty p{font-size:15px;margin-bottom:16px;}
 
-  /* 两列布局：左边"新加菜品/待送入厨房"橙框闪烁，右边"已处理/已送入厨房"绿框静止。
-     每个 order 文档（一次下单或一次加菜）就是一个批次，各自一个 batch-box，
-     不再跨批次合并同名菜品——批次本身已经是视觉上的分隔，合并反而会让"这批还没做"
-     和"那批早就上了"混在一起看不清楚 */
+  /* 左右两栏独立：左边待处理橙框闪烁，右边已处理绿框静止。每个 order 文档
+     （一次下单或一次加菜）是一个批次，各自一个 batch-box，不再跨批次合并同名
+     菜品——批次本身已经是视觉上的分隔，合并反而会让"这批还没做"和"那批早就
+     上了"混在一起看不清楚。按锅底分组的这一组批次，在各自那一栏里再套一层
+     橙色的组框（不跨栏合并）；结账按钮只在已处理栏、且这一组全部批次都送入
+     厨房了才会出现在组框上，一组只出一个 */
   .columns{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;margin-bottom:8px;}
   @media (max-width:760px){ .columns{grid-template-columns:1fr;} }
   .column-title{font-size:14px;font-weight:900;color:var(--text-muted);margin-bottom:10px;}
   .column-empty{font-size:13px;color:var(--text-muted);padding:6px 2px 18px;}
+  .group-box{border-radius:18px;padding:12px;margin-bottom:14px;border:2px solid var(--warn);background:rgba(245,158,11,.06);}
+  .group-head{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+  .group-checkout-hint{font-size:11px;font-weight:700;color:var(--text-muted);white-space:nowrap;}
   .batch-box{border-radius:16px;padding:14px 14px 12px;margin-bottom:12px;}
+  .batch-box:last-child{margin-bottom:0;}
   .batch-pending{background:rgba(245,158,11,.10);border:2px solid var(--warn);}
   @media (prefers-reduced-motion:no-preference){
     .batch-pending{animation:batch-flash 1.1s ease-in-out infinite;}
@@ -80,7 +92,13 @@
     50%{box-shadow:0 0 0 7px rgba(245,158,11,0);}
   }
   .batch-processed{background:rgba(52,211,153,.08);border:2px solid var(--ok);}
-  .batch-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:10px;}
+  .batch-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+  .batch-checkout-btn{
+    flex-shrink:0;font-family:inherit;font-size:11px;font-weight:900;cursor:pointer;
+    padding:3px 10px;border-radius:20px;background:rgba(52,211,153,.14);
+    border:1px solid var(--ok);color:var(--ok);white-space:nowrap;
+  }
+  .batch-checkout-btn:hover{background:rgba(52,211,153,.24);}
   .batch-name{font-size:13px;font-weight:900;color:var(--text-muted);}
   .batch-time{font-size:11.5px;color:var(--text-muted);white-space:nowrap;}
   .batch-pending .batch-time{color:var(--warn-bright);font-weight:700;}
@@ -142,12 +160,14 @@
   .qty-zero-hint{font-size:12.5px;color:var(--urgent);text-align:center;margin:-6px 0 16px;}
 
   .action-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;}
-  .action-row button, .action-row a{
+  /* 这几个按钮的外观跟"放在哪个容器里"脱钩——确认送入厨房现在紧跟在待处理列表
+     最后一条菜品下面（不在底部 action-row 里了），整单删除/返回看板还留在底部 */
+  .confirm-btn, .back-to-board-btn, .order-del-btn{
     flex:1;min-width:180px;padding:14px;border-radius:10px;font-size:15px;cursor:pointer;font-weight:900;
     font-family:inherit;text-decoration:none;text-align:center;
     display:flex;align-items:center;justify-content:center;
   }
-  .confirm-btn{background:rgba(245,158,11,.14);border:1px solid var(--warn);color:var(--warn);}
+  .confirm-btn{background:rgba(245,158,11,.14);border:1px solid var(--warn);color:var(--warn);margin-top:14px;width:100%;}
   .confirm-btn:hover{background:rgba(245,158,11,.22);}
   /* 结账只在接单看板的桌号卡片上做，这里"已全部送入厨房"时改成一个纯返回链接 */
   .back-to-board-btn{background:none;border:1px solid var(--line);color:var(--text-muted);}
@@ -173,6 +193,9 @@
   .confirm-yes-btn{background:rgba(248,113,113,.18);border:1px solid var(--urgent);color:var(--urgent);}
   .confirm-yes-btn:hover{background:rgba(248,113,113,.28);}
   .confirm-yes-btn:disabled{opacity:.4;cursor:default;}
+  .confirm-yes-btn.ok{background:rgba(52,211,153,.18);border-color:var(--ok);color:var(--ok);}
+  .confirm-yes-btn.ok:hover{background:rgba(52,211,153,.28);}
+  .checkout-reminder{font-size:13px;font-weight:900;color:var(--urgent);margin-bottom:14px;}
   .delete-modal-detail{
     font-size:13px;color:var(--text-muted);margin-bottom:14px;line-height:1.5;
     background:rgba(255,255,255,.04);border-radius:8px;padding:10px 12px;text-align:left;
@@ -202,6 +225,7 @@
   </div>
   <span class="status" id="status">加载中…</span>
 </header>
+<div class="checkout-reminder-banner" id="checkout-reminder-banner"></div>
 <div id="app"></div>
 <div id="delete-modal"></div>
 
@@ -225,6 +249,11 @@ const ordersRef = db.collection('orders');
 // 桌号、顾客昵称都是外部输入，塞进 innerHTML 前必须转义
 function escapeHtml(s){
   return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+// "测试"桌是英文名字，切到英文界面时显示"Test"而不是原样中文
+function displayTableName(tbl){
+  return (tbl === '测试' && getStaffLang() === 'en') ? 'Test' : tbl;
 }
 
 const params = new URLSearchParams(location.search);
@@ -257,6 +286,11 @@ const UI = {
     drinkLabels: { cola:'可乐/无糖可乐/健怡可乐', sevenUp:'七喜/无糖七喜', fanta:'芬达', jdb:'加多宝', aloe:'芦荟汁' },
     spiceLabels: { '微辣':'微辣', '中辣':'中辣', '特辣':'特辣' },
     otherCategoryLabel: '其他', editedBadge: '已编辑',
+    checkoutReminderBanner: '如果忘记在看板结账，这里可以补救，但下次别忘了在看板结账！',
+    batchCheckoutBtn: '💳 结账', checkoutBatchQuestion: '确认这一组订单已经结账？',
+    checkoutReminder: '下次可不许忘了哦！', checkoutBatchYes: '确认结账',
+    checkoutFailMsg: '记账失败，请重试，或去"今日盘点"里人工补录',
+    groupNotReadyHint: '还有菜没送入厨房，暂不能结账',
   },
   en: {
     backToBoard: '← Order Board', addDish: '+ Add Dish', confirmedBadge: 'Confirmed', loading: 'Loading…',
@@ -283,6 +317,11 @@ const UI = {
     drinkLabels: { cola:'Coke / Diet Coke / Coke Zero', sevenUp:'7 Up / Diet 7 Up', fanta:'Fanta', jdb:'Jiaduobao', aloe:'Aloe Juice' },
     spiceLabels: { '微辣':'Mild', '中辣':'Medium', '特辣':'Extra Spicy' },
     otherCategoryLabel: 'Other', editedBadge: 'Edited',
+    checkoutReminderBanner: 'If you forgot to check out on the Board, you can fix it here — but don\'t forget to check out on the Board next time!',
+    batchCheckoutBtn: '💳 Checkout', checkoutBatchQuestion: 'Confirm this group of orders has been checked out?',
+    checkoutReminder: 'Don\'t forget next time!', checkoutBatchYes: 'Confirm Checkout',
+    checkoutFailMsg: 'Failed to record, please retry or add it manually in "Today\'s Report"',
+    groupNotReadyHint: 'Some items not sent to kitchen yet — checkout unavailable',
   },
 };
 
@@ -315,7 +354,8 @@ function applyStaticI18n(){
   document.getElementById('add-dish-link').textContent = t('addDish');
   document.getElementById('confirmed-badge').textContent = t('confirmedBadge');
   document.getElementById('lang-toggle-btn').textContent = t('langToggleLabel');
-  document.getElementById('table-title').textContent = table ? `${t('tablePrefix')}${escapeHtml(table)}` : t('noTable');
+  document.getElementById('table-title').textContent = table ? `${t('tablePrefix')}${escapeHtml(displayTableName(table))}` : t('noTable');
+  document.getElementById('checkout-reminder-banner').textContent = t('checkoutReminderBanner');
   if(!loaded) document.getElementById('status').textContent = t('loading');
 }
 document.getElementById('add-dish-link').href = `ygjc.html?table=${encodeURIComponent(table || '')}`;
@@ -379,7 +419,64 @@ async function confirmToKitchen(keys){
 
 // 单品修改数量（点编辑先调数量，再和整单删除一样要求填操作人姓名才能确认）/ 整单删除：
 // 都会记一条日志到 staffActionLogs，供"员工操作日志"页面查看
-let deleteModalCtx = null;   // null | { type:'order', target, operatorName } | { type:'item', step:'qty'|'operator', target, newQty, operatorName }
+// "测试"桌不计入营业额，跟接单看板的结账逻辑保持一致
+function isTestTable(tbl){ return tbl === '测试'; }
+
+function todayKey(d){
+  d = d || new Date();
+  const pad = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+
+// 按锅底分组的这一组批次一起结账：记一笔合并流水，删掉组里所有 order 文档——
+// 这只是防员工忘记结账的备用按钮，正式结账仍然在接单看板上整桌进行
+async function recordDailyCheckoutGroup(items, tbl){
+  const cleanItems = (items || []).map(it => ({ name: it.name, qty: it.qty, price: it.price || 0 }));
+  if(cleanItems.length === 0) return;
+  const revenue = cleanItems.reduce((s, it) => s + it.price * it.qty, 0);
+  const date = todayKey();
+  await db.runTransaction(async tx => {
+    const counterRef = db.collection('counters').doc('dailyOrderSeq');
+    const snap = await tx.get(counterRef);
+    const prev = snap.exists ? snap.data() : null;
+    const seq = (prev && prev.date === date) ? prev.seq + 1 : 1;
+    tx.set(counterRef, { date, seq });
+    const recordRef = db.collection('dailyOrders').doc();
+    tx.set(recordRef, { seq, date, table: tbl, items: cleanItems, revenue, archivedAt: Date.now() });
+  });
+}
+
+function requestCheckoutBatch(idx){
+  const target = checkoutTargets[idx];
+  if(!target) return;
+  deleteModalCtx = { type: 'checkout', target };
+  renderDeleteModal();
+}
+
+function confirmCheckoutBatch(){
+  if(!deleteModalCtx || deleteModalCtx.type !== 'checkout') return;
+  const target = deleteModalCtx.target;
+  deleteModalCtx = null;
+  renderDeleteModal();
+  performCheckoutBatch(target);
+}
+
+async function performCheckoutBatch(target){
+  const { docKeys, table: tbl, items } = target;
+  orders = orders.filter(o => !docKeys.includes(o.key));
+  render();
+  if(!isTestTable(tbl)){
+    try{ await recordDailyCheckoutGroup(items, tbl); }
+    catch(e){ alert(t('checkoutFailMsg')); }
+  }
+  try{
+    const batch = db.batch();
+    docKeys.forEach(key => batch.delete(ordersRef.doc(key)));
+    await batch.commit();
+  }catch(e){ /* onSnapshot 会在下一次推送时自动纠正 */ }
+}
+
+let deleteModalCtx = null;   // null | { type:'order', target, operatorName } | { type:'item', step:'qty'|'operator', target, newQty, operatorName } | { type:'checkout', target }
 
 function requestEditItem(idx){
   const target = itemDeleteTargets[idx];
@@ -452,6 +549,24 @@ function renderDeleteModal(){
   if(!deleteModalCtx){ el.innerHTML = ''; return; }
   const { type } = deleteModalCtx;
 
+  if(type === 'checkout'){
+    const { target } = deleteModalCtx;
+    const detail = `${t('tablePrefix')}${escapeHtml(displayTableName(target.table))} · ${target.items.map(it => `${escapeHtml(staffDishNameByZh(it.name))}×${it.qty}`).join('、')}`;
+    el.innerHTML = `
+      <div class="confirm-overlay">
+        <div class="confirm-box">
+          <p class="confirm-question">${t('checkoutBatchQuestion')}</p>
+          <p class="checkout-reminder">${t('checkoutReminder')}</p>
+          <p class="delete-modal-detail">${detail}</p>
+          <div class="confirm-actions">
+            <button class="confirm-cancel-btn" onclick="cancelDelete()">${t('cancel')}</button>
+            <button class="confirm-yes-btn ok" onclick="confirmCheckoutBatch()">${t('checkoutBatchYes')}</button>
+          </div>
+        </div>
+      </div>`;
+    return;
+  }
+
   if(type === 'item' && deleteModalCtx.step === 'qty'){
     const { target, newQty } = deleteModalCtx;
     el.innerHTML = `
@@ -481,11 +596,11 @@ function renderDeleteModal(){
     const isQtyChange = newQty > 0;
     question = isQtyChange ? t('editQtyConfirmQuestion') : t('deleteItemQuestion');
     confirmBtnLabel = isQtyChange ? t('confirmQtyChangeBtn') : t('confirmDeleteBtn');
-    detail = `${t('tablePrefix')}${escapeHtml(it.table)} · ${escapeHtml(staffDishNameByZh(it.name))} · ${it.qty} → ${newQty}`;
+    detail = `${t('tablePrefix')}${escapeHtml(displayTableName(it.table))} · ${escapeHtml(staffDishNameByZh(it.name))} · ${it.qty} → ${newQty}`;
   }else{
     question = t('deleteOrderQuestion');
     confirmBtnLabel = t('confirmDeleteBtn');
-    detail = `${t('tablePrefix')}${escapeHtml(target.table)} · ${t('itemsCountLabel')(target.items.length)}${target.items.map(it => `${escapeHtml(staffDishNameByZh(it.name))}×${it.qty}`).join('、')}`;
+    detail = `${t('tablePrefix')}${escapeHtml(displayTableName(target.table))} · ${t('itemsCountLabel')(target.items.length)}${target.items.map(it => `${escapeHtml(staffDishNameByZh(it.name))}×${it.qty}`).join('、')}`;
   }
   el.innerHTML = `
     <div class="confirm-overlay">
@@ -555,6 +670,11 @@ async function performDeleteOrder(target, operatorName){
 // （有些酒款名字带英文单引号）直接拼进 onclick 属性里，那样字符串会被提前截断
 let itemDeleteTargets = [];
 let orderDeleteTargets = [];
+let checkoutTargets = [];
+// 按锅底分组：render() 里重新算一遍，同一组里的批次共用一个结账按钮/同一个 checkoutTargets 下标
+let currentGroupOf = {};        // order.key -> 组号
+let currentOrdersByGroup = {};  // 组号 -> 这一组的 order 数组
+let groupCheckoutIndex = {};    // 组号 -> 这次 render() 里 checkoutTargets 的下标，避免同一组重复注册
 
 function itemLineHTML(it, docKey, itemIdx){
   const tags = [];
@@ -605,7 +725,7 @@ function groupedItemsHTML(items, docKey){
   return html;
 }
 
-// 左列：还没送入厨房的批次，红框闪烁，按下单时间倒序——最新加的菜永远排在最上面
+// 左列：还没送入厨房的批次，橙框闪烁
 function pendingBatchHTML(o){
   const { label } = elapsedInfo(o.createdAt);
   return `<div class="batch-box batch-pending">
@@ -614,13 +734,61 @@ function pendingBatchHTML(o){
     </div>`;
 }
 
-// 右列：已经送入厨房的批次，绿框不闪烁，显示"几分钟前已处理"，同样按处理时间倒序
+// 右列：已经送入厨房的批次，绿框静止，显示"几分钟前已处理"
 function processedBatchHTML(o){
   const mins = Math.floor((Date.now() - (o.confirmedAt || o.createdAt)) / 60000);
   const processedLabel = mins < 1 ? t('justProcessed') : t('minutesAgoProcessed')(mins);
   return `<div class="batch-box batch-processed">
       <div class="batch-head"><span class="batch-name">${batchNameLabel(o)}</span><span class="batch-time">${processedLabel}</span></div>
       ${groupedItemsHTML(o.items, o.key)}
+    </div>`;
+}
+
+// 同一栏里（待处理栏 or 已处理栏各自独立算）把批次按锅底分组的组号聚在一起，
+// 每组套一层橙色外框——不跨栏合并，左右两栏还是各自独立显示
+function clusterByGroup(batchList){
+  const order = [];
+  const map = {};
+  batchList.forEach(o => {
+    const g = currentGroupOf[o.key];
+    if(!map[g]){ map[g] = []; order.push(g); }
+    map[g].push(o);
+  });
+  return order.map(g => ({ groupId: g, batches: map[g] }));
+}
+
+// 待处理栏里的组框：只要组里还有批次没送入厨房就一定会出现在这一栏，所以
+// 一律显示提示语，不放结账按钮——总不能菜还没做就先把单结掉
+function pendingGroupWrapperHTML(cluster){
+  const batchesHTML = cluster.batches.map(pendingBatchHTML).join('');
+  return `<div class="group-box">
+      <div class="group-head"><span class="group-checkout-hint">${t('groupNotReadyHint')}</span></div>
+      ${batchesHTML}
+    </div>`;
+}
+
+// 已处理栏里的组框：这一组所有批次（不管在哪一栏）都确认送入厨房了，才出结账
+// 按钮，点一下把这一组的全部批次一起结账；还没全部确认就先不放按钮
+function processedGroupWrapperHTML(cluster){
+  const groupOrders = currentOrdersByGroup[cluster.groupId];
+  const allSentToKitchen = groupOrders.every(go => go.status === 'confirmed');
+  const batchesHTML = cluster.batches.map(processedBatchHTML).join('');
+  let headHTML = '';
+  if(allSentToKitchen){
+    let idx = groupCheckoutIndex[cluster.groupId];
+    if(idx === undefined){
+      const docKeys = groupOrders.map(go => go.key);
+      const items = [];
+      groupOrders.forEach(go => (go.items || []).forEach(it => items.push(it)));
+      idx = checkoutTargets.length;
+      checkoutTargets.push({ docKeys, table, items });
+      groupCheckoutIndex[cluster.groupId] = idx;
+    }
+    headHTML = `<div class="group-head"><button class="batch-checkout-btn" onclick="requestCheckoutBatch(${idx})">${t('batchCheckoutBtn')}</button></div>`;
+  }
+  return `<div class="group-box">
+      ${headHTML}
+      ${batchesHTML}
     </div>`;
 }
 
@@ -635,6 +803,10 @@ function orderDelBtnHTML(realBatch){
 function render(){
   itemDeleteTargets = [];
   orderDeleteTargets = [];
+  checkoutTargets = [];
+  groupCheckoutIndex = {};
+  currentGroupOf = {};
+  currentOrdersByGroup = {};
   const app = document.getElementById('app');
   if(!loaded) return;
 
@@ -649,6 +821,21 @@ function render(){
   }
 
   const realBatch = orders.filter(o => !o.call && (o.items || []).length > 0).sort((a,b) => a.createdAt - b.createdAt);
+
+  // 按锅底分组：realBatch 已经按下单时间从早到晚排好了，遇到真正的锅底（不算蘸料）
+  // 就开新的一组，后面的批次都算进这一组，直到下一个锅底再开一组。第一个锅底出现
+  // 之前下的单（比如菜还没上桌先点了杯饮料）不单独成组，跟着并入第一组——不然会
+  // 平白多出一个没有锅底、员工也没法一起结账的"孤儿组"
+  let groupSeq = 0;
+  let hasSeenSoupBase = false;
+  realBatch.forEach(o => {
+    const hasRealSoupBase = (o.items || []).some(it => posCategoryFor(it.name) === 'soupBase' && it.name !== '蘸料');
+    if(hasRealSoupBase){ groupSeq++; hasSeenSoupBase = true; }
+    const g = hasSeenSoupBase ? groupSeq : 1;
+    currentGroupOf[o.key] = g;
+    (currentOrdersByGroup[g] = currentOrdersByGroup[g] || []).push(o);
+  });
+
   const { label, level } = elapsedInfo(realBatch[0].createdAt);
   const pendingBatches = realBatch.filter(o => o.status !== 'confirmed').slice().sort((a,b) => b.createdAt - a.createdAt);
   const processedBatches = realBatch.filter(o => o.status === 'confirmed').slice().sort((a,b) => (b.confirmedAt||b.createdAt) - (a.confirmedAt||a.createdAt));
@@ -659,23 +846,29 @@ function render(){
   elapsedPill.className = 'elapsed ' + level;
   document.getElementById('confirmed-badge').hidden = anyPending;
 
-  const actionBtn = anyPending
+  // 确认送入厨房紧跟在待处理列表最后一条菜品下面，不用滑到页面最底部
+  const confirmToKitchenBtn = anyPending
     ? `<button class="confirm-btn" data-keys="${pendingBatches.map(o=>o.key).join(',')}" onclick="confirmToKitchen(this.dataset.keys.split(','))">${t('confirmToKitchen')}</button>`
-    : `<a class="back-to-board-btn" href="sjxddxtygd.html">${t('backToBoardShort')}</a>`;
+    : '';
+  const bottomActionBtn = anyPending ? '' : `<a class="back-to-board-btn" href="sjxddxtygd.html">${t('backToBoardShort')}</a>`;
+
+  const pendingClusters = clusterByGroup(pendingBatches);
+  const processedClusters = clusterByGroup(processedBatches);
 
   app.innerHTML = `
     <div class="columns">
       <section>
         <p class="column-title">${t('pendingColumnTitle')}</p>
-        ${pendingBatches.length ? pendingBatches.map(pendingBatchHTML).join('') : `<p class="column-empty">${t('noPendingItems')}</p>`}
+        ${pendingClusters.length ? pendingClusters.map(pendingGroupWrapperHTML).join('') : `<p class="column-empty">${t('noPendingItems')}</p>`}
+        ${confirmToKitchenBtn}
       </section>
       <section>
         <p class="column-title">${t('processedColumnTitle')}</p>
-        ${processedBatches.length ? processedBatches.map(processedBatchHTML).join('') : `<p class="column-empty">${t('noProcessedItems')}</p>`}
+        ${processedClusters.length ? processedClusters.map(processedGroupWrapperHTML).join('') : `<p class="column-empty">${t('noProcessedItems')}</p>`}
       </section>
     </div>
     <div class="action-row">
-      ${actionBtn}
+      ${bottomActionBtn}
       ${orderDelBtnHTML(realBatch)}
     </div>`;
 }

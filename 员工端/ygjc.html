@@ -192,7 +192,7 @@ const UI = {
     searchPlaceholder: '搜索菜品或酒水名称…', soldOutBadge: '已沽清',
     perPersonSuffix: '/人',
     noTableMsg: '没有指定桌号，请从接单看板的订单详情页进入。', noMatch: '没有找到匹配的菜品',
-    modalNote: (tbl) => `确认后会给桌 ${escapeHtml(tbl)} 生成一笔新的待处理订单，仍需要在订单详情页里手动"确认送入厨房"。`,
+    modalNote: (tbl) => `确认后会给桌 ${escapeHtml(displayTableName(tbl))} 生成一笔新的待处理订单，仍需要在订单详情页里手动"确认送入厨房"。`,
     cancel: '取消', addFailedMsg: '加菜失败，请重试', langToggleLabel: 'EN',
     sizeLabels: { large:'大份', small:'小份', glass:'杯', bottle:'瓶', drinkSmall:'小', drinkLarge:'大' },
   },
@@ -202,7 +202,7 @@ const UI = {
     searchPlaceholder: 'Search dish or drink name…', soldOutBadge: 'Sold Out',
     perPersonSuffix: '/person',
     noTableMsg: 'No table specified — please enter from the order detail page on the order board.', noMatch: 'No matching dishes found',
-    modalNote: (tbl) => `Confirming creates a new pending order for Table ${escapeHtml(tbl)} — you'll still need to manually "Confirm, Send to Kitchen" on the order detail page.`,
+    modalNote: (tbl) => `Confirming creates a new pending order for Table ${escapeHtml(displayTableName(tbl))} — you'll still need to manually "Confirm, Send to Kitchen" on the order detail page.`,
     cancel: 'Cancel', addFailedMsg: 'Failed to add dish, please try again', langToggleLabel: '中',
     sizeLabels: { large:'Large', small:'Small', glass:'Glass', bottle:'Bottle', drinkSmall:'Small', drinkLarge:'Large' },
   },
@@ -220,7 +220,7 @@ function applyStaticI18n(){
   document.getElementById('back-link').textContent = t('backToDetail');
   document.getElementById('lang-toggle-btn').textContent = t('langToggleLabel');
   document.getElementById('page-title').textContent = t('pageTitle');
-  document.getElementById('table-pill').textContent = table ? `${t('tablePrefix')}${escapeHtml(table)}` : t('noTable');
+  document.getElementById('table-pill').textContent = table ? `${t('tablePrefix')}${escapeHtml(displayTableName(table))}` : t('noTable');
   document.getElementById('sel-count-label').textContent = t('selCountLabel');
   document.getElementById('sel-count-suffix').textContent = t('selCountSuffix');
   document.getElementById('addBtn').textContent = t('confirmAddBtn');
@@ -230,6 +230,11 @@ function applyStaticI18n(){
 // 桌号来自 URL 参数，属于外部输入，塞进 innerHTML 前必须转义
 function escapeHtml(s){
   return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+// "测试"桌是英文名字，切到英文界面时显示"Test"而不是原样中文
+function displayTableName(tbl){
+  return (tbl === '测试' && getStaffLang() === 'en') ? 'Test' : tbl;
 }
 
 // 员工加菜：接单看板订单详情页的"+ 加菜"入口，只覆盖火锅生食材/凉菜/甜品/饮品/酒水

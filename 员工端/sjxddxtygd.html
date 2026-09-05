@@ -252,6 +252,11 @@
     border-radius:20px;padding:3px 10px;display:inline-block;margin-top:8px;
     max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   }
+  .add-pending-timer{
+    font-size:11px;font-weight:800;color:var(--warn-bright);border:1px solid rgba(245,158,11,.5);
+    background:rgba(245,158,11,.14);border-radius:20px;padding:3px 10px;display:inline-block;
+    margin-top:8px;white-space:nowrap;
+  }
 
   /* 状态方框底部两个大按钮：结账（常用、放绿色）+ 查看详细订单（次要、灰边框） */
   .preview-actions{display:flex;gap:8px;margin-top:2px;}
@@ -360,6 +365,7 @@ const UI = {
     emptyPending: '暂无待处理的桌号', viewAll: '← 查看全部', emptyAll: '暂无订单，等待顾客点单中…',
     confirmedBadge: '已确认', statusNewBig: '🔴 新订单', statusNewSub: '等待送入厨房',
     statusAddBig: '🔴 加菜', statusAddSub: '有新加菜品待处理',
+    newDishPending: '有新菜品待处理',
     statusDoneBig: '✅ 已处理', statusDoneSub: '已全部送入厨房',
     callCaption: '顾客呼叫', callDismiss: '✓ 已处理',
     checkoutBtn: '💳 结账', testCompleteBtn: '移除', testTableNote: '不计入营业额，请忽略', viewDetailBtn: '📋 查看详细订单',
@@ -385,6 +391,7 @@ const UI = {
     emptyPending: 'No tables pending', viewAll: '← View All', emptyAll: 'No orders yet, waiting for customers…',
     confirmedBadge: 'Confirmed', statusNewBig: '🔴 New Order', statusNewSub: 'Waiting to send to kitchen',
     statusAddBig: '🔴 Add-on', statusAddSub: 'New add-on items pending',
+    newDishPending: 'New dish pending',
     statusDoneBig: '✅ Done', statusDoneSub: 'All sent to kitchen',
     callCaption: 'Customer Calling', callDismiss: '✓ Resolved',
     checkoutBtn: '💳 Checkout', testCompleteBtn: 'Remove', testTableNote: 'Not counted in revenue — please ignore', viewDetailBtn: '📋 Details',
@@ -621,6 +628,12 @@ const COOK_METHOD_LABELS_ZH = { steamed:'蒸', panFried:'煎' };
 const SOUP_BASE_LABELS_ZH = { tomato:'番茄', classicMala:'经典川味麻辣', boneBrothSpicy:'骨汤（辣）', boneBrothMild:'骨汤（不辣）', mushroom:'菌汤', malaBan:'麻辣拌' };
 const DRINK_LABELS_ZH = { cola:'可乐/无糖可乐/健怡可乐', sevenUp:'七喜/无糖七喜', fanta:'芬达', jdb:'加多宝', aloe:'芦荟汁' };
 
+function formatSecondsClock(sec){
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
 function elapsedInfo(ts){
   const diffMs = Date.now() - ts;
   const mins = Math.floor(diffMs / 60000);
@@ -842,6 +855,13 @@ function cardHTML(group){
   const detailHref = `ddxq.html?table=${encodeURIComponent(group.table)}`;
   const flashingClass = (state === 'new' || state === 'add') ? ' flashing' : '';
   const testClass = isTestTable(group.table) ? ' test-table' : '';
+  let addTimerHTML = '';
+  if(state === 'add'){
+    const pendingTs = realBatch.filter(o => o.status !== 'confirmed').map(o => o.createdAt);
+    const addStart = Math.min(...pendingTs);
+    const secs = Math.max(0, Math.floor((Date.now() - addStart) / 1000));
+    addTimerHTML = `<span class="add-pending-timer">${t('newDishPending')} ${formatSecondsClock(secs)}</span>`;
+  }
   return `
     <div class="order-card ${level}${flashingClass}${testClass}">
       <div class="card-top">
@@ -851,6 +871,7 @@ function cardHTML(group){
           <span class="elapsed">${label}</span>
         </span>
       </div>
+      ${addTimerHTML}
       ${isTestTable(group.table) ? `<span class="test-table-note">${t('testTableNote')}</span>` : ''}
       ${hasRealContent ? `
       <div class="card-body-wrap">

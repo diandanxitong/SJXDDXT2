@@ -110,10 +110,11 @@
     font-family:'Archivo Black',sans-serif;color:var(--warn);margin-right:8px;
   }
   .spice-tag{font-size:11.5px;color:var(--text-muted);border:1px solid var(--line);border-radius:20px;padding:2px 9px;}
-  /* 规格标签（大/小、瓶/杯）单独标红加粗，避免员工看漏尺寸拿错货 */
-  .spice-tag.size-highlight{color:#fff;background:var(--urgent);border-color:var(--urgent);font-weight:900;}
+  /* 规格标签（大/小、瓶/杯）、辣度、不要花椒——这几个容易漏看、备餐时又必须
+     看到的标签，统一标红加粗+闪烁，避免员工看漏 */
+  .size-highlight{color:#fff;background:var(--urgent);border-color:var(--urgent);font-weight:900;}
   @media (prefers-reduced-motion:no-preference){
-    .spice-tag.size-highlight{animation:size-tag-flash 1s ease-in-out infinite;}
+    .size-highlight{animation:size-tag-flash 1s ease-in-out infinite;}
   }
   @keyframes size-tag-flash{
     0%,100%{opacity:1;}
@@ -250,7 +251,7 @@ const UI = {
     operatorPlaceholder: '请输入操作人员姓名，不填不能删除', operatorHint: '仅支持汉字和英文字母',
     cancel: '取消', confirmDeleteBtn: '确认删除', confirmQtyChangeBtn: '确认修改', langToggleLabel: 'EN',
     sizeLabels: { half:'半份', whole:'整份', large:'大份', small:'小份', glass:'杯', bottle:'瓶', drinkSmall:'小', drinkLarge:'大' },
-    optionLabels: { onion:'不要洋葱', scallion:'不要葱', ginger:'不要姜', cilantro:'不要香菜', meat:'不要肉' },
+    optionLabels: { onion:'不要洋葱', scallion:'不要葱', ginger:'不要姜', cilantro:'不要香菜', meat:'不要肉', noPepper:'不要花椒' },
     cookMethodLabels: { steamed:'蒸', panFried:'煎' },
     soupBaseLabels: { tomato:'番茄', classicMala:'经典川味麻辣', boneBrothSpicy:'骨汤（辣）', boneBrothMild:'骨汤（不辣）', mushroom:'菌汤', malaBan:'麻辣拌' },
     drinkLabels: { cola:'可乐/无糖可乐/健怡可乐', sevenUp:'七喜/无糖七喜', fanta:'芬达', jdb:'加多宝', aloe:'芦荟汁' },
@@ -276,7 +277,7 @@ const UI = {
     operatorPlaceholder: "Enter staff name (required to delete)", operatorHint: 'Chinese characters and English letters only',
     cancel: 'Cancel', confirmDeleteBtn: 'Confirm Delete', confirmQtyChangeBtn: 'Confirm Change', langToggleLabel: '中',
     sizeLabels: { half:'Half', whole:'Whole', large:'Large', small:'Small', glass:'Glass', bottle:'Bottle', drinkSmall:'Small', drinkLarge:'Large' },
-    optionLabels: { onion:'No Onion', scallion:'No Spring Onion', ginger:'No Ginger', cilantro:'No Coriander', meat:'No Meat' },
+    optionLabels: { onion:'No Onion', scallion:'No Spring Onion', ginger:'No Ginger', cilantro:'No Coriander', meat:'No Meat', noPepper:'No Sichuan Pepper' },
     cookMethodLabels: { steamed:'Steamed', panFried:'Pan-Fried' },
     soupBaseLabels: { tomato:'Tomato', classicMala:'Classic Sichuan Mala', boneBrothSpicy:'Pork Bone (Spicy)', boneBrothMild:'Pork Bone (Mild)', mushroom:'Mushroom', malaBan:'Mixed Mala' },
     drinkLabels: { cola:'Coke / Diet Coke / Coke Zero', sevenUp:'7 Up / Diet 7 Up', fanta:'Fanta', jdb:'Jiaduobao', aloe:'Aloe Juice' },
@@ -557,12 +558,12 @@ let orderDeleteTargets = [];
 
 function itemLineHTML(it, docKey, itemIdx){
   const tags = [];
-  if(it.spice) tags.push(`<span class="spice-tag">${escapeHtml(t('spiceLabels')[it.spice] || it.spice)}</span>`);
+  if(it.spice) tags.push(`<span class="spice-tag size-highlight">${escapeHtml(t('spiceLabels')[it.spice] || it.spice)}</span>`);
   if(it.size) tags.push(`<span class="spice-tag size-highlight">${t('sizeLabels')[it.size] || it.size}</span>`);
   if(it.cookMethod) tags.push(`<span class="spice-tag">${t('cookMethodLabels')[it.cookMethod] || it.cookMethod}</span>`);
   if(it.soupBase) tags.push(`<span class="spice-tag">${t('soupBaseLabels')[it.soupBase] || it.soupBase}</span>`);
   if(it.drink) tags.push(`<span class="spice-tag">${t('drinkLabels')[it.drink] || it.drink}</span>`);
-  (it.excludes || []).forEach(k => tags.push(`<span class="exclude-tag">${t('optionLabels')[k] || k}</span>`));
+  (it.excludes || []).forEach(k => tags.push(`<span class="exclude-tag${k === 'noPepper' ? ' size-highlight' : ''}">${t('optionLabels')[k] || k}</span>`));
   if(it.forDish) tags.push(`<span class="for-dish-tag">${t('addOnForPrefix')}${escapeHtml(staffDishNameByZh(it.forDish))}</span>`);
   const idx = itemDeleteTargets.length;
   itemDeleteTargets.push({ table, docKey, itemIdx, name: it.name, qty: it.qty });

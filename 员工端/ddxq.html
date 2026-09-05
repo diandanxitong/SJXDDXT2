@@ -81,13 +81,6 @@
   }
   .batch-processed{background:rgba(52,211,153,.08);border:2px solid var(--ok);}
   .batch-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:10px;}
-  .batch-head-left{display:flex;align-items:baseline;gap:8px;min-width:0;}
-  .batch-checkout-btn{
-    flex-shrink:0;font-family:inherit;font-size:11.5px;font-weight:900;cursor:pointer;
-    padding:4px 10px;border-radius:20px;background:rgba(52,211,153,.14);
-    border:1px solid var(--ok);color:var(--ok);
-  }
-  .batch-checkout-btn:hover{background:rgba(52,211,153,.24);}
   .batch-name{font-size:13px;font-weight:900;color:var(--text-muted);}
   .batch-time{font-size:11.5px;color:var(--text-muted);white-space:nowrap;}
   .batch-pending .batch-time{color:var(--warn-bright);font-weight:700;}
@@ -180,8 +173,6 @@
   .confirm-yes-btn{background:rgba(248,113,113,.18);border:1px solid var(--urgent);color:var(--urgent);}
   .confirm-yes-btn:hover{background:rgba(248,113,113,.28);}
   .confirm-yes-btn:disabled{opacity:.4;cursor:default;}
-  .confirm-yes-btn.ok{background:rgba(52,211,153,.18);border-color:var(--ok);color:var(--ok);}
-  .confirm-yes-btn.ok:hover{background:rgba(52,211,153,.28);}
   .delete-modal-detail{
     font-size:13px;color:var(--text-muted);margin-bottom:14px;line-height:1.5;
     background:rgba(255,255,255,.04);border-radius:8px;padding:10px 12px;text-align:left;
@@ -266,8 +257,6 @@ const UI = {
     drinkLabels: { cola:'可乐/无糖可乐/健怡可乐', sevenUp:'七喜/无糖七喜', fanta:'芬达', jdb:'加多宝', aloe:'芦荟汁' },
     spiceLabels: { '微辣':'微辣', '中辣':'中辣', '特辣':'特辣' },
     otherCategoryLabel: '其他', editedBadge: '已编辑',
-    batchCheckoutBtn: '💳 结账', checkoutBatchQuestion: '确认这批订单已经结账？',
-    checkoutBatchYes: '确认结账', checkoutFailMsg: '记账失败，请重试，或去"今日盘点"里人工补录',
   },
   en: {
     backToBoard: '← Order Board', addDish: '+ Add Dish', confirmedBadge: 'Confirmed', loading: 'Loading…',
@@ -294,8 +283,6 @@ const UI = {
     drinkLabels: { cola:'Coke / Diet Coke / Coke Zero', sevenUp:'7 Up / Diet 7 Up', fanta:'Fanta', jdb:'Jiaduobao', aloe:'Aloe Juice' },
     spiceLabels: { '微辣':'Mild', '中辣':'Medium', '特辣':'Extra Spicy' },
     otherCategoryLabel: 'Other', editedBadge: 'Edited',
-    batchCheckoutBtn: '💳 Checkout', checkoutBatchQuestion: 'Confirm this batch has been checked out?',
-    checkoutBatchYes: 'Confirm Checkout', checkoutFailMsg: 'Failed to record, please retry or add it manually in "Today\'s Report"',
   },
 };
 
@@ -390,64 +377,9 @@ async function confirmToKitchen(keys){
 }
 
 
-// "测试"桌不计入营业额，跟接单看板的结账逻辑保持一致
-function isTestTable(tbl){ return tbl === '测试'; }
-
-function todayKey(d){
-  d = d || new Date();
-  const pad = n => String(n).padStart(2,'0');
-  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-}
-
-// 单个批次自己的结账：只结这一批（这份 order 文档），不动同一桌的其它批次——
-// 跟接单看板整桌结账不一样，那边是把这一桌所有批次一起记账+移出看板
-async function recordDailyCheckoutSingle(items, tbl){
-  const cleanItems = (items || []).map(it => ({ name: it.name, qty: it.qty, price: it.price || 0 }));
-  if(cleanItems.length === 0) return;
-  const revenue = cleanItems.reduce((s, it) => s + it.price * it.qty, 0);
-  const date = todayKey();
-  await db.runTransaction(async tx => {
-    const counterRef = db.collection('counters').doc('dailyOrderSeq');
-    const snap = await tx.get(counterRef);
-    const prev = snap.exists ? snap.data() : null;
-    const seq = (prev && prev.date === date) ? prev.seq + 1 : 1;
-    tx.set(counterRef, { date, seq });
-    const recordRef = db.collection('dailyOrders').doc();
-    tx.set(recordRef, { seq, date, table: tbl, items: cleanItems, revenue, archivedAt: Date.now() });
-  });
-}
-
-function requestCheckoutBatch(idx){
-  const target = checkoutTargets[idx];
-  if(!target) return;
-  const order = orders.find(o => o.key === target.docKey);
-  if(!order) return;
-  deleteModalCtx = { type: 'checkout', target: Object.assign({}, target, { items: order.items || [] }) };
-  renderDeleteModal();
-}
-
-function confirmCheckoutBatch(){
-  if(!deleteModalCtx || deleteModalCtx.type !== 'checkout') return;
-  const target = deleteModalCtx.target;
-  deleteModalCtx = null;
-  renderDeleteModal();
-  performCheckoutBatch(target);
-}
-
-async function performCheckoutBatch(target){
-  const { docKey, table: tbl, items } = target;
-  orders = orders.filter(o => o.key !== docKey);
-  render();
-  if(!isTestTable(tbl)){
-    try{ await recordDailyCheckoutSingle(items, tbl); }
-    catch(e){ alert(t('checkoutFailMsg')); }
-  }
-  try{ await ordersRef.doc(docKey).delete(); }catch(e){ /* onSnapshot 会在下一次推送时自动纠正 */ }
-}
-
 // 单品修改数量（点编辑先调数量，再和整单删除一样要求填操作人姓名才能确认）/ 整单删除：
 // 都会记一条日志到 staffActionLogs，供"员工操作日志"页面查看
-let deleteModalCtx = null;   // null | { type:'order', target, operatorName } | { type:'item', step:'qty'|'operator', target, newQty, operatorName } | { type:'checkout', target }
+let deleteModalCtx = null;   // null | { type:'order', target, operatorName } | { type:'item', step:'qty'|'operator', target, newQty, operatorName }
 
 function requestEditItem(idx){
   const target = itemDeleteTargets[idx];
@@ -519,23 +451,6 @@ function renderDeleteModal(){
   const el = document.getElementById('delete-modal');
   if(!deleteModalCtx){ el.innerHTML = ''; return; }
   const { type } = deleteModalCtx;
-
-  if(type === 'checkout'){
-    const { target } = deleteModalCtx;
-    const detail = `${t('tablePrefix')}${escapeHtml(target.table)} · ${target.items.map(it => `${escapeHtml(staffDishNameByZh(it.name))}×${it.qty}`).join('、')}`;
-    el.innerHTML = `
-      <div class="confirm-overlay">
-        <div class="confirm-box">
-          <p class="confirm-question">${t('checkoutBatchQuestion')}</p>
-          <p class="delete-modal-detail">${detail}</p>
-          <div class="confirm-actions">
-            <button class="confirm-cancel-btn" onclick="cancelDelete()">${t('cancel')}</button>
-            <button class="confirm-yes-btn ok" onclick="confirmCheckoutBatch()">${t('checkoutBatchYes')}</button>
-          </div>
-        </div>
-      </div>`;
-    return;
-  }
 
   if(type === 'item' && deleteModalCtx.step === 'qty'){
     const { target, newQty } = deleteModalCtx;
@@ -640,7 +555,6 @@ async function performDeleteOrder(target, operatorName){
 // （有些酒款名字带英文单引号）直接拼进 onclick 属性里，那样字符串会被提前截断
 let itemDeleteTargets = [];
 let orderDeleteTargets = [];
-let checkoutTargets = [];
 
 function itemLineHTML(it, docKey, itemIdx){
   const tags = [];
@@ -691,19 +605,11 @@ function groupedItemsHTML(items, docKey){
   return html;
 }
 
-// 单个批次(一份 order 文档)自己的结账按钮：只结这一批，不影响这一桌其它批次——
-// 比如同一桌有顾客自己扫码下的单、又有员工代加的单，只想先把其中一批结掉
-function batchCheckoutBtnHTML(o){
-  const idx = checkoutTargets.length;
-  checkoutTargets.push({ docKey: o.key, table });
-  return `<button class="batch-checkout-btn" onclick="requestCheckoutBatch(${idx})">${t('batchCheckoutBtn')}</button>`;
-}
-
 // 左列：还没送入厨房的批次，红框闪烁，按下单时间倒序——最新加的菜永远排在最上面
 function pendingBatchHTML(o){
   const { label } = elapsedInfo(o.createdAt);
   return `<div class="batch-box batch-pending">
-      <div class="batch-head"><span class="batch-head-left">${batchCheckoutBtnHTML(o)}<span class="batch-name">${batchNameLabel(o)}</span></span><span class="batch-time">${label}</span></div>
+      <div class="batch-head"><span class="batch-name">${batchNameLabel(o)}</span><span class="batch-time">${label}</span></div>
       ${groupedItemsHTML(o.items, o.key)}
     </div>`;
 }
@@ -713,7 +619,7 @@ function processedBatchHTML(o){
   const mins = Math.floor((Date.now() - (o.confirmedAt || o.createdAt)) / 60000);
   const processedLabel = mins < 1 ? t('justProcessed') : t('minutesAgoProcessed')(mins);
   return `<div class="batch-box batch-processed">
-      <div class="batch-head"><span class="batch-head-left">${batchCheckoutBtnHTML(o)}<span class="batch-name">${batchNameLabel(o)}</span></span><span class="batch-time">${processedLabel}</span></div>
+      <div class="batch-head"><span class="batch-name">${batchNameLabel(o)}</span><span class="batch-time">${processedLabel}</span></div>
       ${groupedItemsHTML(o.items, o.key)}
     </div>`;
 }
@@ -729,7 +635,6 @@ function orderDelBtnHTML(realBatch){
 function render(){
   itemDeleteTargets = [];
   orderDeleteTargets = [];
-  checkoutTargets = [];
   const app = document.getElementById('app');
   if(!loaded) return;
 

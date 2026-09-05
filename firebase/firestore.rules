@@ -61,9 +61,10 @@ service cloud.firestore {
       // 1. 员工端把 status 从 pending 推进到 confirmed，同时写入 confirmedAt（服务器
       //    时间前后 10 分钟内）——顾客端据此从"等待确认"切换到"已送入厨房"动画，
       //    订单详情页据此算"几分钟前已处理"
-      // 2. 员工端在接单看板上单品删除：只准动 items 这一个字段，且新数组只能比原数组
-      //    短（纯删除），挡不住“删哪一条”这种语义校验，但至少不能借这个口子塞数据、
-      //    改价格或凭空让菜品变多
+      // 2. 员工端在订单详情页单品删除，或者改数量（编辑✎按钮的加减）：只准动 items
+      //    这一个字段。删除会让数组变短，改数量数组长度不变，所以这里允许"不变短或
+      //    变短"，只挡"变长"——挡不住"改的是哪一条/改成了多少"这种语义校验，但至少
+      //    不能借这个口子塞数据、改价格或凭空让菜品变多
       allow update: if (
                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'confirmedAt'])
                       && resource.data.status == 'pending'
@@ -73,7 +74,7 @@ service cloud.firestore {
                     ) || (
                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['items'])
                       && request.resource.data.items is list
-                      && request.resource.data.items.size() < resource.data.items.size()
+                      && request.resource.data.items.size() <= resource.data.items.size()
                     );
 
       // 员工端"已处理，移出看板"需要删除订单；没有登录态，只能开放删

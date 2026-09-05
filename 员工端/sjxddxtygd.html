@@ -338,7 +338,7 @@ const UI = {
     statusAddBig: '🔴 加菜', statusAddSub: '有新加菜品待处理',
     statusDoneBig: '✅ 已处理', statusDoneSub: '已全部送入厨房',
     callCaption: '顾客呼叫', callDismiss: '✓ 已处理',
-    checkoutBtn: '💳 结账', viewDetailBtn: '📋 查看详细订单',
+    checkoutBtn: '💳 结账', testCompleteBtn: '✅ 测试完成，移除看板', viewDetailBtn: '📋 查看详细订单',
     justOrdered: '刚刚下单', minutesAgo: n => `${n} 分钟前`,
     sysConfirmEnable: '确认重新开启系统？', sysConfirmDisable: '确认关闭系统？',
     sysDetailEnable: '开启后，顾客扫码将恢复正常点单页面。',
@@ -363,7 +363,7 @@ const UI = {
     statusAddBig: '🔴 Add-on', statusAddSub: 'New add-on items pending',
     statusDoneBig: '✅ Done', statusDoneSub: 'All sent to kitchen',
     callCaption: 'Customer Calling', callDismiss: '✓ Resolved',
-    checkoutBtn: '💳 Checkout', viewDetailBtn: '📋 Details',
+    checkoutBtn: '💳 Checkout', testCompleteBtn: '✅ Test Complete, Remove', viewDetailBtn: '📋 Details',
     justOrdered: 'Just ordered', minutesAgo: n => `${n} min ago`,
     sysConfirmEnable: 'Confirm reopening the system?', sysConfirmDisable: 'Confirm closing the system?',
     sysDetailEnable: 'Once reopened, guests scanning the QR code will see the normal ordering page again.',
@@ -663,6 +663,10 @@ function cancelLeave(){
   renderConfirmModal();
 }
 
+// "测试"桌专用来验证下单/厨房流程，不是真实营业额——结账时只移出看板，
+// 不写"今日盘点"流水，别的行为（送厨房、加菜等）跟正式桌完全一样
+function isTestTable(table){ return table === '测试'; }
+
 function confirmLeaveYes(){
   const keys = confirmKeys;
   const table = confirmTable;
@@ -671,7 +675,7 @@ function confirmLeaveYes(){
   renderConfirmModal();
   // 先把这一桌的流水记进“今日盘点”，再删单——记账失败也不能卡住移除看板，
   // 所以这里不等它，且内部自己吞掉错误
-  recordDailyCheckout(keys, table);
+  if(!isTestTable(table)) recordDailyCheckout(keys, table);
   archiveOrder(keys);
 }
 
@@ -827,7 +831,7 @@ function cardHTML(group){
         <div class="card-body${hasCall ? ' blurred' : ''}">
           ${statusPanelHTML(state)}
           <div class="preview-actions">
-            <button class="checkout-btn" data-keys="${realBatch.map(o=>o.key).join(',')}" data-table="${escapeHtml(group.table)}" onclick="confirmLeave(this.dataset.keys.split(','), this.dataset.table)">${t('checkoutBtn')}</button>
+            <button class="checkout-btn" data-keys="${realBatch.map(o=>o.key).join(',')}" data-table="${escapeHtml(group.table)}" onclick="confirmLeave(this.dataset.keys.split(','), this.dataset.table)">${isTestTable(group.table) ? t('testCompleteBtn') : t('checkoutBtn')}</button>
             <a class="view-detail-btn" href="${detailHref}">${t('viewDetailBtn')}</a>
           </div>
         </div>

@@ -211,7 +211,9 @@
     width:84px;flex-shrink:0;display:flex;flex-direction:column;
     border-right:1px solid var(--card-line);
     position:sticky;top:0;align-self:flex-start;
-    max-height:100vh;max-height:100dvh;overflow-y:auto;
+    /* 留出底部固定操作条（呼叫服务员/立即下单）的高度，侧边分类栏贴到底时
+       不会被那条固定悬浮条盖住/顶穿 */
+    max-height:calc(100vh - 140px);max-height:calc(100dvh - 140px);overflow-y:auto;
     overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;
     scrollbar-width:none;
     padding:4px 0;
@@ -495,6 +497,14 @@
   .cart-btn.latin .cart-btn-sub, .order-now-btn.latin .order-now-sub{font-size:9px;line-height:1.15;}
   .cart-btn.latin.lang-en .cart-btn-title, .order-now-btn.latin.lang-en .order-now-title{font-size:16px;letter-spacing:.02em;line-height:1.15;}
   .cart-btn.latin.lang-en .cart-btn-sub, .order-now-btn.latin.lang-en .order-now-sub{font-size:10px;line-height:1.15;}
+
+  /* 呼叫服务员按钮左右缩窄一点，跟左边分类栏留出一点空隙，减少手机端划到底部
+     误触——先只在"测试"桌生效，确认没问题、不影响正常点单后再推广到所有桌号。
+     缩窄靠给按钮加左边距（挤占按钮自己的宽度，不动整条底部操作条的位置和
+     "立即下单"按钮），字号跟着缩小避免文字被挤出框外 */
+  .cart-btn.test-narrow{margin-left:14px;padding:9px 6px;}
+  .cart-btn.test-narrow .cart-btn-title{font-size:13px;letter-spacing:0;line-height:1.15;overflow-wrap:break-word;}
+  .cart-btn.test-narrow .cart-btn-sub{font-size:9px;line-height:1.15;overflow-wrap:break-word;}
 
   /* ---------- cart button: slim vertical tab docked to the right edge ---------- */
   .cart-side-fab{
@@ -2663,7 +2673,7 @@ function menuHTML(){
     <div class="bottom-bar">
       <div class="action-pill-wrap">
         <div class="action-pill">
-          <button class="cart-btn${isLatinLang?' latin':''}${state.lang==='en'?' lang-en':''}" onclick="callWaiter()" ${state.callingWaiter?'disabled':''}>
+          <button class="cart-btn${isLatinLang?' latin':''}${state.lang==='en'?' lang-en':''}${state.table==='测试'?' test-narrow':''}" onclick="callWaiter()" ${state.callingWaiter?'disabled':''}>
             <span class="cart-btn-title">${state.callingWaiter ? t('calling') : t('callWaiter')}</span>
             <span class="cart-btn-sub">${t('callWaiterSub')}</span>
           </button>

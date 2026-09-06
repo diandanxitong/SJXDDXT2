@@ -518,6 +518,7 @@ async function confirmAdd(){
     await ordersRef.add({
       table: String(table), items, createdAt: now,
       nickname: '员工代加', partySize: 1, status: 'confirmed', confirmedAt: now,
+      isAddOn: true,
     });
   }catch(e){
     alert(t('addFailedMsg'));

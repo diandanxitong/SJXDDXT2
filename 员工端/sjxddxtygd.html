@@ -648,6 +648,7 @@ ordersRef.onSnapshot(snap => {
     key: d.id, table: d.data().table, items: d.data().items, createdAt: d.data().createdAt,
     nickname: d.data().nickname || '', partySize: d.data().partySize || null,
     status: d.data().status || 'pending', call: !!d.data().call,
+    isAddOn: !!d.data().isAddOn,
   }));
   results.sort((a,b) => a.createdAt - b.createdAt);
   orders = results;
@@ -712,12 +713,19 @@ function todayKey(d){
 async function recordDailyCheckout(keys, table){
   const batchOrders = orders.filter(o => keys.includes(o.key));
   const items = [];
+  // isAddOn 标在每一批（每份 order 文档）上，不是每道菜——一批里所有菜要么都是
+  // 顾客扫码加的这一轮加菜，要么都是最初那一轮下单，展平进 items 时把这个标记
+  // 带到每一条菜品行上，方便"经营数据"页按菜品统计加菜量，不用再回头关联批次
   batchOrders.forEach(o => (o.items || []).forEach(it => {
-    items.push({ name: it.name, qty: it.qty, price: it.price || 0 });
+    items.push({ name: it.name, qty: it.qty, price: it.price || 0, isAddOn: !!o.isAddOn,
+      source: o.nickname === '员工代加' ? 'staff' : 'customer' });
   }));
   if(items.length === 0) return;
   const revenue = items.reduce((s, it) => s + it.price * it.qty, 0);
   const date = todayKey();
+  const firstOrderAt = Math.min(...batchOrders.map(o => o.createdAt));
+  const batchCount = batchOrders.length;
+  const addOnBatchCount = batchOrders.filter(o => o.isAddOn).length;
   try{
     await db.runTransaction(async tx => {
       const counterRef = db.collection('counters').doc('dailyOrderSeq');
@@ -726,7 +734,7 @@ async function recordDailyCheckout(keys, table){
       const seq = (prev && prev.date === date) ? prev.seq + 1 : 1;
       tx.set(counterRef, { date, seq });
       const recordRef = db.collection('dailyOrders').doc();
-      tx.set(recordRef, { seq, date, table, items, revenue, archivedAt: Date.now() });
+      tx.set(recordRef, { seq, date, table, items, revenue, archivedAt: Date.now(), firstOrderAt, batchCount, addOnBatchCount });
     });
   }catch(e){
     // 记账失败就不记了，不阻塞移除看板；但不能让这一笔悄无声息地消失，

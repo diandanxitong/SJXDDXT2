@@ -109,6 +109,62 @@
   .log-operator{font-size:13px;color:var(--text-muted);white-space:nowrap;}
   .log-operator b{color:var(--text);}
   .log-detail{font-size:13px;color:var(--text-muted);flex:1;min-width:160px;}
+
+  /* ---- 经营数据查询台（DORIN 专属）：故意跟上面深色卡片风不一样，
+     纯网格 + 等宽字体，做成"数据库查询工具"的严谨感 ---- */
+  .sysdiag{
+    background:#f4f4f4; color:#111; margin:-22px -26px -60px; padding:16px;
+    font-family:'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size:12.5px; line-height:1.5; min-height:100vh;
+  }
+  .sysdiag-header{
+    background:#1e1e1e; color:#ddd; padding:10px 14px; margin-bottom:14px;
+    display:flex; flex-wrap:wrap; align-items:center; gap:10px;
+  }
+  .sysdiag-header h1{ font-size:13px; margin:0; color:#8f8; letter-spacing:.03em; white-space:nowrap; font-family:inherit; }
+  .sysdiag-header .spacer{ flex:1; }
+  .sysdiag-header label{ color:#999; font-size:11.5px; }
+  .sysdiag-header input[type=date]{
+    background:#111; border:1px solid #444; color:#eee; font-family:inherit;
+    font-size:12px; padding:4px 6px;
+  }
+  .sysdiag-header button{
+    background:#2d5; border:none; color:#111; padding:6px 14px; font-weight:bold;
+    font-family:inherit; cursor:pointer; font-size:12px;
+  }
+  .sysdiag-header .stamp{ color:#666; font-size:10.5px; }
+  .sysdiag .meta-row{ display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px; }
+  .sysdiag .meta-card{ border:1px solid #ccc; background:#fff; padding:8px 12px; min-width:130px; }
+  .sysdiag .meta-card .k{ color:#777; font-size:10.5px; text-transform:uppercase; letter-spacing:.04em; }
+  .sysdiag .meta-card .v{ font-size:16px; font-weight:bold; }
+  .sysdiag .q{ margin-bottom:22px; border:1px solid #ccc; background:#fff; }
+  .sysdiag .q-head{
+    background:#282828; color:#eee; padding:6px 10px; font-size:11.5px;
+    display:flex; gap:10px; align-items:baseline; flex-wrap:wrap;
+  }
+  .sysdiag .q-head .idx{ color:#8f8; }
+  .sysdiag .q-head .name{ font-weight:bold; }
+  .sysdiag .q-sql{
+    background:#f0f0f0; color:#555; padding:5px 10px; font-size:11px;
+    border-bottom:1px solid #ddd; white-space:pre-wrap;
+  }
+  .sysdiag .q-foot{ padding:4px 10px; color:#888; font-size:10.5px; border-top:1px solid #ddd; }
+  .sysdiag .q-wrap{ overflow-x:auto; }
+  .sysdiag table{ border-collapse:collapse; width:100%; font-size:11.5px; white-space:nowrap; }
+  .sysdiag thead th{
+    background:#e6e6e6; border:1px solid #ccc; padding:5px 8px; text-align:left; font-weight:bold; color:#333;
+  }
+  .sysdiag tbody td{ border:1px solid #ddd; padding:4px 8px; }
+  .sysdiag tbody tr:nth-child(even){ background:#fafafa; }
+  .sysdiag tbody tr.total-row{ background:#eef7ee; font-weight:bold; }
+  .sysdiag td.num, .sysdiag th.num{ text-align:right; font-variant-numeric:tabular-nums; }
+  .sysdiag .tag{ display:inline-block; padding:1px 5px; border-radius:2px; font-size:10.5px; }
+  .sysdiag .tag.staff{ background:#e3dcf5; color:#5a2ea6; }
+  .sysdiag .tag.customer{ background:#dbeee0; color:#1a7a3c; }
+  .sysdiag .tag.soldOut{ background:#fbdada; color:#a11; }
+  .sysdiag .tag.restock{ background:#dbeee0; color:#1a7a3c; }
+  .sysdiag .empty-note{ padding:10px; color:#999; font-style:italic; }
+  .sysdiag-footnote{ color:#888; font-size:10.5px; padding:10px 4px 60px; }
 </style>
 </head>
 <body>
@@ -142,8 +198,13 @@ const logsRef = db.collection('staffActionLogs');
 // 真要做到只有管理员能看，需要接入 Firebase Authentication 才行。
 const ADMIN_USER = 'admingk';
 const ADMIN_PASS = '123';
+// 老板专用账号：登录后看到的不是这个页面表面上的"员工操作日志"，而是完整的
+// 经营数据查询台——两个账号共用同一个登录框、同一个页面标题/URL，员工只知道
+// admingk 这一个账号，看到的永远是操作日志，不会意识到还有另一套内容藏在这里。
+const OWNER_USER = 'DORIN';
+const OWNER_PASS = '822';
 
-let authed = false;
+let authMode = null;   // null | 'staff'（员工操作日志）| 'owner'（经营数据查询台）
 let loginError = '';
 let logs = [];
 let logsLoaded = false;
@@ -193,13 +254,17 @@ function handleLoginSubmit(){
   const user = (document.getElementById('login-user').value || '').trim();
   const pass = document.getElementById('login-pass').value || '';
   if(user === ADMIN_USER && pass === ADMIN_PASS){
-    authed = true;
+    authMode = 'staff';
     loginError = '';
     startWatchingLogs();
+  }else if(user === OWNER_USER && pass === OWNER_PASS){
+    authMode = 'owner';
+    loginError = '';
   }else{
     loginError = '用户名或密码错误';
   }
   render();
+  if(authMode === 'owner') sysDiagRunQuery();
 }
 
 function loginScreenHTML(){
@@ -231,7 +296,8 @@ function logRowHTML(log){
 }
 
 function appHTML(){
-  if(!authed) return loginScreenHTML();
+  if(authMode === 'owner') return sysDiagHTML();
+  if(authMode !== 'staff') return loginScreenHTML();
   const header = `
     <div class="page-header">
       <h1>员工操作日志</h1>
@@ -258,9 +324,337 @@ function renderModal(){
     </div>`;
 }
 
+// ============================================================================
+// 经营数据查询台（DORIN 账号专属）：跟上面的"员工操作日志"共用同一个登录框、
+// 同一个页面外壳，只是登录进来之后 appHTML() 走了另一条分支。样式故意跟页面
+// 其它部分（深色卡片风）不一样——纯网格、等宽字体，做成"数据库查询工具"的
+// 严谨感，而不是好看的仪表盘。
+// ============================================================================
+const sysDiagRefs = {
+  orders: db.collection('dailyOrders'),
+  calls: db.collection('callEvents'),
+  soldOuts: db.collection('soldOutEvents'),
+  clicks: db.collection('dishClicks'),
+};
+const sysDiagState = (function(){
+  const pad = n => String(n).padStart(2,'0');
+  const key = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  const today = new Date();
+  const start = new Date(today); start.setDate(start.getDate() - 2);
+  return { start: key(start), end: key(today), results: '<p class="empty-note">加载中…</p>' };
+})();
+
+function sysDiagMoney(v){ return '€' + (v || 0).toFixed(2); }
+function sysDiagPct(a, b){ return b > 0 ? ((a / b) * 100).toFixed(1) + '%' : '—'; }
+function sysDiagFmtTime(ms){
+  if(!ms) return '—';
+  const d = new Date(ms);
+  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
+}
+function sysDiagFmtMin(ms){ return ms == null ? '—' : (ms / 60000).toFixed(1); }
+function sysDiagIsTestTable(t){ return t === '测试'; }
+function sysDiagDateRangeList(start, end){
+  const out = [];
+  let cur = new Date(start + 'T00:00:00');
+  const last = new Date(end + 'T00:00:00');
+  while(cur <= last){
+    const pad = n => String(n).padStart(2,'0');
+    out.push(`${cur.getFullYear()}-${pad(cur.getMonth()+1)}-${pad(cur.getDate())}`);
+    cur.setDate(cur.getDate() + 1);
+  }
+  return out;
+}
+
+// 整表读回来，日期范围在本地筛——跟"历史盘点"页同样的做法，这套系统数据量
+// 不大，没必要为了省一次全表读去维护额外索引
+async function sysDiagFetchAll(){
+  const [ordersSnap, logsSnap, callsSnap, soldOutSnap, clicksSnap] = await Promise.all([
+    sysDiagRefs.orders.get(), logsRef.get(), sysDiagRefs.calls.get(), sysDiagRefs.soldOuts.get(), sysDiagRefs.clicks.get(),
+  ]);
+  return {
+    orders: ordersSnap.docs.map(d => Object.assign({ id: d.id }, d.data())),
+    logs: logsSnap.docs.map(d => Object.assign({ id: d.id }, d.data())),
+    calls: callsSnap.docs.map(d => Object.assign({ id: d.id }, d.data())),
+    soldOuts: soldOutSnap.docs.map(d => Object.assign({ id: d.id }, d.data())),
+    clicks: clicksSnap.docs.map(d => Object.assign({ id: d.id }, d.data())),
+  };
+}
+
+async function sysDiagRunQuery(){
+  const startEl = document.getElementById('sysdiag-start');
+  const endEl = document.getElementById('sysdiag-end');
+  const start = (startEl && startEl.value) || sysDiagState.start;
+  const end = (endEl && endEl.value) || sysDiagState.end;
+  if(!start || !end || start > end){ alert('日期范围不对'); return; }
+  sysDiagState.start = start; sysDiagState.end = end;
+  const resultsEl = document.getElementById('sysdiag-results');
+  if(resultsEl) resultsEl.innerHTML = '<p class="empty-note">查询中…</p>';
+
+  const startMs = new Date(start + 'T00:00:00').getTime();
+  const endMs = new Date(end + 'T23:59:59.999').getTime();
+  let data;
+  try{ data = await sysDiagFetchAll(); }
+  catch(e){
+    if(resultsEl) resultsEl.innerHTML = `<p class="empty-note">查询失败：${escapeHtml(e.message || e)}</p>`;
+    return;
+  }
+
+  const orders = data.orders.filter(r => r.date >= start && r.date <= end && !sysDiagIsTestTable(r.table));
+  const actionLogs = data.logs.filter(r => r.createdAt >= startMs && r.createdAt <= endMs);
+  const calls = data.calls.filter(r => r.date >= start && r.date <= end);
+  const soldOuts = data.soldOuts.filter(r => r.date >= start && r.date <= end);
+  const clicks = data.clicks.filter(r => r.date >= start && r.date <= end);
+
+  const stampEl = document.getElementById('sysdiag-stamp');
+  if(stampEl) stampEl.textContent = `范围 ${start} ~ ${end} · 查询时间 ${new Date().toLocaleString('zh-CN', { hour12:false })}`;
+
+  const metaEl = document.getElementById('sysdiag-meta');
+  if(metaEl) metaEl.innerHTML = sysDiagRenderMeta(orders, calls, clicks);
+
+  if(resultsEl){
+    resultsEl.innerHTML = [
+      sysDiagRenderDailySummary(orders, calls, soldOuts, clicks, start, end),
+      sysDiagRenderDishPerformance(orders, clicks),
+      sysDiagRenderHourly(orders),
+      sysDiagRenderCheckoutRecords(orders),
+      sysDiagRenderAddonLog(orders),
+      sysDiagRenderCallLog(calls),
+      sysDiagRenderSoldOutLog(soldOuts),
+      sysDiagRenderStaffActionLog(actionLogs),
+      sysDiagRenderClickLog(clicks),
+    ].join('');
+  }
+}
+
+function sysDiagQueryBlock(idx, name, sql, columns, rows, rowsHtmlFn){
+  const body = rows.length === 0
+    ? `<div class="empty-note">0 rows</div>`
+    : `<div class="q-wrap"><table>
+        <thead><tr>${columns.map(c => `<th class="${c.num?'num':''}">${c.label}</th>`).join('')}</tr></thead>
+        <tbody>${rows.map(rowsHtmlFn).join('')}</tbody>
+      </table></div>`;
+  return `<section class="q">
+      <div class="q-head"><span class="idx">QUERY ${idx}</span><span class="name">${name}</span></div>
+      <div class="q-sql">${escapeHtml(sql)}</div>
+      ${body}
+      <div class="q-foot">${rows.length} rows</div>
+    </section>`;
+}
+
+function sysDiagRenderMeta(orders, calls, clicks){
+  const revenue = orders.reduce((s,r) => s + (r.revenue || 0), 0);
+  const addonRevenue = orders.reduce((s,r) => s + (r.items||[]).filter(it=>it.isAddOn).reduce((a,it)=>a+it.price*it.qty,0), 0);
+  const totalClicks = clicks.reduce((s,c) => s + (c.count || 0), 0);
+  return [
+    ['营业额合计', sysDiagMoney(revenue)],
+    ['结账笔数', orders.length],
+    ['加菜金额合计', sysDiagMoney(addonRevenue)],
+    ['呼叫服务员次数', calls.length],
+    ['单品点击总量', totalClicks],
+  ].map(([k,v]) => `<div class="meta-card"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
+}
+
+function sysDiagRenderDailySummary(orders, calls, soldOuts, clicks, start, end){
+  const dates = sysDiagDateRangeList(start, end);
+  const rows = dates.map(date => {
+    const dayOrders = orders.filter(r => r.date === date);
+    const revenue = dayOrders.reduce((s,r) => s + (r.revenue || 0), 0);
+    const itemsSold = dayOrders.reduce((s,r) => s + (r.items||[]).reduce((a,it)=>a+it.qty,0), 0);
+    const totalBatches = dayOrders.reduce((s,r) => s + (r.batchCount || 1), 0);
+    const addonBatches = dayOrders.reduce((s,r) => s + (r.addOnBatchCount || 0), 0);
+    const addonRevenue = dayOrders.reduce((s,r) => s + (r.items||[]).filter(it=>it.isAddOn).reduce((a,it)=>a+it.price*it.qty,0), 0);
+    const staffRevenue = dayOrders.reduce((s,r) => s + (r.items||[]).filter(it=>it.source==='staff').reduce((a,it)=>a+it.price*it.qty,0), 0);
+    const dwellSamples = dayOrders.filter(r => r.firstOrderAt);
+    const avgDwell = dwellSamples.length ? dwellSamples.reduce((s,r)=>s+(r.archivedAt-r.firstOrderAt),0)/dwellSamples.length : null;
+    const dayCalls = calls.filter(c => c.date === date).length;
+    const daySoldOuts = soldOuts.filter(c => c.date === date).length;
+    const dayClicks = clicks.filter(c => c.date === date).reduce((s,c)=>s+(c.count||0),0);
+    return { date, checkouts: dayOrders.length, revenue, itemsSold, totalBatches, addonBatches, addonRevenue, staffRevenue, avgDwell, dayCalls, daySoldOuts, dayClicks };
+  });
+  const totalRevenue = rows.reduce((s,r)=>s+r.revenue,0);
+  const totalCheckouts = rows.reduce((s,r)=>s+r.checkouts,0);
+  const totalBatches = rows.reduce((s,r)=>s+r.totalBatches,0);
+  const totalAddonBatches = rows.reduce((s,r)=>s+r.addonBatches,0);
+  const totalAddonRevenue = rows.reduce((s,r)=>s+r.addonRevenue,0);
+
+  const columns = [
+    {label:'date'},{label:'checkouts',num:true},{label:'revenue',num:true},{label:'avg_ticket',num:true},
+    {label:'items_sold',num:true},{label:'addon_batches / total_batches',num:true},{label:'addon_batch_rate',num:true},
+    {label:'addon_revenue',num:true},{label:'addon_revenue_share',num:true},{label:'staff_added_revenue',num:true},
+    {label:'avg_dining_min',num:true},{label:'call_count',num:true},{label:'sold_out_events',num:true},{label:'dish_clicks',num:true},
+  ];
+  const rowsHtml = rows.map(r => `<tr>
+      <td>${r.date}</td><td class="num">${r.checkouts}</td><td class="num">${sysDiagMoney(r.revenue)}</td>
+      <td class="num">${r.checkouts?sysDiagMoney(r.revenue/r.checkouts):'—'}</td><td class="num">${r.itemsSold}</td>
+      <td class="num">${r.addonBatches} / ${r.totalBatches}</td><td class="num">${sysDiagPct(r.addonBatches, r.totalBatches)}</td>
+      <td class="num">${sysDiagMoney(r.addonRevenue)}</td><td class="num">${sysDiagPct(r.addonRevenue, r.revenue)}</td>
+      <td class="num">${sysDiagMoney(r.staffRevenue)}</td><td class="num">${sysDiagFmtMin(r.avgDwell)}</td>
+      <td class="num">${r.dayCalls}</td><td class="num">${r.daySoldOuts}</td><td class="num">${r.dayClicks}</td>
+    </tr>`).join('') + `<tr class="total-row">
+      <td>TOTAL</td><td class="num">${totalCheckouts}</td><td class="num">${sysDiagMoney(totalRevenue)}</td>
+      <td class="num">${totalCheckouts?sysDiagMoney(totalRevenue/totalCheckouts):'—'}</td>
+      <td class="num">${rows.reduce((s,r)=>s+r.itemsSold,0)}</td>
+      <td class="num">${totalAddonBatches} / ${totalBatches}</td><td class="num">${sysDiagPct(totalAddonBatches, totalBatches)}</td>
+      <td class="num">${sysDiagMoney(totalAddonRevenue)}</td><td class="num">${sysDiagPct(totalAddonRevenue, totalRevenue)}</td>
+      <td class="num">${sysDiagMoney(rows.reduce((s,r)=>s+r.staffRevenue,0))}</td><td class="num">—</td>
+      <td class="num">${rows.reduce((s,r)=>s+r.dayCalls,0)}</td><td class="num">${rows.reduce((s,r)=>s+r.daySoldOuts,0)}</td>
+      <td class="num">${rows.reduce((s,r)=>s+r.dayClicks,0)}</td>
+    </tr>`;
+  return `<section class="q">
+      <div class="q-head"><span class="idx">QUERY 1</span><span class="name">daily_summary</span></div>
+      <div class="q-sql">-- GROUP BY date：结账/营业额/加菜/翻台/呼叫/沽清/点击，逐日汇总 + 合计行</div>
+      <div class="q-wrap"><table><thead><tr>${columns.map(c=>`<th class="${c.num?'num':''}">${c.label}</th>`).join('')}</tr></thead><tbody>${rowsHtml}</tbody></table></div>
+      <div class="q-foot">${rows.length} rows (+1 total)</div>
+    </section>`;
+}
+
+function sysDiagRenderDishPerformance(orders, clicks){
+  const clickByName = {};
+  clicks.forEach(c => { clickByName[c.name] = (clickByName[c.name] || 0) + (c.count || 0); });
+  const map = new Map();
+  orders.forEach(r => {
+    const seen = new Set();
+    (r.items || []).forEach(it => {
+      if(!map.has(it.name)) map.set(it.name, { name: it.name, qty:0, revenue:0, orders:0, addonQty:0, addonRevenue:0, staffQty:0 });
+      const m = map.get(it.name);
+      m.qty += it.qty; m.revenue += it.price * it.qty;
+      if(it.isAddOn){ m.addonQty += it.qty; m.addonRevenue += it.price * it.qty; }
+      if(it.source === 'staff') m.staffQty += it.qty;
+      seen.add(it.name);
+    });
+    seen.forEach(name => map.get(name).orders++);
+  });
+  const rows = Array.from(map.values()).sort((a,b) => b.revenue - a.revenue).map(m => {
+    const c = clickByName[m.name] || 0;
+    return Object.assign(m, { clicks: c, conv: c ? sysDiagPct(m.orders, c) : '—', avgPrice: m.qty ? m.revenue/m.qty : 0 });
+  });
+  return sysDiagQueryBlock(2, 'dish_performance',
+    '-- GROUP BY dish_name（选定日期范围内）：销量/营业额/加菜占比/点击量/转化率，按营业额降序',
+    [
+      {label:'dish_name'},{label:'qty_sold',num:true},{label:'revenue',num:true},{label:'avg_price',num:true},
+      {label:'orders_containing',num:true},{label:'addon_qty',num:true},{label:'addon_revenue',num:true},
+      {label:'addon_attach_rate',num:true},{label:'staff_added_qty',num:true},{label:'clicks',num:true},{label:'conversion_rate',num:true},
+    ], rows, m => `<tr>
+      <td>${escapeHtml(m.name)}</td><td class="num">${m.qty}</td><td class="num">${sysDiagMoney(m.revenue)}</td>
+      <td class="num">${sysDiagMoney(m.avgPrice)}</td><td class="num">${m.orders}</td><td class="num">${m.addonQty}</td>
+      <td class="num">${sysDiagMoney(m.addonRevenue)}</td><td class="num">${sysDiagPct(m.addonQty, m.qty)}</td>
+      <td class="num">${m.staffQty}</td><td class="num">${m.clicks}</td><td class="num">${m.conv}</td>
+    </tr>`);
+}
+
+function sysDiagRenderHourly(orders){
+  const buckets = Array.from({length:24}, (_,h) => ({ hour:h, checkouts:0, revenue:0 }));
+  orders.forEach(r => {
+    const ts = r.firstOrderAt || r.archivedAt;
+    const h = new Date(ts).getHours();
+    buckets[h].checkouts++; buckets[h].revenue += (r.revenue || 0);
+  });
+  const rows = buckets.filter(b => b.checkouts > 0);
+  return sysDiagQueryBlock(3, 'hourly_distribution',
+    '-- GROUP BY HOUR(first_order_at)：按小时统计下单笔数与营业额，找高峰时段（只列有数据的小时）',
+    [{label:'hour'},{label:'checkouts',num:true},{label:'revenue',num:true}],
+    rows, b => `<tr><td>${String(b.hour).padStart(2,'0')}:00–${String(b.hour).padStart(2,'0')}:59</td><td class="num">${b.checkouts}</td><td class="num">${sysDiagMoney(b.revenue)}</td></tr>`);
+}
+
+function sysDiagRenderCheckoutRecords(orders){
+  const rows = orders.slice().sort((a,b) => b.archivedAt - a.archivedAt);
+  return sysDiagQueryBlock(4, 'checkout_records',
+    '-- SELECT * FROM dailyOrders WHERE date BETWEEN :start AND :end ORDER BY archivedAt DESC',
+    [
+      {label:'seq'},{label:'date'},{label:'time'},{label:'table'},{label:'items'},{label:'item_count',num:true},
+      {label:'revenue',num:true},{label:'batches',num:true},{label:'addon_batches',num:true},{label:'dining_min',num:true},
+    ], rows, r => `<tr>
+      <td>#${String(r.seq).padStart(3,'0')}</td><td>${r.date}</td><td>${sysDiagFmtTime(r.archivedAt)}</td>
+      <td>${escapeHtml(r.table)}</td><td>${escapeHtml((r.items||[]).map(it=>`${it.name}×${it.qty}`).join('、'))}</td>
+      <td class="num">${(r.items||[]).reduce((s,it)=>s+it.qty,0)}</td><td class="num">${sysDiagMoney(r.revenue)}</td>
+      <td class="num">${r.batchCount || '—'}</td><td class="num">${r.addOnBatchCount != null ? r.addOnBatchCount : '—'}</td>
+      <td class="num">${r.firstOrderAt ? sysDiagFmtMin(r.archivedAt - r.firstOrderAt) : '—'}</td>
+    </tr>`);
+}
+
+function sysDiagRenderAddonLog(orders){
+  const rows = [];
+  orders.forEach(r => (r.items||[]).forEach(it => {
+    if(it.isAddOn) rows.push({ date:r.date, time:r.archivedAt, table:r.table, name:it.name, qty:it.qty, price:it.price, source: it.source || 'customer' });
+  }));
+  rows.sort((a,b) => b.time - a.time);
+  return sysDiagQueryBlock(5, 'addon_log',
+    '-- SELECT items[] FROM dailyOrders WHERE items.isAddOn = true（展开成逐行）：每一笔加菜的菜品/金额/来源',
+    [
+      {label:'date'},{label:'time'},{label:'table'},{label:'dish'},{label:'qty',num:true},
+      {label:'unit_price',num:true},{label:'line_revenue',num:true},{label:'source'},
+    ], rows, r => `<tr>
+      <td>${r.date}</td><td>${sysDiagFmtTime(r.time)}</td><td>${escapeHtml(r.table)}</td><td>${escapeHtml(r.name)}</td>
+      <td class="num">${r.qty}</td><td class="num">${sysDiagMoney(r.price)}</td><td class="num">${sysDiagMoney(r.price*r.qty)}</td>
+      <td><span class="tag ${r.source}">${r.source === 'staff' ? '员工代加' : '顾客自加'}</span></td>
+    </tr>`);
+}
+
+function sysDiagRenderCallLog(calls){
+  const rows = calls.slice().sort((a,b) => b.createdAt - a.createdAt);
+  return sysDiagQueryBlock(6, 'call_log',
+    '-- SELECT * FROM callEvents WHERE date BETWEEN :start AND :end ORDER BY createdAt DESC',
+    [{label:'date'},{label:'time'},{label:'table'}],
+    rows, c => `<tr><td>${c.date}</td><td>${sysDiagFmtTime(c.createdAt)}</td><td>${escapeHtml(c.table)}</td></tr>`);
+}
+
+function sysDiagRenderSoldOutLog(events){
+  const rows = events.slice().sort((a,b) => b.createdAt - a.createdAt);
+  return sysDiagQueryBlock(7, 'sold_out_log',
+    '-- SELECT * FROM soldOutEvents WHERE date BETWEEN :start AND :end ORDER BY createdAt DESC',
+    [{label:'date'},{label:'time'},{label:'dish'},{label:'action'}],
+    rows, e => `<tr><td>${e.date}</td><td>${sysDiagFmtTime(e.createdAt)}</td><td>${escapeHtml(e.name)}</td>
+      <td><span class="tag ${e.action}">${e.action === 'soldOut' ? '沽清' : '恢复售卖'}</span></td></tr>`);
+}
+
+function sysDiagRenderStaffActionLog(actionLogs){
+  const rows = actionLogs.slice().sort((a,b) => b.createdAt - a.createdAt);
+  const actionLabel = a => a === 'deleteItem' ? '删单品' : a === 'deleteOrder' ? '删整单' : a === 'editItemQty' ? '改数量' : a;
+  return sysDiagQueryBlock(8, 'staff_action_log',
+    '-- SELECT * FROM staffActionLogs WHERE createdAt BETWEEN :start AND :end ORDER BY createdAt DESC',
+    [{label:'date'},{label:'time'},{label:'action'},{label:'operator'},{label:'table'},{label:'detail'}],
+    rows, l => {
+      const d = new Date(l.createdAt);
+      const pad = n => String(n).padStart(2,'0');
+      return `<tr><td>${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}</td><td>${sysDiagFmtTime(l.createdAt)}</td>
+        <td>${actionLabel(l.action)}</td><td>${escapeHtml(l.operator)}</td><td>${escapeHtml(l.table)}</td><td>${escapeHtml(l.detail)}</td></tr>`;
+    });
+}
+
+function sysDiagRenderClickLog(clicks){
+  const rows = clicks.slice().sort((a,b) => b.date === a.date ? b.count - a.count : b.date.localeCompare(a.date));
+  return sysDiagQueryBlock(9, 'dish_click_log',
+    '-- SELECT * FROM dishClicks WHERE date BETWEEN :start AND :end ORDER BY date DESC, count DESC',
+    [{label:'date'},{label:'dish'},{label:'clicks',num:true}],
+    rows, c => `<tr><td>${c.date}</td><td>${escapeHtml(c.name)}</td><td class="num">${c.count}</td></tr>`);
+}
+
+function sysDiagHTML(){
+  return `
+    <div class="sysdiag">
+      <header class="sysdiag-header">
+        <h1>系统诊断查询台</h1>
+        <label>起始日期</label>
+        <input type="date" id="sysdiag-start" value="${sysDiagState.start}">
+        <label>结束日期</label>
+        <input type="date" id="sysdiag-end" value="${sysDiagState.end}">
+        <button onclick="sysDiagRunQuery()">执行查询</button>
+        <div class="spacer"></div>
+        <span class="stamp" id="sysdiag-stamp"></span>
+      </header>
+      <div class="meta-row" id="sysdiag-meta"></div>
+      <div id="sysdiag-results">${sysDiagState.results}</div>
+      <p class="sysdiag-footnote">
+        数据来源：dailyOrders / staffActionLogs / callEvents / soldOutEvents / dishClicks（Firestore）。
+        加菜标记、呼叫留痕、沽清留痕、单品点击量均为埋点上线之后才开始累积的数据，上线之前的历史记录这几列会是空的/0，不是数据丢失。
+        单品点击量记录的是顾客点"+"把菜加入购物车的次数（不是曝光/浏览次数），转化率 = 结账中出现该菜的笔数 ÷ 点击次数，仅供参考。
+      </p>
+    </div>`;
+}
+
 function render(){
   document.getElementById('app').innerHTML = appHTML();
-  if(!authed){
+  if(!authMode){
     const el = document.getElementById('login-user');
     if(el) el.focus();
   }

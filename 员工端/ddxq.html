@@ -395,7 +395,7 @@ if(table){
       key: d.id, table: d.data().table, items: d.data().items, createdAt: d.data().createdAt,
       nickname: d.data().nickname || '', partySize: d.data().partySize || null,
       status: d.data().status || 'pending', call: !!d.data().call,
-      confirmedAt: d.data().confirmedAt || null,
+      confirmedAt: d.data().confirmedAt || null, isAddOn: !!d.data().isAddOn,
     })).sort((a,b) => a.createdAt - b.createdAt);
     loaded = true;
     document.getElementById('status').textContent = t('liveStatusPrefix') + new Date().toLocaleTimeString('zh-CN',{hour12:false});
@@ -434,11 +434,14 @@ function todayKey(d){
 
 // 按锅底分组的这一组批次一起结账：记一笔合并流水，删掉组里所有 order 文档——
 // 这只是防员工忘记结账的备用按钮，正式结账仍然在接单看板上整桌进行
-async function recordDailyCheckoutGroup(items, tbl){
-  const cleanItems = (items || []).map(it => ({ name: it.name, qty: it.qty, price: it.price || 0 }));
+async function recordDailyCheckoutGroup(items, tbl, batchOrders){
+  const cleanItems = (items || []).map(it => ({ name: it.name, qty: it.qty, price: it.price || 0, isAddOn: !!it.isAddOn, source: it.source === 'staff' ? 'staff' : 'customer' }));
   if(cleanItems.length === 0) return;
   const revenue = cleanItems.reduce((s, it) => s + it.price * it.qty, 0);
   const date = todayKey();
+  const firstOrderAt = (batchOrders && batchOrders.length) ? Math.min(...batchOrders.map(o => o.createdAt)) : Date.now();
+  const batchCount = (batchOrders && batchOrders.length) || 1;
+  const addOnBatchCount = batchOrders ? batchOrders.filter(o => o.isAddOn).length : 0;
   await db.runTransaction(async tx => {
     const counterRef = db.collection('counters').doc('dailyOrderSeq');
     const snap = await tx.get(counterRef);
@@ -446,7 +449,7 @@ async function recordDailyCheckoutGroup(items, tbl){
     const seq = (prev && prev.date === date) ? prev.seq + 1 : 1;
     tx.set(counterRef, { date, seq });
     const recordRef = db.collection('dailyOrders').doc();
-    tx.set(recordRef, { seq, date, table: tbl, items: cleanItems, revenue, archivedAt: Date.now() });
+    tx.set(recordRef, { seq, date, table: tbl, items: cleanItems, revenue, archivedAt: Date.now(), firstOrderAt, batchCount, addOnBatchCount });
   });
 }
 
@@ -467,10 +470,11 @@ function confirmCheckoutBatch(){
 
 async function performCheckoutBatch(target){
   const { docKeys, table: tbl, items } = target;
+  const batchOrders = orders.filter(o => docKeys.includes(o.key));
   orders = orders.filter(o => !docKeys.includes(o.key));
   render();
   if(!isTestTable(tbl)){
-    try{ await recordDailyCheckoutGroup(items, tbl); }
+    try{ await recordDailyCheckoutGroup(items, tbl, batchOrders); }
     catch(e){ alert(t('checkoutFailMsg')); }
   }
   try{
@@ -783,7 +787,9 @@ function processedGroupWrapperHTML(cluster){
     if(idx === undefined){
       const docKeys = groupOrders.map(go => go.key);
       const items = [];
-      groupOrders.forEach(go => (go.items || []).forEach(it => items.push(it)));
+      groupOrders.forEach(go => (go.items || []).forEach(it => items.push(Object.assign({}, it, {
+        isAddOn: !!go.isAddOn, source: go.nickname === '员工代加' ? 'staff' : 'customer',
+      }))));
       idx = checkoutTargets.length;
       checkoutTargets.push({ docKeys, table, items });
       groupCheckoutIndex[cluster.groupId] = idx;

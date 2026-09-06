@@ -967,6 +967,17 @@ const menuStatusRef = db.collection('menuStatus').doc('soldOut');
 // 同桌其他人扫同一个桌号码进来也要实时看到，避免大家各点各的、菜重复下单。
 // 文档 id 就是桌号，字段 items 结构跟 state.items 一模一样，按菜品 id 逐条存。
 const tableCartsRef = db.collection('tableCarts');
+// 后台经营数据统计用：每道菜每天被点击（按了"+"）多少次、顾客按了几次"呼叫服务员"。
+// 跟点单本身完全独立，写失败/写慢都不能影响下单体验，所以这两个都是"尽力而为"，
+// 出错直接吞掉，不重试、不提示。
+const dishClicksRef = db.collection('dishClicks');
+const callEventsRef = db.collection('callEvents');
+
+function todayKey(d){
+  d = d || new Date();
+  const pad = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
 
 // 桌号来自 URL 参数，顾客昵称是自由输入——两者都可能被塞进 innerHTML 的场合
 // (state.table/order.table 显示、之后流入员工看板) 必须先转义，否则相当于
@@ -1874,10 +1885,45 @@ function changeQty(id, delta){
   const cur = getItem(id);
   const qty = Math.max(0, Math.min(20, cur.qty + delta));
   state.items[id] = { qty, spice: cur.spice, size: cur.size, excludes: cur.excludes, cookMethod: cur.cookMethod };
-  if(delta > 0 && qty > cur.qty) celebrateAddToCart();
+  if(delta > 0 && qty > cur.qty){ celebrateAddToCart(); logDishClick(id); }
   updateItemUI(id);
   pushSharedCartItem(id);
 }
+
+// 单品点击量统计：每次顾客按"+"把这道菜加一份，本地先计数，攒够一小段时间/攒到
+// 页面要离开了再一次性合并写入 Firestore（用 increment 叠加当天这道菜的总数），
+// 不然手速快的顾客连点几十次"+"就要打几十次 Firestore，既没必要也费流量。
+let pendingClickCounts = {};
+let clickFlushTimer = null;
+
+function logDishClick(id){
+  pendingClickCounts[id] = (pendingClickCounts[id] || 0) + 1;
+  if(!clickFlushTimer) clickFlushTimer = setTimeout(flushDishClicks, 20000);
+}
+
+function flushDishClicks(){
+  clickFlushTimer = null;
+  const counts = pendingClickCounts;
+  pendingClickCounts = {};
+  const date = todayKey();
+  Object.keys(counts).forEach(id => {
+    const d = MENU_BY_ID[id];
+    if(!d) return;
+    dishClicksRef.doc(`${date}_${id}`).set({
+      date, dishId: id, name: zhDishName(id),
+      count: firebase.firestore.FieldValue.increment(counts[id]),
+    }, { merge: true }).catch(() => {});
+  });
+}
+
+// 顾客切走标签页/关掉页面前，把还没攒够时间的点击数也尽量冲一次，宁可漏几次
+// 点击统计，也不要攒了一堆从来没写进去
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'hidden' && Object.keys(pendingClickCounts).length > 0){
+    clearTimeout(clickFlushTimer);
+    flushDishClicks();
+  }
+});
 
 function setSpice(id, level){
   const cur = getItem(id);
@@ -2191,6 +2237,7 @@ async function callWaiter(){
       status: 'pending', call: true,
     }), 12000);
     celebrateCallWaiter();
+    callEventsRef.add({ table: state.table, date: todayKey(), createdAt: Date.now() }).catch(() => {});
   }catch(e){ alert(t('orderFailed')); }
   state.callingWaiter = false;
   render();
@@ -2433,6 +2480,7 @@ async function claimSharedCartAndSubmit(order){
     tx.set(newOrderRef, {
       table: order.table, items: order.items, createdAt: order.createdAt,
       nickname: order.nickname, partySize: order.partySize, status: 'pending',
+      isAddOn: order.isAddOn,
     });
     tx.set(cartRef, { items: {}, updatedAt: Date.now() });
     created = true;
@@ -2487,6 +2535,7 @@ async function submitOrder(){
   try{
     const priorOrders = await fetchTableOrders(state.table);
     const isAddOn = priorOrders.length > 0;
+    order.isAddOn = isAddOn;
 
     // 两道去重保护：命中任何一道，都不再重复建单，直接借用已经存在的那一笔当作
     // 这次提交的结果——不提示、不报错，安安静静跳去下单成功页，反正前面已经下成了
@@ -2509,6 +2558,7 @@ async function submitOrder(){
         nickname: order.nickname,
         partySize: order.partySize,
         status: 'pending',
+        isAddOn: order.isAddOn,
       }), 12000);
       docId = docRef.id;
     }

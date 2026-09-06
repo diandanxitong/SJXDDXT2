@@ -31,7 +31,7 @@ service cloud.firestore {
       // 此时必须同时带上 confirmedAt（服务器时间前后 10 分钟内），供订单详情页算
       // "几分钟前已处理"
       // call 是"呼叫服务员"标记（可选字段）：这类订单没有菜品，items 允许为空
-      allow create: if request.resource.data.keys().hasOnly(['table', 'items', 'createdAt', 'nickname', 'partySize', 'status', 'call', 'confirmedAt'])
+      allow create: if request.resource.data.keys().hasOnly(['table', 'items', 'createdAt', 'nickname', 'partySize', 'status', 'call', 'confirmedAt', 'isAddOn'])
                     && request.resource.data.table is string
                     && request.resource.data.table.size() > 0
                     && request.resource.data.table.size() <= 20
@@ -39,6 +39,9 @@ service cloud.firestore {
                     && request.resource.data.items.size() <= 30
                     && (request.resource.data.items.size() > 0 || request.resource.data.get('call', false) == true)
                     && (!('call' in request.resource.data) || request.resource.data.call is bool)
+                    // isAddOn：这一批是不是这一桌当天的加菜（相对最初那一轮下单）——
+                    // 只给"经营数据"页统计加菜频率/金额用，不影响下单/厨房流程本身
+                    && (!('isAddOn' in request.resource.data) || request.resource.data.isAddOn is bool)
                     && request.resource.data.createdAt is number
                     // createdAt 必须落在服务器时间前后 10 分钟内，防止伪造过期/未来时间戳
                     && math.abs(request.time.toMillis() - request.resource.data.createdAt) < 10 * 60 * 1000
@@ -110,7 +113,7 @@ service cloud.firestore {
     // 只是前端一道软性关卡，没有真正的账号体系，规则本身没法校验"谁在删"。
     match /dailyOrders/{recordId} {
       allow read: if true;
-      allow create: if request.resource.data.keys().hasOnly(['seq', 'date', 'table', 'items', 'revenue', 'archivedAt'])
+      allow create: if request.resource.data.keys().hasOnly(['seq', 'date', 'table', 'items', 'revenue', 'archivedAt', 'firstOrderAt', 'batchCount', 'addOnBatchCount'])
                     && request.resource.data.seq is number
                     && request.resource.data.seq > 0
                     && request.resource.data.date is string
@@ -125,7 +128,13 @@ service cloud.firestore {
                     && request.resource.data.revenue >= 0
                     && request.resource.data.revenue < 100000
                     && request.resource.data.archivedAt is number
-                    && math.abs(request.time.toMillis() - request.resource.data.archivedAt) < 10 * 60 * 1000;
+                    && math.abs(request.time.toMillis() - request.resource.data.archivedAt) < 10 * 60 * 1000
+                    // 下面三个是"经营数据"页用的补充字段：这一桌第一笔下单时间（算翻台时长）、
+                    // 这次结账合并了几批（初始+加菜）、其中几批是加菜——都是可选的，老代码
+                    // 没传也不影响结账本身
+                    && (!('firstOrderAt' in request.resource.data) || request.resource.data.firstOrderAt is number)
+                    && (!('batchCount' in request.resource.data) || (request.resource.data.batchCount is number && request.resource.data.batchCount > 0))
+                    && (!('addOnBatchCount' in request.resource.data) || (request.resource.data.addOnBatchCount is number && request.resource.data.addOnBatchCount >= 0));
       allow delete: if true;
     }
 
@@ -176,6 +185,56 @@ service cloud.firestore {
                     && request.resource.data.items is map
                     && request.resource.data.updatedAt is number
                     && math.abs(request.time.toMillis() - request.resource.data.updatedAt) < 10 * 60 * 1000;
+    }
+
+    // 经营数据统计——单品点击量：文档 id 是"日期_菜品id"，count 用 increment 叠加，
+    // 顾客端每次点一下"+"就加一次。跟点单流程完全独立，没有登录态，靠形状兜底。
+    match /dishClicks/{docId} {
+      allow read: if true;
+      allow write: if request.resource.data.keys().hasOnly(['date', 'dishId', 'name', 'count'])
+                    && request.resource.data.date is string
+                    && request.resource.data.date.size() == 10
+                    && request.resource.data.dishId is string
+                    && request.resource.data.dishId.size() > 0
+                    && request.resource.data.dishId.size() <= 50
+                    && request.resource.data.name is string
+                    && request.resource.data.name.size() <= 50
+                    && request.resource.data.count is number
+                    && request.resource.data.count >= 0;
+    }
+
+    // 经营数据统计——顾客按"呼叫服务员"次数留痕：这个 collection 跟 orders 里
+    // call:true 的临时呼叫单不一样，orders 那条会在员工处理完之后被删掉，这里
+    // 专门留一份不会被删的历史记录，用来看每天呼叫服务员的频率。
+    match /callEvents/{docId} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['table', 'date', 'createdAt'])
+                    && request.resource.data.table is string
+                    && request.resource.data.table.size() > 0
+                    && request.resource.data.table.size() <= 20
+                    && request.resource.data.date is string
+                    && request.resource.data.date.size() == 10
+                    && request.resource.data.createdAt is number
+                    && math.abs(request.time.toMillis() - request.resource.data.createdAt) < 10 * 60 * 1000;
+      allow delete: if true;
+    }
+
+    // 经营数据统计——沽清/恢复售卖留痕：menuStatus 只存"现在沽清了哪些菜"，
+    // 会被整份覆盖写，看不出历史；这里专门记一条流水，用来看哪些菜经常断货。
+    match /soldOutEvents/{docId} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['dishId', 'name', 'action', 'date', 'createdAt'])
+                    && request.resource.data.dishId is string
+                    && request.resource.data.dishId.size() > 0
+                    && request.resource.data.dishId.size() <= 50
+                    && request.resource.data.name is string
+                    && request.resource.data.name.size() <= 50
+                    && request.resource.data.action in ['soldOut', 'restock']
+                    && request.resource.data.date is string
+                    && request.resource.data.date.size() == 10
+                    && request.resource.data.createdAt is number
+                    && math.abs(request.time.toMillis() - request.resource.data.createdAt) < 10 * 60 * 1000;
+      allow delete: if true;
     }
 
     // 兜底：其他任何 collection 一律拒绝，避免规则之外的路径被意外读写

@@ -155,16 +155,19 @@
   .order-card.test-table .view-detail-btn:hover{border-color:#3F2D00;color:#3F2D00;}
 
   /* 桌号模块（整张卡片）外框跟着状态方框里的"新订单/加菜"文字一起闪红光——
-     用 box-shadow 叠一层扩散的红色光圈，和 status-flash 用同样的时长/节奏，
-     视觉上像是同一次呼吸在闪，而不是两个各闪各的动画 */
-  .order-card.flashing{border-color:var(--urgent);}
+     用一层叠加的伪元素画固定的红色光圈，只对它做 opacity 呼吸动画（不直接对
+     box-shadow 做动画）。box-shadow 动画每一帧都要重新走一遍浏览器的绘制，
+     一张卡片还好，桌子一多、同时好几张在闪，对低性能设备（比如平板）的滑动
+     顺畅度影响很明显；opacity 动画走的是合成层，基本不占主线程 */
+  .order-card.flashing{border-color:var(--urgent);position:relative;}
+  .order-card.flashing::after{
+    content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+    box-shadow:0 0 0 1px var(--urgent), 0 0 26px 5px rgba(248,113,113,.55);
+  }
   @media (prefers-reduced-motion:no-preference){
-    .order-card.flashing{animation:card-glow 1s ease-in-out infinite;}
+    .order-card.flashing::after{animation:card-glow 1s ease-in-out infinite;}
   }
-  @keyframes card-glow{
-    0%,100%{box-shadow:0 0 0 1px var(--urgent), 0 0 26px 5px rgba(248,113,113,.55);}
-    50%{box-shadow:0 0 0 1px rgba(248,113,113,.3), 0 0 8px 1px rgba(248,113,113,.15);}
-  }
+  @keyframes card-glow{0%,100%{opacity:1}50%{opacity:.3}}
 
   /* 看板卡片不再显示具体菜品：只是个"状态方框"——新订单/加菜用橙字闪烁提醒，
      已处理用绿字静止显示，单品/整单删除、加菜、送入厨房都在"查看详细订单"打开的

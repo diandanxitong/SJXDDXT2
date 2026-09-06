@@ -169,6 +169,7 @@
   .sysdiag .tag.staff{ background:#e3dcf5; color:#5a2ea6; }
   .sysdiag .tag.customer{ background:#dbeee0; color:#1a7a3c; }
   .sysdiag .empty-note{ padding:10px; color:#999; font-style:italic; }
+  .sysdiag-warning{ background:#fff3cd; border:1px solid #e0b100; color:#7a5c00; padding:8px 12px; margin-bottom:14px; }
   .sysdiag-footnote{ color:#888; font-size:10.5px; padding:10px 4px 60px; }
 </style>
 </head>
@@ -356,6 +357,12 @@ let sysDiagCategory = 'overview';
 let sysDiagSections = {};
 let sysDiagReports = [];       // 已生成的快照，按日期从新到旧排列
 let sysDiagSelectedDate = '';  // 当前正在查看哪一天
+
+// 加菜标记（isAddOn/batchCount）是 2026-09-06 当天才上线的埋点，写在结账那一刻
+// 的 dailyOrders 记录里；9-06 当天已经有不少桌子是用上线前的旧代码结账、
+// 结账时压根没有这两个字段，9-06 之前（含 9-06 当天）的加菜数字统计不全，
+// 不是真的没人加菜，是历史数据缺口，补不回来——从 9-07 起才是完整数据
+const ADDON_TRACKING_SINCE = '2026-09-07';
 let sysDiagStockoutHTML = '<p class="empty-note">加载中…</p>';  // 库存这张表跟日期无关，算一次存着
 
 function sysDiagMoney(v){ return '€' + (v || 0).toFixed(2); }
@@ -423,6 +430,13 @@ function sysDiagSelectDate(date){
   const stampEl = document.getElementById('sysdiag-stamp');
   if(stampEl) stampEl.textContent = `生成于 ${new Date(report.generatedAt).toLocaleString('zh-CN', { hour12:false })}`;
 
+  const warnEl = document.getElementById('sysdiag-warning');
+  if(warnEl){
+    warnEl.innerHTML = date < ADDON_TRACKING_SINCE
+      ? `⚠ ${date} 早于加菜埋点上线（${ADDON_TRACKING_SINCE} 起才完整），这天的加菜次数/加菜金额/加菜占比不准确，不是真的没人加菜。`
+      : '';
+  }
+
   const trendEl = document.getElementById('sysdiag-trend');
   if(trendEl) trendEl.innerHTML = sysDiagRenderTrend(sysDiagReports);
 
@@ -478,12 +492,12 @@ function sysDiagRenderTrend(reports){
   });
   return `<section class="q">
       <div class="q-head"><span class="idx">趋势</span><span class="name">近期每日趋势</span></div>
-      <div class="q-sql">最近 ${rows.length} 天的自动记录，按日期从新到旧排列——选中的那天会高亮，下面选个日期看当天详情</div>
+      <div class="q-sql">最近 ${rows.length} 天的自动记录，按日期从新到旧排列——选中的那天会高亮，下面选个日期看当天详情；标 ⚠ 的那几天早于加菜埋点上线，加菜金额一栏不准确</div>
       <div class="q-wrap"><table>
         <thead><tr><th>日期</th><th class="num">结账笔数</th><th class="num">营业额</th><th class="num">客单价</th><th class="num">加菜金额</th><th class="num">呼叫次数</th><th class="num">点击量</th></tr></thead>
         <tbody>${rows.map(r => `<tr class="${r.date === sysDiagSelectedDate ? 'total-row' : ''}">
-          <td>${r.date}</td><td class="num">${r.checkouts}</td><td class="num">${sysDiagMoney(r.revenue)}</td>
-          <td class="num">${r.checkouts ? sysDiagMoney(r.revenue / r.checkouts) : '—'}</td><td class="num">${sysDiagMoney(r.addonRevenue)}</td>
+          <td>${r.date}${r.date < ADDON_TRACKING_SINCE ? ' ⚠' : ''}</td><td class="num">${r.checkouts}</td><td class="num">${sysDiagMoney(r.revenue)}</td>
+          <td class="num">${r.checkouts ? sysDiagMoney(r.revenue / r.checkouts) : '—'}</td><td class="num">${r.date < ADDON_TRACKING_SINCE ? '—' : sysDiagMoney(r.addonRevenue)}</td>
           <td class="num">${r.calls}</td><td class="num">${r.clicks}</td>
         </tr>`).join('')}</tbody>
       </table></div>
@@ -710,13 +724,15 @@ function sysDiagHTML(){
         <div class="spacer"></div>
         <span class="stamp" id="sysdiag-stamp"></span>
       </header>
+      <div id="sysdiag-warning"></div>
       <div id="sysdiag-trend"></div>
       <div class="meta-row" id="sysdiag-meta"></div>
       <div class="sysdiag-tabs" id="sysdiag-tabs"></div>
       <div id="sysdiag-results">${'<p class="empty-note">加载中…</p>'}</div>
       <p class="sysdiag-footnote">
         每天英国/葡萄牙时间 23:50 自动生成当天的记录，不用手动选日期范围查询——上面下拉框选哪天看哪天的详情。
-        加菜标记、呼叫留痕、单品点击量都是这次才加的埋点，只统计上线之后发生的数据；上线之前的历史记录这几项会是空的/0，不是数据丢失。
+        呼叫留痕、单品点击量都是这次才加的埋点，只统计上线之后发生的数据；上线之前的历史记录这几项会是空的/0，不是数据丢失。
+        加菜标记（isAddOn）从 ${ADDON_TRACKING_SINCE} 起才是完整数据——${ADDON_TRACKING_SINCE} 之前的日期，加菜次数/金额不准确，不是真的没人加菜，趋势表和详情页会标 ⚠ 提醒。
         单品点击量记录的是顾客点"+"把菜加入购物车的次数（不是浏览次数），转化率 = 结账中出现该菜的笔数 ÷ 点击次数，仅供参考。
       </p>
     </div>`;

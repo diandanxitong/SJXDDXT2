@@ -134,6 +134,13 @@
   }
   .sysdiag-header .stamp{ color:#666; font-size:10.5px; }
   .sysdiag .meta-row{ display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px; }
+  .sysdiag-tabs{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
+  .sysdiag-tab{
+    background:#fff; border:1px solid #ccc; color:#333; padding:6px 14px;
+    font-family:inherit; font-size:12px; font-weight:bold; cursor:pointer;
+  }
+  .sysdiag-tab:hover{ border-color:#888; }
+  .sysdiag-tab.active{ background:#282828; color:#8f8; border-color:#282828; }
   .sysdiag .meta-card{ border:1px solid #ccc; background:#fff; padding:8px 12px; min-width:130px; }
   .sysdiag .meta-card .k{ color:#777; font-size:10.5px; text-transform:uppercase; letter-spacing:.04em; }
   .sysdiag .meta-card .v{ font-size:16px; font-weight:bold; }
@@ -344,6 +351,33 @@ const sysDiagState = (function(){
   return { start: key(start), end: key(today), results: '<p class="empty-note">加载中…</p>' };
 })();
 
+// 功能分类按钮：查询结果太多了不好一次看完，按用途分成几组，点哪组看哪组，
+// 数据在一次查询里已经全拉回来了，切分类只是换一下要显示哪几张表，不用重新查
+const SYSDIAG_CATEGORIES = [
+  { key: 'overview', label: '营业总览' },
+  { key: 'dish', label: '菜品分析' },
+  { key: 'addon', label: '加菜分析' },
+  { key: 'service', label: '服务与库存' },
+  { key: 'raw', label: '原始记录' },
+];
+let sysDiagCategory = 'overview';
+let sysDiagSections = {};
+
+function sysDiagRenderTabs(){
+  const el = document.getElementById('sysdiag-tabs');
+  if(!el) return;
+  el.innerHTML = SYSDIAG_CATEGORIES.map(c =>
+    `<button class="sysdiag-tab ${c.key === sysDiagCategory ? 'active' : ''}" onclick="sysDiagShowCategory('${c.key}')">${c.label}</button>`
+  ).join('');
+}
+
+function sysDiagShowCategory(key){
+  sysDiagCategory = key;
+  sysDiagRenderTabs();
+  const el = document.getElementById('sysdiag-results');
+  if(el) el.innerHTML = (sysDiagSections[key] || []).join('');
+}
+
 function sysDiagMoney(v){ return '€' + (v || 0).toFixed(2); }
 function sysDiagPct(a, b){ return b > 0 ? ((a / b) * 100).toFixed(1) + '%' : '—'; }
 function sysDiagFmtTime(ms){
@@ -411,33 +445,44 @@ async function sysDiagRunQuery(){
   const metaEl = document.getElementById('sysdiag-meta');
   if(metaEl) metaEl.innerHTML = sysDiagRenderMeta(orders, calls, clicks);
 
-  if(resultsEl){
-    resultsEl.innerHTML = [
+  sysDiagSections = {
+    overview: [
       sysDiagRenderDailySummary(orders, calls, soldOuts, clicks, start, end),
-      sysDiagRenderDishPerformance(orders, clicks),
       sysDiagRenderHourly(orders),
-      sysDiagRenderCheckoutRecords(orders),
+    ],
+    dish: [
+      sysDiagRenderDishPerformance(orders, clicks),
+      sysDiagRenderClickLog(clicks),
+    ],
+    addon: [
+      sysDiagRenderTableAddonFrequency(orders),
       sysDiagRenderAddonLog(orders),
+    ],
+    service: [
       sysDiagRenderCallLog(calls),
       sysDiagRenderSoldOutLog(soldOuts),
+    ],
+    raw: [
+      sysDiagRenderCheckoutRecords(orders),
       sysDiagRenderStaffActionLog(actionLogs),
-      sysDiagRenderClickLog(clicks),
-    ].join('');
-  }
+    ],
+  };
+  sysDiagRenderTabs();
+  sysDiagShowCategory(sysDiagCategory);
 }
 
-function sysDiagQueryBlock(idx, name, sql, columns, rows, rowsHtmlFn){
+function sysDiagQueryBlock(idx, name, note, columns, rows, rowsHtmlFn){
   const body = rows.length === 0
-    ? `<div class="empty-note">0 rows</div>`
+    ? `<div class="empty-note">没有数据</div>`
     : `<div class="q-wrap"><table>
         <thead><tr>${columns.map(c => `<th class="${c.num?'num':''}">${c.label}</th>`).join('')}</tr></thead>
         <tbody>${rows.map(rowsHtmlFn).join('')}</tbody>
       </table></div>`;
   return `<section class="q">
-      <div class="q-head"><span class="idx">QUERY ${idx}</span><span class="name">${name}</span></div>
-      <div class="q-sql">${escapeHtml(sql)}</div>
+      <div class="q-head"><span class="idx">${idx}</span><span class="name">${name}</span></div>
+      <div class="q-sql">${escapeHtml(note)}</div>
       ${body}
-      <div class="q-foot">${rows.length} rows</div>
+      <div class="q-foot">共 ${rows.length} 条</div>
     </section>`;
 }
 
@@ -478,10 +523,10 @@ function sysDiagRenderDailySummary(orders, calls, soldOuts, clicks, start, end){
   const totalAddonRevenue = rows.reduce((s,r)=>s+r.addonRevenue,0);
 
   const columns = [
-    {label:'date'},{label:'checkouts',num:true},{label:'revenue',num:true},{label:'avg_ticket',num:true},
-    {label:'items_sold',num:true},{label:'addon_batches / total_batches',num:true},{label:'addon_batch_rate',num:true},
-    {label:'addon_revenue',num:true},{label:'addon_revenue_share',num:true},{label:'staff_added_revenue',num:true},
-    {label:'avg_dining_min',num:true},{label:'call_count',num:true},{label:'sold_out_events',num:true},{label:'dish_clicks',num:true},
+    {label:'日期'},{label:'结账笔数',num:true},{label:'营业额',num:true},{label:'客单价',num:true},
+    {label:'菜品销量',num:true},{label:'加菜批次/总批次',num:true},{label:'加菜批次占比',num:true},
+    {label:'加菜金额',num:true},{label:'加菜金额占比',num:true},{label:'员工代加金额',num:true},
+    {label:'平均用餐(分钟)',num:true},{label:'呼叫次数',num:true},{label:'沽清次数',num:true},{label:'点击量',num:true},
   ];
   const rowsHtml = rows.map(r => `<tr>
       <td>${r.date}</td><td class="num">${r.checkouts}</td><td class="num">${sysDiagMoney(r.revenue)}</td>
@@ -491,7 +536,7 @@ function sysDiagRenderDailySummary(orders, calls, soldOuts, clicks, start, end){
       <td class="num">${sysDiagMoney(r.staffRevenue)}</td><td class="num">${sysDiagFmtMin(r.avgDwell)}</td>
       <td class="num">${r.dayCalls}</td><td class="num">${r.daySoldOuts}</td><td class="num">${r.dayClicks}</td>
     </tr>`).join('') + `<tr class="total-row">
-      <td>TOTAL</td><td class="num">${totalCheckouts}</td><td class="num">${sysDiagMoney(totalRevenue)}</td>
+      <td>合计</td><td class="num">${totalCheckouts}</td><td class="num">${sysDiagMoney(totalRevenue)}</td>
       <td class="num">${totalCheckouts?sysDiagMoney(totalRevenue/totalCheckouts):'—'}</td>
       <td class="num">${rows.reduce((s,r)=>s+r.itemsSold,0)}</td>
       <td class="num">${totalAddonBatches} / ${totalBatches}</td><td class="num">${sysDiagPct(totalAddonBatches, totalBatches)}</td>
@@ -501,10 +546,10 @@ function sysDiagRenderDailySummary(orders, calls, soldOuts, clicks, start, end){
       <td class="num">${rows.reduce((s,r)=>s+r.dayClicks,0)}</td>
     </tr>`;
   return `<section class="q">
-      <div class="q-head"><span class="idx">QUERY 1</span><span class="name">daily_summary</span></div>
-      <div class="q-sql">-- GROUP BY date：结账/营业额/加菜/翻台/呼叫/沽清/点击，逐日汇总 + 合计行</div>
+      <div class="q-head"><span class="idx">1</span><span class="name">每日汇总</span></div>
+      <div class="q-sql">按日期汇总结账、营业额、加菜、翻台时长、呼叫、沽清、点击，最后一行是合计</div>
       <div class="q-wrap"><table><thead><tr>${columns.map(c=>`<th class="${c.num?'num':''}">${c.label}</th>`).join('')}</tr></thead><tbody>${rowsHtml}</tbody></table></div>
-      <div class="q-foot">${rows.length} rows (+1 total)</div>
+      <div class="q-foot">共 ${rows.length} 天（另加 1 行合计）</div>
     </section>`;
 }
 
@@ -528,12 +573,12 @@ function sysDiagRenderDishPerformance(orders, clicks){
     const c = clickByName[m.name] || 0;
     return Object.assign(m, { clicks: c, conv: c ? sysDiagPct(m.orders, c) : '—', avgPrice: m.qty ? m.revenue/m.qty : 0 });
   });
-  return sysDiagQueryBlock(2, 'dish_performance',
-    '-- GROUP BY dish_name（选定日期范围内）：销量/营业额/加菜占比/点击量/转化率，按营业额降序',
+  return sysDiagQueryBlock('3', '单品表现',
+    '按菜品汇总（所选日期范围内），按营业额从高到低排序',
     [
-      {label:'dish_name'},{label:'qty_sold',num:true},{label:'revenue',num:true},{label:'avg_price',num:true},
-      {label:'orders_containing',num:true},{label:'addon_qty',num:true},{label:'addon_revenue',num:true},
-      {label:'addon_attach_rate',num:true},{label:'staff_added_qty',num:true},{label:'clicks',num:true},{label:'conversion_rate',num:true},
+      {label:'菜品'},{label:'销量',num:true},{label:'营业额',num:true},{label:'均价',num:true},
+      {label:'出现笔数',num:true},{label:'加菜数量',num:true},{label:'加菜金额',num:true},
+      {label:'加菜占比',num:true},{label:'员工代加数量',num:true},{label:'点击量',num:true},{label:'转化率',num:true},
     ], rows, m => `<tr>
       <td>${escapeHtml(m.name)}</td><td class="num">${m.qty}</td><td class="num">${sysDiagMoney(m.revenue)}</td>
       <td class="num">${sysDiagMoney(m.avgPrice)}</td><td class="num">${m.orders}</td><td class="num">${m.addonQty}</td>
@@ -550,19 +595,19 @@ function sysDiagRenderHourly(orders){
     buckets[h].checkouts++; buckets[h].revenue += (r.revenue || 0);
   });
   const rows = buckets.filter(b => b.checkouts > 0);
-  return sysDiagQueryBlock(3, 'hourly_distribution',
-    '-- GROUP BY HOUR(first_order_at)：按小时统计下单笔数与营业额，找高峰时段（只列有数据的小时）',
-    [{label:'hour'},{label:'checkouts',num:true},{label:'revenue',num:true}],
+  return sysDiagQueryBlock('2', '分时段分布',
+    '按小时统计下单笔数与营业额，用来看高峰时段（只列有数据的小时）',
+    [{label:'时段'},{label:'结账笔数',num:true},{label:'营业额',num:true}],
     rows, b => `<tr><td>${String(b.hour).padStart(2,'0')}:00–${String(b.hour).padStart(2,'0')}:59</td><td class="num">${b.checkouts}</td><td class="num">${sysDiagMoney(b.revenue)}</td></tr>`);
 }
 
 function sysDiagRenderCheckoutRecords(orders){
   const rows = orders.slice().sort((a,b) => b.archivedAt - a.archivedAt);
-  return sysDiagQueryBlock(4, 'checkout_records',
-    '-- SELECT * FROM dailyOrders WHERE date BETWEEN :start AND :end ORDER BY archivedAt DESC',
+  return sysDiagQueryBlock('9', '结账流水',
+    '结账原始记录，按时间从新到旧排列',
     [
-      {label:'seq'},{label:'date'},{label:'time'},{label:'table'},{label:'items'},{label:'item_count',num:true},
-      {label:'revenue',num:true},{label:'batches',num:true},{label:'addon_batches',num:true},{label:'dining_min',num:true},
+      {label:'单号'},{label:'日期'},{label:'时间'},{label:'桌号'},{label:'菜品明细'},{label:'菜品数量',num:true},
+      {label:'营业额',num:true},{label:'批次数',num:true},{label:'加菜批次',num:true},{label:'用餐(分钟)',num:true},
     ], rows, r => `<tr>
       <td>#${String(r.seq).padStart(3,'0')}</td><td>${r.date}</td><td>${sysDiagFmtTime(r.archivedAt)}</td>
       <td>${escapeHtml(r.table)}</td><td>${escapeHtml((r.items||[]).map(it=>`${it.name}×${it.qty}`).join('、'))}</td>
@@ -572,17 +617,45 @@ function sysDiagRenderCheckoutRecords(orders){
     </tr>`);
 }
 
+// 按桌号统计"初次下单之后又加单"的频率：这张桌子这段时间一共来了几场客人、
+// 其中几场有加菜、平均每场加几次——用来看哪些桌子/场次加菜最频繁
+function sysDiagRenderTableAddonFrequency(orders){
+  const map = new Map();
+  orders.forEach(r => {
+    if(!map.has(r.table)) map.set(r.table, { table: r.table, sessions:0, addonSessions:0, addonBatches:0, addonRevenue:0, revenue:0 });
+    const m = map.get(r.table);
+    const addonB = r.addOnBatchCount || 0;
+    m.sessions++;
+    m.addonBatches += addonB;
+    if(addonB > 0) m.addonSessions++;
+    m.revenue += (r.revenue || 0);
+    m.addonRevenue += (r.items||[]).filter(it=>it.isAddOn).reduce((a,it)=>a+it.price*it.qty,0);
+  });
+  const rows = Array.from(map.values()).sort((a,b) => b.addonBatches - a.addonBatches);
+  return sysDiagQueryBlock('5', '桌号加菜频率',
+    '按桌号汇总：这张桌子这段时间一共来了几场客人、其中几场有加菜、平均每场加菜几次',
+    [
+      {label:'桌号'},{label:'来客场次',num:true},{label:'有加菜的场次',num:true},{label:'加菜渗透率',num:true},
+      {label:'加菜次数合计',num:true},{label:'场均加菜次数',num:true},{label:'加菜金额合计',num:true},{label:'营业额合计',num:true},
+    ], rows, m => `<tr>
+      <td>${escapeHtml(m.table)}</td><td class="num">${m.sessions}</td><td class="num">${m.addonSessions}</td>
+      <td class="num">${sysDiagPct(m.addonSessions, m.sessions)}</td><td class="num">${m.addonBatches}</td>
+      <td class="num">${m.sessions ? (m.addonBatches / m.sessions).toFixed(2) : '—'}</td>
+      <td class="num">${sysDiagMoney(m.addonRevenue)}</td><td class="num">${sysDiagMoney(m.revenue)}</td>
+    </tr>`);
+}
+
 function sysDiagRenderAddonLog(orders){
   const rows = [];
   orders.forEach(r => (r.items||[]).forEach(it => {
     if(it.isAddOn) rows.push({ date:r.date, time:r.archivedAt, table:r.table, name:it.name, qty:it.qty, price:it.price, source: it.source || 'customer' });
   }));
   rows.sort((a,b) => b.time - a.time);
-  return sysDiagQueryBlock(5, 'addon_log',
-    '-- SELECT items[] FROM dailyOrders WHERE items.isAddOn = true（展开成逐行）：每一笔加菜的菜品/金额/来源',
+  return sysDiagQueryBlock('6', '加菜明细',
+    '每一笔加菜：菜品、数量、金额、顾客自己加的还是员工代加的',
     [
-      {label:'date'},{label:'time'},{label:'table'},{label:'dish'},{label:'qty',num:true},
-      {label:'unit_price',num:true},{label:'line_revenue',num:true},{label:'source'},
+      {label:'日期'},{label:'时间'},{label:'桌号'},{label:'菜品'},{label:'数量',num:true},
+      {label:'单价',num:true},{label:'金额',num:true},{label:'来源'},
     ], rows, r => `<tr>
       <td>${r.date}</td><td>${sysDiagFmtTime(r.time)}</td><td>${escapeHtml(r.table)}</td><td>${escapeHtml(r.name)}</td>
       <td class="num">${r.qty}</td><td class="num">${sysDiagMoney(r.price)}</td><td class="num">${sysDiagMoney(r.price*r.qty)}</td>
@@ -592,17 +665,17 @@ function sysDiagRenderAddonLog(orders){
 
 function sysDiagRenderCallLog(calls){
   const rows = calls.slice().sort((a,b) => b.createdAt - a.createdAt);
-  return sysDiagQueryBlock(6, 'call_log',
-    '-- SELECT * FROM callEvents WHERE date BETWEEN :start AND :end ORDER BY createdAt DESC',
-    [{label:'date'},{label:'time'},{label:'table'}],
+  return sysDiagQueryBlock('7', '呼叫服务员记录',
+    '顾客按"呼叫服务员"的记录，按时间从新到旧排列',
+    [{label:'日期'},{label:'时间'},{label:'桌号'}],
     rows, c => `<tr><td>${c.date}</td><td>${sysDiagFmtTime(c.createdAt)}</td><td>${escapeHtml(c.table)}</td></tr>`);
 }
 
 function sysDiagRenderSoldOutLog(events){
   const rows = events.slice().sort((a,b) => b.createdAt - a.createdAt);
-  return sysDiagQueryBlock(7, 'sold_out_log',
-    '-- SELECT * FROM soldOutEvents WHERE date BETWEEN :start AND :end ORDER BY createdAt DESC',
-    [{label:'date'},{label:'time'},{label:'dish'},{label:'action'}],
+  return sysDiagQueryBlock('8', '沽清/恢复记录',
+    '菜品被标记沽清或恢复售卖的记录，按时间从新到旧排列',
+    [{label:'日期'},{label:'时间'},{label:'菜品'},{label:'操作'}],
     rows, e => `<tr><td>${e.date}</td><td>${sysDiagFmtTime(e.createdAt)}</td><td>${escapeHtml(e.name)}</td>
       <td><span class="tag ${e.action}">${e.action === 'soldOut' ? '沽清' : '恢复售卖'}</span></td></tr>`);
 }
@@ -610,9 +683,9 @@ function sysDiagRenderSoldOutLog(events){
 function sysDiagRenderStaffActionLog(actionLogs){
   const rows = actionLogs.slice().sort((a,b) => b.createdAt - a.createdAt);
   const actionLabel = a => a === 'deleteItem' ? '删单品' : a === 'deleteOrder' ? '删整单' : a === 'editItemQty' ? '改数量' : a;
-  return sysDiagQueryBlock(8, 'staff_action_log',
-    '-- SELECT * FROM staffActionLogs WHERE createdAt BETWEEN :start AND :end ORDER BY createdAt DESC',
-    [{label:'date'},{label:'time'},{label:'action'},{label:'operator'},{label:'table'},{label:'detail'}],
+  return sysDiagQueryBlock('10', '员工操作日志',
+    '员工删单品/删整单/改数量的操作记录，按时间从新到旧排列',
+    [{label:'日期'},{label:'时间'},{label:'操作'},{label:'操作人'},{label:'桌号'},{label:'详情'}],
     rows, l => {
       const d = new Date(l.createdAt);
       const pad = n => String(n).padStart(2,'0');
@@ -623,9 +696,9 @@ function sysDiagRenderStaffActionLog(actionLogs){
 
 function sysDiagRenderClickLog(clicks){
   const rows = clicks.slice().sort((a,b) => b.date === a.date ? b.count - a.count : b.date.localeCompare(a.date));
-  return sysDiagQueryBlock(9, 'dish_click_log',
-    '-- SELECT * FROM dishClicks WHERE date BETWEEN :start AND :end ORDER BY date DESC, count DESC',
-    [{label:'date'},{label:'dish'},{label:'clicks',num:true}],
+  return sysDiagQueryBlock('4', '单品点击记录',
+    '每道菜每天被点"+"加入购物车的次数，按日期从新到旧、点击量从高到低排列',
+    [{label:'日期'},{label:'菜品'},{label:'点击量',num:true}],
     rows, c => `<tr><td>${c.date}</td><td>${escapeHtml(c.name)}</td><td class="num">${c.count}</td></tr>`);
 }
 
@@ -633,21 +706,22 @@ function sysDiagHTML(){
   return `
     <div class="sysdiag">
       <header class="sysdiag-header">
-        <h1>系统诊断查询台</h1>
+        <h1>经营数据查询台</h1>
         <label>起始日期</label>
         <input type="date" id="sysdiag-start" value="${sysDiagState.start}">
         <label>结束日期</label>
         <input type="date" id="sysdiag-end" value="${sysDiagState.end}">
-        <button onclick="sysDiagRunQuery()">执行查询</button>
+        <button onclick="sysDiagRunQuery()">查询</button>
         <div class="spacer"></div>
         <span class="stamp" id="sysdiag-stamp"></span>
       </header>
       <div class="meta-row" id="sysdiag-meta"></div>
+      <div class="sysdiag-tabs" id="sysdiag-tabs"></div>
       <div id="sysdiag-results">${sysDiagState.results}</div>
       <p class="sysdiag-footnote">
-        数据来源：dailyOrders / staffActionLogs / callEvents / soldOutEvents / dishClicks（Firestore）。
-        加菜标记、呼叫留痕、沽清留痕、单品点击量均为埋点上线之后才开始累积的数据，上线之前的历史记录这几列会是空的/0，不是数据丢失。
-        单品点击量记录的是顾客点"+"把菜加入购物车的次数（不是曝光/浏览次数），转化率 = 结账中出现该菜的笔数 ÷ 点击次数，仅供参考。
+        数据来自结账流水、员工操作日志、呼叫记录、沽清记录、单品点击记录。
+        加菜标记、呼叫留痕、沽清留痕、单品点击量都是这次才加的埋点，只统计上线之后发生的数据，上线之前的历史记录这几列会是空的/0，不是数据丢失。
+        单品点击量记录的是顾客点"+"把菜加入购物车的次数（不是浏览次数），转化率 = 结账中出现该菜的笔数 ÷ 点击次数，仅供参考。
       </p>
     </div>`;
 }

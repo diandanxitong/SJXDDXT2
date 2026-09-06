@@ -340,18 +340,23 @@ function renderModal(){
 // dailyReports/{日期} 文档。这个页面不再需要手动选日期范围、点"查询"去现读现
 // 算——只是把已经生成好的快照挑一天读出来展示。
 const dailyReportsRef = db.collection('dailyReports');
+// 沽清事件是永久流水（不像 dailyOrders 那样按天存），量也很小，直接整表读，
+// 不受上面"查看日期"下拉框影响——库存这张表看的是全部历史，不是某一天
+const soldOutEventsRef = db.collection('soldOutEvents');
 
 // 功能分类按钮：一天的数据也有好几张表，按用途分组，点哪组看哪组
 const SYSDIAG_CATEGORIES = [
   { key: 'overview', label: '营业总览' },
   { key: 'dish', label: '菜品分析' },
   { key: 'addon', label: '加菜分析' },
+  { key: 'inventory', label: '库存' },
   { key: 'raw', label: '原始记录' },
 ];
 let sysDiagCategory = 'overview';
 let sysDiagSections = {};
 let sysDiagReports = [];       // 已生成的快照，按日期从新到旧排列
 let sysDiagSelectedDate = '';  // 当前正在查看哪一天
+let sysDiagStockoutHTML = '<p class="empty-note">加载中…</p>';  // 库存这张表跟日期无关，算一次存着
 
 function sysDiagMoney(v){ return '€' + (v || 0).toFixed(2); }
 function sysDiagPct(a, b){ return b > 0 ? ((a / b) * 100).toFixed(1) + '%' : '—'; }
@@ -369,8 +374,12 @@ async function sysDiagInit(){
   const resultsEl = document.getElementById('sysdiag-results');
   if(resultsEl) resultsEl.innerHTML = '<p class="empty-note">加载中…</p>';
   try{
-    const snap = await dailyReportsRef.orderBy('date', 'desc').limit(60).get();
-    sysDiagReports = snap.docs.map(d => d.data());
+    const [reportsSnap, soldOutSnap] = await Promise.all([
+      dailyReportsRef.orderBy('date', 'desc').limit(60).get(),
+      soldOutEventsRef.get(),
+    ]);
+    sysDiagReports = reportsSnap.docs.map(d => d.data());
+    sysDiagStockoutHTML = sysDiagRenderStockoutIntervals(soldOutSnap.docs.map(d => d.data()));
   }catch(e){
     if(resultsEl) resultsEl.innerHTML = `<p class="empty-note">加载失败：${escapeHtml(e.message || e)}</p>`;
     return;
@@ -382,11 +391,18 @@ async function sysDiagInit(){
       : sysDiagReports.map(r => `<option value="${r.date}">${r.date}</option>`).join('');
   }
   if(sysDiagReports.length === 0){
-    if(resultsEl) resultsEl.innerHTML = `<p class="empty-note">还没有生成过任何一天的记录——每天英国时间 23:50 会自动生成当天的快照，明天这个时候就能看到第一份了。</p>`;
     const metaEl = document.getElementById('sysdiag-meta');
     if(metaEl) metaEl.innerHTML = '';
     const trendEl = document.getElementById('sysdiag-trend');
     if(trendEl) trendEl.innerHTML = '';
+    // 每天的快照还没出来，但库存这张表跟日期无关，照样能看
+    sysDiagSections = {
+      overview: [`<p class="empty-note">还没有生成过任何一天的记录——每天英国时间 23:50 会自动生成当天的快照，明天这个时候就能看到第一份了。</p>`],
+      dish: [], addon: [], raw: [],
+      inventory: [sysDiagStockoutHTML],
+    };
+    sysDiagRenderTabs();
+    sysDiagShowCategory(sysDiagCategory);
     return;
   }
   sysDiagSelectDate(sysDiagReports[0].date);
@@ -426,6 +442,7 @@ function sysDiagSelectDate(date){
       sysDiagRenderTableAddonFrequency(orders),
       sysDiagRenderAddonLog(orders),
     ],
+    inventory: [sysDiagStockoutHTML],
     raw: [
       sysDiagRenderCheckoutRecords(orders),
       sysDiagRenderStaffActionLog(actionLogs),
@@ -558,7 +575,7 @@ function sysDiagRenderHourly(orders){
 
 function sysDiagRenderCheckoutRecords(orders){
   const rows = orders.slice().sort((a,b) => b.archivedAt - a.archivedAt);
-  return sysDiagQueryBlock('7', '结账流水',
+  return sysDiagQueryBlock('8', '结账流水',
     '结账原始记录，按时间从新到旧排列',
     [
       {label:'单号'},{label:'日期'},{label:'时间'},{label:'桌号'},{label:'菜品明细'},{label:'菜品数量',num:true},
@@ -600,6 +617,41 @@ function sysDiagRenderTableAddonFrequency(orders){
     </tr>`);
 }
 
+// 沽清区间：把 soldOutEvents 里同一道菜的 soldOut/restock 两条配对起来，算出
+// 每次沽清了多久——跟"查看日期"下拉框无关，看的是全部历史。事件是按菜品各自
+// 独立的一条时间线，按时间正序走一遍配对：遇到 soldOut 就开一段（已经开着的
+// 就当重复点击，忽略），遇到 restock 就把最近开着的那一段收尾；最后还开着
+// 没收尾的，说明这道菜现在还在沽清中，到"现在"为止算天数。
+function sysDiagRenderStockoutIntervals(events){
+  const byDish = new Map();
+  events.slice().sort((a,b) => a.createdAt - b.createdAt).forEach(e => {
+    if(!byDish.has(e.dishId)) byDish.set(e.dishId, { name: e.name, open: null, intervals: [] });
+    const d = byDish.get(e.dishId);
+    d.name = e.name;
+    if(e.action === 'soldOut'){
+      if(d.open == null) d.open = e.createdAt;
+    }else if(e.action === 'restock'){
+      if(d.open != null){ d.intervals.push({ start: d.open, end: e.createdAt }); d.open = null; }
+    }
+  });
+  const now = Date.now();
+  const rows = [];
+  byDish.forEach((d, dishId) => {
+    d.intervals.forEach(iv => rows.push({ dishId, name: d.name, start: iv.start, end: iv.end, ongoing: false }));
+    if(d.open != null) rows.push({ dishId, name: d.name, start: d.open, end: null, ongoing: true });
+  });
+  rows.sort((a,b) => (b.end || now) - (a.end || now));
+  return sysDiagQueryBlock('7', '沽清区间',
+    '把每道菜的沽清、恢复售卖两条记录配对起来，算出每次沽清了多久（全部历史，不受上面日期选择影响，仍在沽清中的排最前面）',
+    [{label:'菜品'},{label:'沽清开始'},{label:'恢复售卖'},{label:'沽清天数',num:true}],
+    rows, r => `<tr class="${r.ongoing ? 'total-row' : ''}">
+      <td>${escapeHtml(r.name)}</td>
+      <td>${new Date(r.start).toLocaleString('zh-CN', { hour12:false })}</td>
+      <td>${r.ongoing ? '仍在沽清中' : new Date(r.end).toLocaleString('zh-CN', { hour12:false })}</td>
+      <td class="num">${(((r.end || now) - r.start) / 86400000).toFixed(1)}</td>
+    </tr>`);
+}
+
 function sysDiagRenderAddonLog(orders){
   const rows = [];
   orders.forEach(r => (r.items||[]).forEach(it => {
@@ -629,7 +681,7 @@ function sysDiagRenderCallLog(calls){
 function sysDiagRenderStaffActionLog(actionLogs){
   const rows = actionLogs.slice().sort((a,b) => b.createdAt - a.createdAt);
   const actionLabel = a => a === 'deleteItem' ? '删单品' : a === 'deleteOrder' ? '删整单' : a === 'editItemQty' ? '改数量' : a;
-  return sysDiagQueryBlock('8', '员工操作日志',
+  return sysDiagQueryBlock('9', '员工操作日志',
     '员工删单品/删整单/改数量的操作记录，按时间从新到旧排列',
     [{label:'日期'},{label:'时间'},{label:'操作'},{label:'操作人'},{label:'桌号'},{label:'详情'}],
     rows, l => {

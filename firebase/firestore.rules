@@ -219,6 +219,25 @@ service cloud.firestore {
       allow delete: if true;
     }
 
+    // 经营数据统计——沽清/恢复售卖留痕：menuStatus 只存"现在沽清了哪些菜"，
+    // 会被整份覆盖写，看不出历史；这里专门记一条流水，"经营数据"页把 soldOut/
+    // restock 两条配对起来，算出每次沽清了多久。
+    match /soldOutEvents/{docId} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['dishId', 'name', 'action', 'date', 'createdAt'])
+                    && request.resource.data.dishId is string
+                    && request.resource.data.dishId.size() > 0
+                    && request.resource.data.dishId.size() <= 50
+                    && request.resource.data.name is string
+                    && request.resource.data.name.size() <= 50
+                    && request.resource.data.action in ['soldOut', 'restock']
+                    && request.resource.data.date is string
+                    && request.resource.data.date.size() == 10
+                    && request.resource.data.createdAt is number
+                    && math.abs(request.time.toMillis() - request.resource.data.createdAt) < 10 * 60 * 1000;
+      allow delete: if true;
+    }
+
     // 经营数据统计——每天 23:50（英国/葡萄牙时间）由 GitHub Actions 定时任务自动
     // 生成一份当天的经营快照，把当天的结账流水/员工操作日志/呼叫记录/单品点击
     // 打包存成一份文档，长期保留——这样"经营数据"页只要读某一天的这一份文档就

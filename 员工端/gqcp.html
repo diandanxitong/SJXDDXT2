@@ -175,6 +175,24 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 db.settings({ experimentalAutoDetectLongPolling: true });
 const menuStatusRef = db.collection('menuStatus').doc('soldOut');
+// 后台经营数据统计用：记一条"这道菜什么时候被沽清/恢复"的日志，用来算沽清了
+// 多久——跟 menuStatus 那份"当前沽清名单"完全独立，menuStatus 会被覆盖写、
+// 看不出历史，这里只增不改，专门留痕，"经营数据"页会把 soldOut/restock 两条
+// 配对算出沽清区间和天数
+const soldOutEventsRef = db.collection('soldOutEvents');
+function todayKey(d){
+  d = d || new Date();
+  const pad = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+function logSoldOutEvents(ids, action){
+  const now = Date.now();
+  const date = todayKey();
+  ids.forEach(id => {
+    const dish = DISH_LIST.find(d => d.id === id);
+    soldOutEventsRef.add({ dishId: id, name: (dish && dish.name) || id, action, date, createdAt: now }).catch(() => {});
+  });
+}
 
 // 员工端英文版：语言状态跟接单看板共用同一个 localStorage 开关（staff-i18n.js）
 const UI = {
@@ -473,7 +491,7 @@ function closeModal(){
 async function confirmSoldOut(){
   const ids = new Set(soldOutIds);
   selected.forEach(id => ids.add(id));
-  try{ await menuStatusRef.set({ ids: Array.from(ids) }); }catch(e){}
+  try{ await menuStatusRef.set({ ids: Array.from(ids) }); logSoldOutEvents(Array.from(selected), 'soldOut'); }catch(e){}
   selected.clear();
   modal = null;
   render();
@@ -483,7 +501,7 @@ async function confirmSoldOut(){
 async function confirmRestore(){
   const ids = new Set(soldOutIds);
   selected.forEach(id => ids.delete(id));
-  try{ await menuStatusRef.set({ ids: Array.from(ids) }); }catch(e){}
+  try{ await menuStatusRef.set({ ids: Array.from(ids) }); logSoldOutEvents(Array.from(selected), 'restock'); }catch(e){}
   selected.clear();
   modal = null;
   render();

@@ -1597,6 +1597,11 @@ let state = {
   upsellItems: [],        // 4 randomly-picked dish ids currently shown in the upsell modal
   upsellSelected: {},     // { dishId: true }
   upsellQueue: [],        // "换一批"要按这个队列走：洗过牌、还没展示过的菜品 id，取完一轮再重新洗牌
+  // 网络不好时，下单请求可能一直卡着/超时报错，但其实服务器那边已经建单成功了——本地
+  // 购物车这时候不敢清空（万一是真的失败了），就先记一笔"提交过什么、什么时候提交的"
+  // 在这里，等后面本桌订单的实时监听推送过来一条对得上号的订单，就知道那次其实是成功的，
+  // 把这些菜从购物车里扣掉，避免顾客等会儿加菜时把这些菜跟着又下一遍
+  pendingSubmitAttempts: [], // [{ dishIds, items, createdAt, signature }]
 };
 
 let screenHistory = [];   // 记录来源页面，供“返回”按钮回退用
@@ -1675,8 +1680,32 @@ function clearSharedCart(){
   tableCartsRef.doc(state.table).set({ items: {}, updatedAt: Date.now() }).catch(()=>{});
 }
 
+// 核对"卡住/报错"的下单尝试是不是其实已经成功了：本桌订单的实时推送里只要出现一笔
+// 建单时间、菜品内容都跟某次 pendingSubmitAttempt 精确对上号的订单，就说明那次不是
+// 真的失败，是网络太差、没等到确认——把这次提交的这些菜从本地购物车划掉（按提交时的
+// 数量扣，不是直接清零，万一顾客等待期间又把同一道菜加了更多，剩下的量还留着），
+// 这样顾客之后再加菜下单，才不会把这些已经成功的菜又带上去重复下单
+function reconcilePendingSubmits(){
+  if(!state.pendingSubmitAttempts.length || !liveTableOrders.length) return;
+  state.pendingSubmitAttempts = state.pendingSubmitAttempts.filter(attempt => {
+    const matched = liveTableOrders.find(o => o.createdAt === attempt.createdAt && itemsSignature(o.items) === attempt.signature);
+    if(!matched) return true;
+    attempt.dishIds.forEach((dishId, idx) => {
+      const attemptedQty = attempt.items[idx].qty;
+      const cur = state.items[dishId];
+      if(!cur) return;
+      const newQty = Math.max(0, cur.qty - attemptedQty);
+      if(newQty === 0) delete state.items[dishId];
+      else state.items[dishId] = Object.assign({}, cur, { qty: newQty });
+      updateItemUI(dishId);
+    });
+    return false;
+  });
+}
+
 function onTableOrdersChanged(){
   const foodOrders = liveTableOrders.filter(o => !o.call);
+  reconcilePendingSubmits();
 
   if(state.myOrderItems !== null){
     state.myOrderItems = mergeItems(foodOrders);
@@ -2429,6 +2458,7 @@ async function submitOrder(){
   state.submitting = true; render();
 
   const items = [];
+  const itemDishIds = [];
   MENU.forEach(d => {
     const it = getItem(d.id);
     if(it.qty > 0){
@@ -2439,6 +2469,7 @@ async function submitOrder(){
       const excludeKeys = Object.keys(it.excludes || {}).filter(k => it.excludes[k]);
       if(excludeKeys.length) entry.excludes = excludeKeys;
       items.push(entry);
+      itemDishIds.push(d.id);
     }
   });
 
@@ -2446,6 +2477,12 @@ async function submitOrder(){
     table: state.table, items, createdAt: Date.now(),
     nickname: state.orderNickname || '', partySize: state.orderPartySize || 1,
   };
+
+  // 提交请求可能卡住/超时，但服务器那边实际上已经建单成功——先记一笔"提交过什么"，
+  // 万一等下报错/卡住，本桌订单实时监听那边收到这笔单子推送时能对上号，自动把这些菜
+  // 从购物车扣掉（见 reconcilePendingSubmits），不会等到成功回执才清购物车
+  const pendingAttempt = { dishIds: itemDishIds, items, createdAt: order.createdAt, signature: itemsSignature(items) };
+  state.pendingSubmitAttempts.push(pendingAttempt);
 
   try{
     const priorOrders = await fetchTableOrders(state.table);
@@ -2487,9 +2524,15 @@ async function submitOrder(){
     // 这一轮共享购物车草稿已经变成正式订单了，立刻清空——不然同桌其他设备还会
     // 看着这些菜"待点"，容易重复加、重复下单
     clearSharedCart();
+    // 已经亲眼确认这次提交成功了，不用再靠后面的实时监听去反推，把这条记录摘掉
+    state.pendingSubmitAttempts = state.pendingSubmitAttempts.filter(a => a !== pendingAttempt);
     screenHistory.push('menu');
     state.screen = 'confirm';
   }catch(e){
+    // 这里报错不代表真的没建单成功——很可能是网络太差、没等到服务器确认就超时了，
+    // 服务器那边说不定已经建单成功。所以不清购物车，也不摘掉 pendingAttempt，留着
+    // 让 reconcilePendingSubmits 之后自己去核对：真成功了就把这些菜从购物车划掉，
+    // 避免顾客以为没提交、之后加菜重新下单时把这些菜又带上重复下单
     alert(t('orderFailed'));
   }
   state.submitting = false;

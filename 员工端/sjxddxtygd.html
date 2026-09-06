@@ -202,19 +202,18 @@
   }
   .call-caption{font-weight:700;font-size:15px;color:var(--call-bright);}
   .call-caption-boss{font-weight:900;font-size:22px;color:#ff1a1a;text-shadow:0 0 10px rgba(255,26,26,.5);}
-  .tea-pour{display:flex;align-items:flex-end;justify-content:center;gap:2px;height:34px;}
-  .tea-pour .teapot{font-size:26px;display:inline-block;transform-origin:80% 80%;animation:tea-tilt 1.6s ease-in-out infinite;}
-  .tea-pour .tea-drop{font-size:12px;display:inline-block;opacity:0;animation:tea-drop 1.6s ease-in-out infinite;}
-  .tea-pour .teacup{font-size:22px;display:inline-block;}
-  @keyframes tea-tilt{
-    0%,20%{transform:rotate(0deg);}
-    45%,65%{transform:rotate(-48deg);}
-    100%{transform:rotate(0deg);}
+  .tea-steam{position:relative;display:flex;align-items:flex-end;justify-content:center;height:38px;}
+  .tea-steam .teacup{font-size:26px;display:inline-block;}
+  .tea-steam .steam{
+    position:absolute;bottom:24px;font-size:13px;color:#e5e7eb;opacity:0;
+    animation:steam-rise 2.2s ease-in-out infinite;
   }
-  @keyframes tea-drop{
-    0%,35%{opacity:0;transform:translateY(0);}
-    50%,60%{opacity:1;transform:translateY(6px);}
-    75%,100%{opacity:0;transform:translateY(14px);}
+  .tea-steam .steam.s1{left:calc(50% - 9px);animation-delay:0s;}
+  .tea-steam .steam.s2{left:calc(50% + 3px);animation-delay:1.1s;}
+  @keyframes steam-rise{
+    0%{opacity:0;transform:translateY(0) scale(1);}
+    30%{opacity:.85;}
+    100%{opacity:0;transform:translateY(-16px) scale(1.4);}
   }
   .call-boss-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
   .call-dismiss-btn{
@@ -813,7 +812,7 @@ function groupByTable(list){
 }
 
 // "测试"桌专门用来验证下单/呼叫流程，不是真的有顾客——呼叫服务员这里就不显示
-// 正常的"顾客呼叫"了，改成给测试的员工一句慰问（大红字+倒茶动画图个乐），
+// 正常的"顾客呼叫"了，改成给测试的员工一句慰问（大红字+冒热气的茶图个乐），
 // 下面两个按钮随便点哪个，效果都一样是把这张卡片移出看板
 function callOverlayHTML(callKeys, isAbs, isTest){
   const keys = callKeys.join(',');
@@ -823,7 +822,7 @@ function callOverlayHTML(callKeys, isAbs, isTest){
     <div class="call-overlay ${isAbs ? 'call-overlay-abs' : 'call-overlay-inline'}">
       <span class="call-bell">🔔</span>
       <p class="${isTest ? 'call-caption-boss' : 'call-caption'}">${isTest ? '辛苦了，资方送上问候' : t('callCaption')}</p>
-      ${isTest ? `<div class="tea-pour"><span class="teapot">🫖</span><span class="tea-drop">💧</span><span class="teacup">🍵</span></div>` : ''}
+      ${isTest ? `<div class="tea-steam"><span class="steam s1">～</span><span class="steam s2">～</span><span class="teacup">🍵</span></div>` : ''}
       ${isTest
         ? `<div class="call-boss-actions">${dismissBtn('不辛苦，命苦')}${dismissBtn('感动的接受资方问候')}</div>`
         : dismissBtn(t('callDismiss'))}

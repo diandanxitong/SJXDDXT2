@@ -201,6 +201,7 @@
     80%{transform:rotate(5deg);}
   }
   .call-caption{font-weight:700;font-size:15px;color:var(--call-bright);}
+  .call-caption-boss{font-weight:900;font-size:22px;color:#ff1a1a;text-shadow:0 0 10px rgba(255,26,26,.5);}
   .call-dismiss-btn{
     padding:9px 18px;border-radius:20px;border:1px solid var(--call);
     background:rgba(56,189,248,.18);color:var(--call);font-weight:700;cursor:pointer;font-size:13px;
@@ -796,11 +797,13 @@ function groupByTable(list){
   return groups;
 }
 
-function callOverlayHTML(callKeys, isAbs){
+// "测试"桌专门用来验证下单/呼叫流程，不是真的有顾客——呼叫服务员这里就不显示
+// 正常的"顾客呼叫"了，改成给测试的员工一句慰问，大红字图个乐
+function callOverlayHTML(callKeys, isAbs, isTest){
   return `
     <div class="call-overlay ${isAbs ? 'call-overlay-abs' : 'call-overlay-inline'}">
       <span class="call-bell">🔔</span>
-      <p class="call-caption">${t('callCaption')}</p>
+      <p class="${isTest ? 'call-caption-boss' : 'call-caption'}">${isTest ? '辛苦了，资方送上问候' : t('callCaption')}</p>
       <button class="call-dismiss-btn" data-keys="${callKeys.join(',')}" onclick="archiveOrder(this.dataset.keys.split(','))">${t('callDismiss')}</button>
     </div>`;
 }
@@ -867,8 +870,8 @@ function cardHTML(group){
             <a class="view-detail-btn" href="${detailHref}">${t('viewDetailBtn')}</a>
           </div>
         </div>
-        ${hasCall ? callOverlayHTML(callKeys, true) : ''}
-      </div>` : (hasCall ? callOverlayHTML(callKeys, false) : '')}
+        ${hasCall ? callOverlayHTML(callKeys, true, isTestTable(group.table)) : ''}
+      </div>` : (hasCall ? callOverlayHTML(callKeys, false, isTestTable(group.table)) : '')}
     </div>`;
 }
 

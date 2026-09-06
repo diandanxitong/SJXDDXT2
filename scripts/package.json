@@ -1,0 +1,9 @@
+{
+  "name": "sjxddxt-daily-report",
+  "private": true,
+  "type": "module",
+  "description": "每天定时把当天的经营数据打包存进 Firestore dailyReports，供员工端「员工操作日志」页 DORIN 账号查看。",
+  "dependencies": {
+    "firebase": "12.17.1"
+  }
+}

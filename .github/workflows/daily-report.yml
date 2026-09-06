@@ -1,0 +1,33 @@
+name: Record daily business report
+
+on:
+  schedule:
+    # 英国/葡萄牙时间 23:50 全年对应两种 UTC 偏移（冬令时 GMT / 夏令时 BST），
+    # 用两个 cron 双重触发，脚本自己靠 Europe/London 时间判断是不是真的 23:50，
+    # 不是那一次直接跳过不生成，保证一天只落一份 dailyReports 文档。
+    - cron: '50 23 * * *'
+    - cron: '50 22 * * *'
+  workflow_dispatch:
+    inputs:
+      date:
+        description: '手动补录某一天（格式 YYYY-MM-DD），留空则按当前英国时间生成"今天"，且必须在 23:45~23:59 之间才会真正生成'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install script dependencies
+        working-directory: scripts
+        run: npm install --no-audit --no-fund
+      - name: Generate daily report
+        working-directory: scripts
+        run: node daily-report.mjs "${{ inputs.date }}"

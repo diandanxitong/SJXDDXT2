@@ -219,21 +219,27 @@ service cloud.firestore {
       allow delete: if true;
     }
 
-    // 经营数据统计——沽清/恢复售卖留痕：menuStatus 只存"现在沽清了哪些菜"，
-    // 会被整份覆盖写，看不出历史；这里专门记一条流水，用来看哪些菜经常断货。
-    match /soldOutEvents/{docId} {
+    // 经营数据统计——每天 23:50（英国/葡萄牙时间）由 GitHub Actions 定时任务自动
+    // 生成一份当天的经营快照，把当天的结账流水/员工操作日志/呼叫记录/单品点击
+    // 打包存成一份文档，长期保留——这样"经营数据"页只要读某一天的这一份文档就
+    // 行，不用每次都把好几个可能越长越大的 collection 整表读回来重新筛选；staff
+    // ActionLogs 被员工清空之后，已经生成的快照也不会跟着丢。没有登录态，跟这
+    // 套系统其它 collection 一样只能靠形状校验兜底，运行定时任务的脚本用的也是
+    // 这同一把公开的 Web API Key，不是什么更高权限的身份。
+    match /dailyReports/{date} {
       allow read: if true;
-      allow create: if request.resource.data.keys().hasOnly(['dishId', 'name', 'action', 'date', 'createdAt'])
-                    && request.resource.data.dishId is string
-                    && request.resource.data.dishId.size() > 0
-                    && request.resource.data.dishId.size() <= 50
-                    && request.resource.data.name is string
-                    && request.resource.data.name.size() <= 50
-                    && request.resource.data.action in ['soldOut', 'restock']
+      allow write: if request.resource.data.keys().hasOnly(['date', 'generatedAt', 'orders', 'actionLogs', 'calls', 'clicks'])
                     && request.resource.data.date is string
                     && request.resource.data.date.size() == 10
-                    && request.resource.data.createdAt is number
-                    && math.abs(request.time.toMillis() - request.resource.data.createdAt) < 10 * 60 * 1000;
+                    && request.resource.data.generatedAt is number
+                    && request.resource.data.orders is list
+                    && request.resource.data.orders.size() <= 1000
+                    && request.resource.data.actionLogs is list
+                    && request.resource.data.actionLogs.size() <= 1000
+                    && request.resource.data.calls is list
+                    && request.resource.data.calls.size() <= 1000
+                    && request.resource.data.clicks is list
+                    && request.resource.data.clicks.size() <= 1000;
       allow delete: if true;
     }
 

@@ -4,6 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
+<script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-auth-compat.js"></script>
+<script>
+firebase.initializeApp({
+  apiKey: 'AIzaSyBaFx1ZYKzEKfQLKbnD9YE_X_EJnFXrxOE',
+  authDomain: 'sjxddxt.firebaseapp.com',
+  projectId: 'sjxddxt',
+  storageBucket: 'sjxddxt.firebasestorage.app',
+  messagingSenderId: '56738241418',
+  appId: '1:56738241418:web:1ea87e2445e9d09e3d8673',
+});
+</script>
+<script src="staff-auth.js"></script>
 <title>历史盘点</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -137,18 +150,8 @@
 <div id="app"></div>
 <div id="modal-root"></div>
 
-<script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-compat.js"></script>
 <script>
-const firebaseConfig = {
-  apiKey: 'AIzaSyBaFx1ZYKzEKfQLKbnD9YE_X_EJnFXrxOE',
-  authDomain: 'sjxddxt.firebaseapp.com',
-  projectId: 'sjxddxt',
-  storageBucket: 'sjxddxt.firebasestorage.app',
-  messagingSenderId: '56738241418',
-  appId: '1:56738241418:web:1ea87e2445e9d09e3d8673',
-};
-firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 db.settings({ experimentalAutoDetectLongPolling: true });
 // 不按日期过滤——“今日盘点”结账时写进 dailyOrders 的每一条流水都会长期留着，

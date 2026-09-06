@@ -1,13 +1,21 @@
 // 扫码点单系统 - Firestore 安全规则
 //
-// 这个 App 没有登录功能（扫码即用），所以规则没法按“谁在写”来限制，
-// 只能按“写的内容长什么样”来限制——这是唯一能做的第一道防线。
+// 顾客扫码点单没有登录（也不该有——扫码即用是产品设计的一部分），但员工端
+// （index.html + 员工端/ 下的页面）现在接了真正的 Firebase Authentication
+// （邮箱+密码）。所以规则分两类：顾客也要写的路径（下单、购物车草稿、点菜
+// 点击、呼叫服务员）继续只能按“写的内容长什么样”兜底；员工专属的写操作
+// （改订单状态、删单、沽清菜品、结账流水、员工日志、关闭系统）改成同时要求
+// request.auth != null——数据库自己会拒绝没登录的请求，不再只是前端挡一下。
 // 部署方式：Firebase 控制台 → Firestore Database → 规则 → 粘贴本文件全部内容 → 发布
 //
 // 已知局限：Firestore 规则语法不支持遍历数组，没法逐项校验 items 里
 // 每一道菜的 name/qty/spice。这里只能做“整体形状”和“数量上限”的校验，
 // 挡不住"字段类型对但内容瞎填"的脏数据。如果以后需要更强的校验，
 // 可以加一个 Cloud Functions onCreate 触发器做二次清洗，这次先不做。
+//
+// dailyReports 的写规则仍然是 if true（形状校验兜底）：它是每天 23:50 由
+// GitHub Actions 定时任务写入的，跑的脚本用的是跟浏览器一样的公开 Web API
+// Key，没有登录态，不能要求 request.auth != null，否则定时任务会失败。
 //
 // 强烈建议同时开启 Firebase App Check（reCAPTCHA v3），能挡掉绝大多数
 // 用脚本直接打 Firestore API 的滥用请求，是比规则更有效的防线。
@@ -54,13 +62,14 @@ service cloud.firestore {
                     && (
                          (request.resource.data.status == 'pending' && !('confirmedAt' in request.resource.data))
                          || (
-                              request.resource.data.status == 'confirmed'
+                              // 'confirmed' 建单是员工在"员工加菜"页当面代加的菜，必须已登录
+                              request.auth != null
                               && request.resource.data.confirmedAt is number
                               && math.abs(request.time.toMillis() - request.resource.data.confirmedAt) < 10 * 60 * 1000
                             )
                        );
 
-      // 订单一旦建立，只允许两种修改：
+      // 订单一旦建立，只允许两种修改，且都只能是员工端登录后做的操作：
       // 1. 员工端把 status 从 pending 推进到 confirmed，同时写入 confirmedAt（服务器
       //    时间前后 10 分钟内）——顾客端据此从"等待确认"切换到"已送入厨房"动画，
       //    订单详情页据此算"几分钟前已处理"
@@ -68,27 +77,30 @@ service cloud.firestore {
       //    这一个字段。删除会让数组变短，改数量数组长度不变，所以这里允许"不变短或
       //    变短"，只挡"变长"——挡不住"改的是哪一条/改成了多少"这种语义校验，但至少
       //    不能借这个口子塞数据、改价格或凭空让菜品变多
-      allow update: if (
-                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'confirmedAt'])
-                      && resource.data.status == 'pending'
-                      && request.resource.data.status == 'confirmed'
-                      && request.resource.data.confirmedAt is number
-                      && math.abs(request.time.toMillis() - request.resource.data.confirmedAt) < 10 * 60 * 1000
-                    ) || (
-                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['items'])
-                      && request.resource.data.items is list
-                      && request.resource.data.items.size() <= resource.data.items.size()
+      allow update: if request.auth != null && (
+                      (
+                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'confirmedAt'])
+                        && resource.data.status == 'pending'
+                        && request.resource.data.status == 'confirmed'
+                        && request.resource.data.confirmedAt is number
+                        && math.abs(request.time.toMillis() - request.resource.data.confirmedAt) < 10 * 60 * 1000
+                      ) || (
+                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['items'])
+                        && request.resource.data.items is list
+                        && request.resource.data.items.size() <= resource.data.items.size()
+                      )
                     );
 
-      // 员工端"已处理，移出看板"需要删除订单；没有登录态，只能开放删
-      allow delete: if true;
+      // 员工端"已处理，移出看板"需要删除订单，必须已登录
+      allow delete: if request.auth != null;
     }
 
-    // 沽清菜品：员工在"沽清菜品"页勾选后写入这一个文档，顾客端和看板都实时监听
-    // 没有登录态，只能靠形状校验兜底：只准写 soldOut 这一个文档，且只能是一个 id 数组
+    // 沽清菜品：员工在"沽清菜品"页勾选后写入这一个文档，顾客端和看板都实时监听读取，
+    // 但写只能是登录后的员工——只准写 soldOut 这一个文档，且只能是一个 id 数组
     match /menuStatus/{docId} {
       allow read: if true;
-      allow write: if docId == 'soldOut'
+      allow write: if request.auth != null
+                    && docId == 'soldOut'
                     && request.resource.data.keys().hasOnly(['ids'])
                     && request.resource.data.ids is list
                     && request.resource.data.ids.size() <= 200;
@@ -98,7 +110,8 @@ service cloud.firestore {
     // 用来给当天的结账流水编号（#001、#002……每天从 1 重新开始）
     match /counters/{docId} {
       allow read: if true;
-      allow write: if docId == 'dailyOrderSeq'
+      allow write: if request.auth != null
+                    && docId == 'dailyOrderSeq'
                     && request.resource.data.keys().hasOnly(['date', 'seq'])
                     && request.resource.data.date is string
                     && request.resource.data.date.size() == 10
@@ -108,12 +121,12 @@ service cloud.firestore {
 
     // 今日盘点：每次结账生成一条流水记录（桌号/菜品/营业额），用于"今日盘点"页面的
     // 列表、"生成报告"汇总，以及"历史盘点"页面按周/月/季度/年查营业额——这些记录长期
-    // 保留，不会自动清理。允许 delete 是为了配合"今日盘点"页右上角的"确认清除"（勾选
-    // 单条记录 + 管理员账号密码才能删）；和这套系统其它 collection 一样，用户名/密码
-    // 只是前端一道软性关卡，没有真正的账号体系，规则本身没法校验"谁在删"。
+    // 保留，不会自动清理。create/delete 都要求已登录，配合"今日盘点"页右上角的
+    // "确认清除"（勾选单条记录才能删）。
     match /dailyOrders/{recordId} {
       allow read: if true;
-      allow create: if request.resource.data.keys().hasOnly(['seq', 'date', 'table', 'items', 'revenue', 'archivedAt', 'firstOrderAt', 'batchCount', 'addOnBatchCount'])
+      allow create: if request.auth != null
+                    && request.resource.data.keys().hasOnly(['seq', 'date', 'table', 'items', 'revenue', 'archivedAt', 'firstOrderAt', 'batchCount', 'addOnBatchCount'])
                     && request.resource.data.seq is number
                     && request.resource.data.seq > 0
                     && request.resource.data.date is string
@@ -135,17 +148,16 @@ service cloud.firestore {
                     && (!('firstOrderAt' in request.resource.data) || request.resource.data.firstOrderAt is number)
                     && (!('batchCount' in request.resource.data) || (request.resource.data.batchCount is number && request.resource.data.batchCount > 0))
                     && (!('addOnBatchCount' in request.resource.data) || (request.resource.data.addOnBatchCount is number && request.resource.data.addOnBatchCount >= 0));
-      allow delete: if true;
+      allow delete: if request.auth != null;
     }
 
     // 员工操作日志：单品删除/整单删除都要求先填操作人姓名，这里记一条审计记录，
-    // 供"员工操作日志"页面查看——这个 collection 本身没有登录态保护（这套系统压根没有
-    // 账号体系），页面上的用户名/密码只是前端一道软性关卡，不是真正的访问控制。
-    // 允许 delete 是为了配合日志页右上角的"清除记录"按钮（同样没有真正的权限控制，
-    // 只要知道路径谁都能删——这点和这套系统其它 collection 的信任模型是一致的）。
+    // 供"员工操作日志"页面查看——create/delete 都要求已登录，配合日志页右上角的
+    // "清除记录"按钮。
     match /staffActionLogs/{logId} {
       allow read: if true;
-      allow create: if request.resource.data.keys().hasOnly(['action', 'operator', 'table', 'detail', 'createdAt'])
+      allow create: if request.auth != null
+                    && request.resource.data.keys().hasOnly(['action', 'operator', 'table', 'detail', 'createdAt'])
                     && request.resource.data.action in ['deleteItem', 'deleteOrder']
                     && request.resource.data.operator is string
                     && request.resource.data.operator.size() > 0
@@ -157,15 +169,15 @@ service cloud.firestore {
                     && request.resource.data.detail.size() <= 500
                     && request.resource.data.createdAt is number
                     && math.abs(request.time.toMillis() - request.resource.data.createdAt) < 10 * 60 * 1000;
-      allow delete: if true;
+      allow delete: if request.auth != null;
     }
 
-    // 关闭系统：接单看板的"关闭系统"按钮（密码校验只在前端做）写这一个文档，
-    // 扫码点单端实时监听 disabled 字段，为 true 时整站切换成"暂停服务"提示页。
-    // 没有登录态，只能靠形状校验兜底。
+    // 关闭系统：接单看板的"关闭系统"按钮写这一个文档，扫码点单端实时监听 disabled
+    // 字段，为 true 时整站切换成"暂停服务"提示页。写操作要求已登录。
     match /systemStatus/{docId} {
       allow read: if true;
-      allow write: if docId == 'main'
+      allow write: if request.auth != null
+                    && docId == 'main'
                     && request.resource.data.keys().hasOnly(['disabled', 'updatedAt'])
                     && request.resource.data.disabled is bool
                     && request.resource.data.updatedAt is number
@@ -216,15 +228,19 @@ service cloud.firestore {
                     && request.resource.data.date.size() == 10
                     && request.resource.data.createdAt is number
                     && math.abs(request.time.toMillis() - request.resource.data.createdAt) < 10 * 60 * 1000;
-      allow delete: if true;
+      // 目前没有任何页面会删这个 collection，delete 权限只是留给以后清理用的，
+      // 顺手也要求已登录
+      allow delete: if request.auth != null;
     }
 
     // 经营数据统计——沽清/恢复售卖留痕：menuStatus 只存"现在沽清了哪些菜"，
     // 会被整份覆盖写，看不出历史；这里专门记一条流水，"经营数据"页把 soldOut/
-    // restock 两条配对起来，算出每次沽清了多久。
+    // restock 两条配对起来，算出每次沽清了多久。这是"沽清菜品"页的副作用写入，
+    // 属于员工操作，要求已登录。
     match /soldOutEvents/{docId} {
       allow read: if true;
-      allow create: if request.resource.data.keys().hasOnly(['dishId', 'name', 'action', 'date', 'createdAt'])
+      allow create: if request.auth != null
+                    && request.resource.data.keys().hasOnly(['dishId', 'name', 'action', 'date', 'createdAt'])
                     && request.resource.data.dishId is string
                     && request.resource.data.dishId.size() > 0
                     && request.resource.data.dishId.size() <= 50
@@ -235,7 +251,9 @@ service cloud.firestore {
                     && request.resource.data.date.size() == 10
                     && request.resource.data.createdAt is number
                     && math.abs(request.time.toMillis() - request.resource.data.createdAt) < 10 * 60 * 1000;
-      allow delete: if true;
+      // 目前没有任何页面会删这个 collection，delete 权限只是留给以后清理用的，
+      // 顺手也要求已登录
+      allow delete: if request.auth != null;
     }
 
     // 经营数据统计——每天 23:50（英国/葡萄牙时间）由 GitHub Actions 定时任务自动

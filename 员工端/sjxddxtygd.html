@@ -252,12 +252,6 @@
     border-radius:20px;padding:3px 10px;display:inline-block;margin-top:8px;
     max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   }
-  .add-pending-timer{
-    font-size:11px;font-weight:800;color:var(--warn-bright);border:1px solid rgba(245,158,11,.5);
-    background:rgba(245,158,11,.14);border-radius:20px;padding:3px 10px;display:inline-block;
-    margin-top:8px;white-space:nowrap;
-  }
-
   /* 状态方框底部两个大按钮：结账（常用、放绿色）+ 查看详细订单（次要、灰边框） */
   .preview-actions{display:flex;gap:8px;margin-top:2px;}
   .checkout-btn, .view-detail-btn{
@@ -365,7 +359,6 @@ const UI = {
     emptyPending: '暂无待处理的桌号', viewAll: '← 查看全部', emptyAll: '暂无订单，等待顾客点单中…',
     confirmedBadge: '已确认', statusNewBig: '🔴 新订单', statusNewSub: '等待送入厨房',
     statusAddBig: '🔴 加菜', statusAddSub: '有新加菜品待处理',
-    newDishPending: '有新菜品待处理',
     statusDoneBig: '✅ 已处理', statusDoneSub: '已全部送入厨房',
     callCaption: '顾客呼叫', callDismiss: '✓ 已处理',
     checkoutBtn: '💳 结账', testCompleteBtn: '移除', testTableNote: '不计入营业额，请忽略', viewDetailBtn: '📋 查看详细订单',
@@ -391,7 +384,6 @@ const UI = {
     emptyPending: 'No tables pending', viewAll: '← View All', emptyAll: 'No orders yet, waiting for customers…',
     confirmedBadge: 'Confirmed', statusNewBig: '🔴 New Order', statusNewSub: 'Waiting to send to kitchen',
     statusAddBig: '🔴 Add-on', statusAddSub: 'New add-on items pending',
-    newDishPending: 'New dish pending',
     statusDoneBig: '✅ Done', statusDoneSub: 'All sent to kitchen',
     callCaption: 'Customer Calling', callDismiss: '✓ Resolved',
     checkoutBtn: '💳 Checkout', testCompleteBtn: 'Remove', testTableNote: 'Not counted in revenue — please ignore', viewDetailBtn: '📋 Details',
@@ -628,12 +620,6 @@ const COOK_METHOD_LABELS_ZH = { steamed:'蒸', panFried:'煎' };
 const SOUP_BASE_LABELS_ZH = { tomato:'番茄', classicMala:'经典川味麻辣', boneBrothSpicy:'骨汤（辣）', boneBrothMild:'骨汤（不辣）', mushroom:'菌汤', malaBan:'麻辣拌' };
 const DRINK_LABELS_ZH = { cola:'可乐/无糖可乐/健怡可乐', sevenUp:'七喜/无糖七喜', fanta:'芬达', jdb:'加多宝', aloe:'芦荟汁' };
 
-function formatSecondsClock(sec){
-  const m = Math.floor(sec / 60);
-  const s = sec % 60;
-  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-}
-
 function elapsedInfo(ts){
   const diffMs = Date.now() - ts;
   const mins = Math.floor(diffMs / 60000);
@@ -855,15 +841,8 @@ function cardHTML(group){
   const detailHref = `ddxq.html?table=${encodeURIComponent(group.table)}`;
   const flashingClass = (state === 'new' || state === 'add') ? ' flashing' : '';
   const testClass = isTestTable(group.table) ? ' test-table' : '';
-  let addTimerHTML = '';
-  if(state === 'add'){
-    const pendingTs = realBatch.filter(o => o.status !== 'confirmed').map(o => o.createdAt);
-    const addStart = Math.min(...pendingTs);
-    const secs = Math.max(0, Math.floor((Date.now() - addStart) / 1000));
-    addTimerHTML = `<span class="add-pending-timer">${t('newDishPending')} ${formatSecondsClock(secs)}</span>`;
-  }
   return `
-    <div class="order-card ${level}${flashingClass}${testClass}">
+    <div class="order-card ${level}${flashingClass}${testClass}" data-table="${escapeHtml(group.table)}">
       <div class="card-top">
         <span class="table-num">${t('tablePrefix')}${escapeHtml(displayTableName(group.table))}</span>
         <span style="display:flex;gap:8px;align-items:center;">
@@ -871,7 +850,6 @@ function cardHTML(group){
           <span class="elapsed">${label}</span>
         </span>
       </div>
-      ${addTimerHTML}
       ${isTestTable(group.table) ? `<span class="test-table-note">${t('testTableNote')}</span>` : ''}
       ${hasRealContent ? `
       <div class="card-body-wrap">
@@ -932,9 +910,28 @@ function render(){
   app.innerHTML = `<div class="grid">${shown.map(cardHTML).join('')}</div>`;
 }
 
+// 每秒轻量刷新：只更新每张卡片上"等了多久"的文字/颜色和加菜秒表这几处，不整页重建 DOM。
+// 之前是整页 innerHTML 重来一遍，桌子一多、或者设备性能差一点（比如平板），每秒这么
+// 重建一次容易在用户正好划屏的那一下把触摸手势"吃掉"，导致偶尔滑动没反应
+function tickClocks(){
+  if(!loaded) return;
+  const groups = groupByTable(orders);
+  const byTable = new Map(groups.map(g => [g.table, g]));
+  document.querySelectorAll('.order-card[data-table]').forEach(card => {
+    const group = byTable.get(card.dataset.table);
+    if(!group) return;
+
+    const { label, level } = elapsedInfo(group.createdAt);
+    card.classList.remove('normal', 'warn', 'urgent');
+    card.classList.add(level);
+    const elapsedEl = card.querySelector('.elapsed');
+    if(elapsedEl) elapsedEl.textContent = label;
+  });
+}
+
 applyStaticI18n();
 render();
-setInterval(render, 1000);        // 每秒刷新一次等待时长与颜色提示（订单数据本身由 onSnapshot 实时推送）
+setInterval(tickClocks, 15000);        // 等待时长/颜色是按分钟变化的，不用按秒刷，减少不必要的DOM更新（订单数据本身由 onSnapshot 实时推送，变化时会走 render() 整页重画）
 </script>
 </body>
 </html>

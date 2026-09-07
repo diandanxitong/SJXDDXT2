@@ -84,7 +84,13 @@ firebase.initializeApp({
   .search-clear-btn:hover{color:var(--ink);}
   .no-results{color:var(--ink-soft);font-size:13px;padding:10px 2px;}
 
-  .filter-row{margin-bottom:24px;}
+  .filter-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:24px;}
+  .filter-row select{
+    font-family:inherit;font-size:12.5px;color:var(--ink);
+    padding:8px 12px;border-radius:6px;border:1px solid var(--hairline);background:var(--paper);
+    cursor:pointer;
+  }
+  .filter-row select:focus{outline:none;border-color:var(--brand);}
   .view-toggle-btn{
     display:inline-flex;align-items:center;gap:6px;
     background:none;border:1px solid var(--hairline);color:var(--ink-soft);
@@ -169,6 +175,7 @@ firebase.initializeApp({
 </div>
 <div class="filter-row">
   <button class="view-toggle-btn" id="viewToggleBtn" onclick="toggleSoldOutOnlyView()">显示已沽清菜品</button>
+  <select id="categoryFilter" onchange="setCategoryFilter(this.value)"></select>
 </div>
 <div id="app"></div>
 <div id="modal-root"></div>
@@ -206,7 +213,7 @@ const UI = {
     selCountLabel: '已选', selCountSuffix: '项',
     pauseSaleBtn: '暂停售卖', restoreSaleBtn: '恢复售卖',
     searchPlaceholder: '搜索菜品或酒水名称…',
-    showSoldOutOnly: '显示已沽清菜品', showAll: '展示所有菜品',
+    showSoldOutOnly: '显示已沽清菜品', showAll: '展示所有菜品', allCategories: '全部分类',
     noSoldOutYet: '目前没有已沽清的菜品', noMatch: '没有找到匹配的菜品',
     soldOutBadge: '已沽清',
     soldOutWarning: '注意：确认沽清后此菜品将不可点单，请务必与后厨确认！',
@@ -220,7 +227,7 @@ const UI = {
     selCountLabel: 'Selected:', selCountSuffix: 'items',
     pauseSaleBtn: 'Mark Sold Out', restoreSaleBtn: 'Restore Sale',
     searchPlaceholder: 'Search dish or drink name…',
-    showSoldOutOnly: 'Show Sold Out Only', showAll: 'Show All Dishes',
+    showSoldOutOnly: 'Show Sold Out Only', showAll: 'Show All Dishes', allCategories: 'All Categories',
     noSoldOutYet: 'No sold-out dishes right now', noMatch: 'No matching dishes found',
     soldOutBadge: 'Sold Out',
     soldOutWarning: 'Note: once confirmed, this dish can no longer be ordered — please confirm with the kitchen first!',
@@ -433,6 +440,17 @@ let modal = null;   // null | 'soldOut' | 'restore'
 let loaded = false;
 let searchQuery = '';
 let showSoldOutOnly = false;
+let categoryFilter = 'all';
+
+function setCategoryFilter(cat){
+  categoryFilter = cat;
+  renderList();
+}
+function categoryFilterOptionsHTML(){
+  const opts = [`<option value="all">${t('allCategories')}</option>`]
+    .concat(CATEGORY_ORDER.map(cat => `<option value="${cat}" ${categoryFilter === cat ? 'selected' : ''}>${staffCategoryLabel(cat, CATEGORY_LABELS[cat])}</option>`));
+  return opts.join('');
+}
 
 function toggleSoldOutOnlyView(){
   showSoldOutOnly = !showSoldOutOnly;
@@ -558,11 +576,14 @@ function renderModal(){
 
 function renderList(){
   const app = document.getElementById('app');
+  const catSelect = document.getElementById('categoryFilter');
+  if(catSelect) catSelect.innerHTML = categoryFilterOptionsHTML();
   if(!loaded){
     app.innerHTML = '';
     return;
   }
-  const sections = CATEGORY_ORDER.map(cat => {
+  const cats = categoryFilter === 'all' ? CATEGORY_ORDER : [categoryFilter];
+  const sections = cats.map(cat => {
     const items = DISH_LIST.filter(d => d.category === cat && matchesFilters(d));
     if(items.length === 0) return '';
     return `<section class="cat-section">

@@ -15,13 +15,22 @@
 
   var overlay = null;
 
-  function buildOverlay(){
+  // 先挂一个空遮罩挡住页面内容，此时还不知道到底有没有登录过，不能先把表单
+  // 画出来——真登录过的人会在 onAuthStateChanged 回调里看到一闪而过的表单，
+  // 体验上像是"又要登一次"。真正的表单要等确认没登录了才由 showForm() 填进去。
+  function buildBlocker(){
     var el = document.createElement('div');
     el.id = 'staff-auth-overlay';
     el.style.cssText = 'position:fixed;inset:0;z-index:2147483647;background:#1B1613;' +
       'display:flex;align-items:center;justify-content:center;' +
-      'font-family:"PingFang SC","Microsoft YaHei",sans-serif;';
-    el.innerHTML =
+      'font-family:"PingFang SC","Microsoft YaHei",sans-serif;' +
+      'opacity:1;transition:opacity .15s ease;';
+    return el;
+  }
+
+  function showForm(){
+    if (!overlay) return;
+    overlay.innerHTML =
       '<div style="width:100%;max-width:320px;padding:24px;box-sizing:border-box;">' +
         '<h2 style="margin:0 0 20px;font-size:18px;text-align:center;color:#F3ECE1;">员工登录</h2>' +
         '<input id="staff-auth-user" autocomplete="off" placeholder="用户名" ' +
@@ -35,7 +44,13 @@
           'style="width:100%;padding:12px;border-radius:8px;border:none;background:#E3421F;' +
           'color:#fff;font-weight:700;font-size:15px;">登录</button>' +
       '</div>';
-    return el;
+    document.getElementById('staff-auth-submit').addEventListener('click', submit);
+    ['staff-auth-user', 'staff-auth-pass'].forEach(function(id){
+      document.getElementById(id).addEventListener('keydown', function(ev){
+        if (ev.key === 'Enter') submit();
+      });
+    });
+    document.getElementById('staff-auth-user').focus();
   }
 
   function submit(){
@@ -61,29 +76,27 @@
     });
   }
 
-  function mount(){
+  function mountBlocker(){
     if (overlay) return;
-    overlay = buildOverlay();
+    overlay = buildBlocker();
     document.body.appendChild(overlay);
-    document.getElementById('staff-auth-submit').addEventListener('click', submit);
-    ['staff-auth-user', 'staff-auth-pass'].forEach(function(id){
-      document.getElementById(id).addEventListener('keydown', function(ev){
-        if (ev.key === 'Enter') submit();
-      });
-    });
-    document.getElementById('staff-auth-user').focus();
   }
 
   function unmount(){
-    if (overlay){ overlay.remove(); overlay = null; }
+    if (!overlay) return;
+    var el = overlay;
+    overlay = null;
+    el.style.opacity = '0';
+    setTimeout(function(){ el.remove(); }, 150);
   }
 
-  // 默认先锁住（挂上登录框），确认真的登录过才解锁——避免 Firebase 校验会话
-  // 这一小段异步空档里，页面内容先被看到
+  // 默认先挂空遮罩挡住页面内容，直到 Firebase 确认登录状态才决定：已登录就直接
+  // 撤掉遮罩，没登录才把表单画出来——避免已登录的人看到表单一闪而过
   function init(){
-    mount();
+    mountBlocker();
     firebase.auth().onAuthStateChanged(function(user){
       if (user) unmount();
+      else showForm();
     });
   }
 

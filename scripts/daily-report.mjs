@@ -50,13 +50,24 @@ if (overrideDate) {
   console.log(`手动指定 date=${targetDate}，跳过时间窗口检查。`);
 } else {
   const { hour, minute } = londonHourMinute();
-  // 定时任务用两个 cron（覆盖冬令时/夏令时两种 UTC 偏移）双重触发，靠这里的
-  // 时间窗口挑出真正落在英国 23:45~23:59 的那一次，另一次直接跳过不生成
-  if (!(hour === '23' && Number(minute) >= 45)) {
-    console.log(`现在英国时间 ${hour}:${minute}，不在 23:45~23:59 窗口内，跳过。`);
+  const hourNum = Number(hour);
+  // 定时任务用两个 cron（覆盖冬令时/夏令时两种 UTC 偏移）双重触发，正常应该有
+  // 一次落在英国 23 点档，生成"今天"的报告——不用卡到 23:45 那么精确，23 点
+  // 整到 23:59 之间跑到都算数。但 GitHub Actions 的 schedule 触发经常延迟
+  // （免费额度下延迟一两个小时很常见），一旦拖过了午夜，两次触发就都落到了
+  // 次日凌晨——这时候不能再当"今天"生成（当天才刚开始，数据是空的），要当成
+  // "昨晚没赶上的补录"，生成昨天那一份（反正昨天已经结束了，不管现在几点补，
+  // 数据都是完整、确定的）。凌晨之后留了到中午 13 点的补录窗口，足够覆盖正常
+  // 的触发延迟。
+  if (hourNum === 23) {
+    targetDate = londonDateStr(Date.now());
+  } else if (hourNum < 13) {
+    targetDate = londonDateStr(Date.now() - 24 * 60 * 60 * 1000);
+    console.log(`现在英国时间 ${hour}:${minute}，判定为延迟触发，补录昨天 date=${targetDate}。`);
+  } else {
+    console.log(`现在英国时间 ${hour}:${minute}，不在有效窗口内，跳过。`);
     process.exit(0);
   }
-  targetDate = londonDateStr(Date.now());
 }
 
 const app = initializeApp(firebaseConfig);

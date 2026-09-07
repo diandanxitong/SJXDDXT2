@@ -106,6 +106,24 @@ service cloud.firestore {
                     && request.resource.data.ids.size() <= 200;
     }
 
+    // 商品管理（spgl.html）对菜单做的改动——改名/改价/改分类/下架某个既有菜品，
+    // 或者整条新增一个菜品。不直接改 customer.html 里那份写死的 DISH_DATA，
+    // 而是叠加在它上面的一层"补丁"：customer.html 加载时把这里的记录应用到
+    // 内置菜单上（新增的 isNew 菜品整条拼进去，改名/改价的按 docId 对应覆盖，
+    // deleted 的从顾客端菜单里过滤掉）。顾客端要实时读，写只能是登录后的员工
+    match /menuOverrides/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null
+                    && request.resource.data.keys().hasOnly(['category', 'name', 'price', 'deleted', 'isNew', 'updatedAt'])
+                    && (!('category' in request.resource.data) || request.resource.data.category is string)
+                    && (!('name' in request.resource.data) || (request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 60))
+                    && (!('price' in request.resource.data) || (request.resource.data.price is number && request.resource.data.price >= 0 && request.resource.data.price <= 500))
+                    && (!('deleted' in request.resource.data) || request.resource.data.deleted == true)
+                    && (!('isNew' in request.resource.data) || request.resource.data.isNew == true)
+                    && request.resource.data.updatedAt is number;
+      allow delete: if request.auth != null;
+    }
+
     // 今日盘点：每次员工点"顾客已离开，移除看板"，写入这一个自增计数器，
     // 用来给当天的结账流水编号（#001、#002……每天从 1 重新开始）
     match /counters/{docId} {

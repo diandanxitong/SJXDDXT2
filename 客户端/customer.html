@@ -974,6 +974,8 @@ const db = firebase.firestore();
 db.settings({ experimentalAutoDetectLongPolling: true });
 const ordersRef = db.collection('orders');
 const menuStatusRef = db.collection('menuStatus').doc('soldOut');
+// 商品管理页（spgl.html）对菜单的改动——见 rebuildMenu() 那段注释
+const menuOverridesRef = db.collection('menuOverrides');
 // 同桌多台手机共享的"下单前购物车草稿"：一台手机选了锅底/加了菜，还没点"下单"，
 // 同桌其他人扫同一个桌号码进来也要实时看到，避免大家各点各的、菜重复下单。
 // 文档 id 就是桌号，字段 items 结构跟 state.items 一模一样，按菜品 id 逐条存。
@@ -1396,7 +1398,9 @@ const SPICE_LEVELS = ['微辣','中辣','特辣'];
 const HOTPOT_INGREDIENT_CATS = ['houseSpecial','seafood','premiumBeef','meatballs','mushrooms','vegetables'];
 
 // Each entry: id, category, price (or sizes[]+unit), allergens[], img, and i18n{lang:{name,tag}}
-const DISH_DATA = [
+// 这份是内置菜单，员工在"商品管理"页做的改名/改价/新增/下架不会碰这份数据本身，
+// 是叠加在它上面的一层补丁（见下面 rebuildMenu），保留这份原始数据方便随时对比
+const BASE_DISH_DATA = [
 {"id": "potBeefTallow", "img": "../image/菜品/牛油锅.webp", "category": "soupBase", "sub": "potSingle", "price": 16.6, "allergens": ["1", "2", "4"], "i18n": {"zh": {"name": "牛油锅", "tag": "特辣/中辣/微辣可选"}, "zhHant": {"name": "牛油鍋", "tag": "特辣/中辣/微辣可選"}, "en": {"name": "Spicy Chilli Beef Tallow Broth", "tag": "Extra/Medium/Mild spicy"}, "it": {"name": "Brodo Piccante al Sego di Manzo", "tag": "Piccante extra/medio/leggero a scelta"}, "fr": {"name": "Bouillon Épicé au Suif de Bœuf", "tag": "Extra/moyen/léger épicé au choix"}, "es": {"name": "Caldo Picante de Sebo de Ternera", "tag": "Extra/medio/suave picante a elegir"}}},
 {"id": "potTomato", "img": "../image/菜品/番茄锅.webp", "category": "soupBase", "sub": "potSingle", "price": 15.6, "allergens": [], "i18n": {"zh": {"name": "番茄锅（素）", "tag": ""}, "zhHant": {"name": "番茄鍋（素）", "tag": ""}, "en": {"name": "Tomato Broth (V)", "tag": ""}, "it": {"name": "Brodo di Pomodoro (V)", "tag": ""}, "fr": {"name": "Bouillon Tomate (V)", "tag": ""}, "es": {"name": "Caldo de Tomate (V)", "tag": ""}}},
 {"id": "potMushroom", "img": "../image/菜品/菌汤锅.webp", "category": "soupBase", "sub": "potSingle", "price": 11.8, "allergens": [], "i18n": {"zh": {"name": "菌汤锅（素）", "tag": ""}, "zhHant": {"name": "菌湯鍋（素）", "tag": ""}, "en": {"name": "Mushroom Broth (V)", "tag": ""}, "it": {"name": "Brodo di Funghi (V)", "tag": ""}, "fr": {"name": "Bouillon aux Champignons (V)", "tag": ""}, "es": {"name": "Caldo de Setas (V)", "tag": ""}}},
@@ -1573,20 +1577,75 @@ function detectSpicy(d){ return SPICY_RE.test(d.i18n.zh.name + d.i18n.zh.tag); }
 // 火锅食材由客人自己下锅烹煮，无需"不要葱/不要肉"这类做法定制
 function detectOptions(d){ return []; }
 
-const MENU = DISH_DATA.map(d => ({
-  id: d.id, category: d.category, sub: d.sub, price: d.price, sizes: d.sizes, unit: d.unit,
-  allergens: d.allergens, img: d.img || `https://picsum.photos/seed/${d.id}-dish/640/480`,
-  spicy: detectSpicy(d), options: detectOptions(d),
-}));
-LANG_ORDER.forEach(lang => {
-  I18N[lang].dishes = {};
-  DISH_DATA.forEach(d => { I18N[lang].dishes[d.id] = d.i18n[lang]; });
-});
+// 商品管理（spgl.html）页对菜单做的改动，不直接改 BASE_DISH_DATA，而是叠加
+// 一层"补丁"：menuOverrides 里按 dishId 存的记录——isNew 的整条拼进菜单，
+// deleted 的从菜单里拿掉，其余字段（name/price/category）存在的就覆盖对应
+// 内置菜品的值。改名统一覆盖全部语言的名字（不需要员工分别输入六种语言）。
+// DISH_DATA/MENU/... 都保留 const 绑定但内容可变（clear+refill），这样
+// rebuildMenu() 之后所有已经引用过 MENU_BY_ID[x] 之类的地方不用重新获取引用
+const DISH_DATA = [];
+const MENU = [];
 const ZH_NAME_TO_ID = {};
-DISH_DATA.forEach(d => { ZH_NAME_TO_ID[d.i18n.zh.name] = d.id; });
 const MENU_BY_ID = {};
-MENU.forEach(d => { MENU_BY_ID[d.id] = d; });
-const CHEF_ITEMS = MENU.filter(d => d.category === 'houseSpecial');
+const CHEF_ITEMS = [];
+let menuOverrides = [];   // menuOverridesRef.onSnapshot 推送的原始记录
+
+function applyOverridesToBaseDishData(overrides){
+  const byId = new Map();
+  overrides.forEach(o => { if(!o.isNew) byId.set(o.id, o); });
+  const patched = BASE_DISH_DATA
+    .filter(d => !(byId.get(d.id) && byId.get(d.id).deleted))
+    .map(d => {
+      const o = byId.get(d.id);
+      if(!o) return d;
+      const next = Object.assign({}, d, { i18n: Object.assign({}, d.i18n) });
+      if(o.category) next.category = o.category;
+      if(typeof o.price === 'number' && !next.sizes) next.price = o.price;
+      if(o.name){
+        LANG_ORDER.forEach(lang => {
+          next.i18n[lang] = Object.assign({}, next.i18n[lang], { name: o.name });
+        });
+      }
+      return next;
+    });
+  const newDishes = overrides.filter(o => o.isNew).map(o => {
+    const name = o.name || o.id;
+    const i18n = {};
+    LANG_ORDER.forEach(lang => { i18n[lang] = { name, tag: '' }; });
+    return { id: o.id, img: '', category: o.category || 'snacks', price: typeof o.price === 'number' ? o.price : 0, allergens: [], i18n };
+  });
+  return patched.concat(newDishes);
+}
+
+function rebuildMenu(){
+  DISH_DATA.length = 0;
+  DISH_DATA.push(...applyOverridesToBaseDishData(menuOverrides));
+
+  MENU.length = 0;
+  MENU.push(...DISH_DATA.map(d => ({
+    id: d.id, category: d.category, sub: d.sub, price: d.price, sizes: d.sizes, unit: d.unit,
+    allergens: d.allergens, img: d.img || `https://picsum.photos/seed/${d.id}-dish/640/480`,
+    spicy: detectSpicy(d), options: detectOptions(d),
+  })));
+  LANG_ORDER.forEach(lang => {
+    I18N[lang].dishes = {};
+    DISH_DATA.forEach(d => { I18N[lang].dishes[d.id] = d.i18n[lang]; });
+  });
+  Object.keys(ZH_NAME_TO_ID).forEach(k => delete ZH_NAME_TO_ID[k]);
+  DISH_DATA.forEach(d => { ZH_NAME_TO_ID[d.i18n.zh.name] = d.id; });
+  Object.keys(MENU_BY_ID).forEach(k => delete MENU_BY_ID[k]);
+  MENU.forEach(d => { MENU_BY_ID[d.id] = d; });
+  CHEF_ITEMS.length = 0;
+  CHEF_ITEMS.push(...MENU.filter(d => d.category === 'houseSpecial'));
+}
+rebuildMenu();
+// 实时监听——员工在"商品管理"页保存改动后，已经打开菜单的顾客不用重新扫码/
+// 刷新就能看到，跟 menuStatusRef（沽清）走的是同一套模式
+menuOverridesRef.onSnapshot(snap => {
+  menuOverrides = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+  rebuildMenu();
+  render();
+}, err => {});
 // 脑花只对中文顾客展示，切到中文以外的语言时菜单里直接查无此菜
 const ZH_ONLY_DISH_IDS = ['pigBrain'];
 function isDishVisible(id){ return !ZH_ONLY_DISH_IDS.includes(id) || state.lang === 'zh' || state.lang === 'zhHant'; }

@@ -116,12 +116,15 @@ firebase.initializeApp({
      不用卡片、不用圆角色块——跟系统里表格/统计卡一贯的发丝线语言一致 */
   .sidebar-nav{border-top:1px solid var(--side-hairline);}
   .nav-item{
-    display:block;width:100%;text-align:center;background:none;border:none;
+    display:flex;align-items:center;justify-content:center;gap:10px;width:100%;background:none;border:none;
     border-bottom:1px solid var(--side-hairline);
     font-family:inherit;font-size:14px;font-weight:600;color:var(--side-ink-soft);
     padding:18px 24px;cursor:pointer;position:relative;letter-spacing:.02em;
     transition:color .15s ease,background .15s ease;
   }
+  /* 图标沿用统计卡 .stat-icon 的线宽风格，颜色跟文字一起变——不是单独
+     染色，这样激活/悬停态是"整行一起变色"，图标不会跟文字割裂 */
+  .nav-icon{width:17px;height:17px;flex-shrink:0;}
   .nav-item:hover:not(.active){color:var(--side-ink);background:rgba(43,38,32,.03);}
   .nav-item.active{color:var(--brand);background:var(--side-bg-active);}
   .nav-item.active::after{
@@ -147,9 +150,10 @@ firebase.initializeApp({
   .nav-group.expanded .nav-subwrap{grid-template-rows:1fr;}
   .nav-subwrap-inner{overflow:hidden;}
   .nav-subitem{
-    display:block;text-align:center;font-size:12.5px;color:var(--side-ink-soft);
+    display:flex;align-items:center;justify-content:center;gap:8px;font-size:12.5px;color:var(--side-ink-soft);
     text-decoration:none;padding:11px 24px;transition:color .15s ease,background .15s ease;
   }
+  .nav-subicon{width:13px;height:13px;flex-shrink:0;}
   .nav-subitem:hover{color:var(--brand);background:rgba(43,38,32,.03);}
   .nav-subitem:last-child{padding-bottom:19px;}
 
@@ -268,16 +272,51 @@ firebase.initializeApp({
         <div class="sidebar-brand-rule"></div>
       </div>
       <nav class="sidebar-nav">
-        <button class="nav-item active" id="nav-home" onclick="switchView('home')">系统首页</button>
-        <button class="nav-item" id="nav-staff" onclick="switchView('staff')">员工操作端口</button>
+        <button class="nav-item active" id="nav-home" onclick="switchView('home')">
+          <svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round">
+            <rect x="3" y="3" width="6" height="6" rx="1"/>
+            <rect x="11" y="3" width="6" height="6" rx="1"/>
+            <rect x="3" y="11" width="6" height="6" rx="1"/>
+            <rect x="11" y="11" width="6" height="6" rx="1"/>
+          </svg>
+          <span>系统首页</span>
+        </button>
+        <button class="nav-item" id="nav-staff" onclick="switchView('staff')">
+          <svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="10" cy="6.5" r="3.2"/>
+            <path d="M3.5 16.5c0-3.4 2.9-6 6.5-6s6.5 2.6 6.5 6"/>
+          </svg>
+          <span>员工操作端口</span>
+        </button>
         <div class="nav-group" id="nav-menu-group">
           <button class="nav-group-toggle" onclick="toggleMenuGroup()">
-            菜品管理 <span class="chevron">▾</span>
+            <svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 9.3h14c0 3.9-3.1 7-7 7s-7-3.1-7-7z"/>
+              <path d="M6.2 9.3c0-2.2 1.7-4 3.8-4s3.8 1.8 3.8 4"/>
+              <line x1="10" y1="3" x2="10" y2="4.3"/>
+            </svg>
+            <span>菜品管理</span> <span class="chevron">▾</span>
           </button>
           <div class="nav-subwrap">
             <div class="nav-subwrap-inner">
-              <a class="nav-subitem" href="员工端/spgl.html">商品列表</a>
-              <a class="nav-subitem" href="员工端/gqcp.html">沽清菜品</a>
+              <a class="nav-subitem" href="员工端/spgl.html">
+                <svg class="nav-subicon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round">
+                  <line x1="6.3" y1="5.5" x2="16" y2="5.5"/>
+                  <line x1="6.3" y1="10" x2="16" y2="10"/>
+                  <line x1="6.3" y1="14.5" x2="16" y2="14.5"/>
+                  <circle cx="3.4" cy="5.5" r="0.9" fill="currentColor" stroke="none"/>
+                  <circle cx="3.4" cy="10" r="0.9" fill="currentColor" stroke="none"/>
+                  <circle cx="3.4" cy="14.5" r="0.9" fill="currentColor" stroke="none"/>
+                </svg>
+                <span>商品列表</span>
+              </a>
+              <a class="nav-subitem" href="员工端/gqcp.html">
+                <svg class="nav-subicon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round">
+                  <circle cx="10" cy="10" r="7"/>
+                  <line x1="5.3" y1="14.7" x2="14.7" y2="5.3"/>
+                </svg>
+                <span>沽清菜品</span>
+              </a>
             </div>
           </div>
         </div>
@@ -369,7 +408,7 @@ firebase.initializeApp({
       <section class="view" id="view-staff">
         <h2 class="section-title">员工操作端口</h2>
         <div class="staff-btn-grid">
-          <a class="staff-btn" href="客户端/customer.html?staff=1">代客点单</a>
+          <a class="staff-btn" href="员工端/dkdd.html">代客点单</a>
           <a class="staff-btn" href="员工端/sjxddxtygd.html">接单看板</a>
         </div>
       </section>

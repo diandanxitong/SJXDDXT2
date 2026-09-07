@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-auth-compat.js"></script>
+<script>
+firebase.initializeApp({
+  apiKey: 'AIzaSyBaFx1ZYKzEKfQLKbnD9YE_X_EJnFXrxOE',
+  authDomain: 'sjxddxt.firebaseapp.com',
+  projectId: 'sjxddxt',
+  storageBucket: 'sjxddxt.firebasestorage.app',
+  messagingSenderId: '56738241418',
+  appId: '1:56738241418:web:1ea87e2445e9d09e3d8673',
+});
+</script>
+<script src="staff-auth.js"></script>
+<title>代客点单</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* 跟 index.html 总控台同一套"商务风"色板（暖白纸感+朱红强调色），不是
+     接单看板（sjxddxtygd.html）那套深色紧急作业台风格——那边留着不动 */
+  :root{
+    --paper:#FDFCF9;
+    --paper-tint:#F7F2EA;
+    --ink:#1C1712;
+    --ink-soft:#736A60;
+    --ink-faint:#B3A99C;
+    --brand:#AA0101;
+    --brand-soft:#C23434;
+    --hairline:#E6E0D6;
+    --side-bg:#F2F0EB;
+    --side-hairline:#E2DDD1;
+    --pepper-brown:#6B4226;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{
+    background:var(--paper);color:var(--ink);
+    font-family:'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif;
+    display:flex;flex-direction:column;height:100vh;overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  [hidden]{display:none!important;}
+  button{font-family:inherit;}
+
+  .top-nav{
+    display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;
+    padding:14px 20px;background:var(--side-bg);border-bottom:1px solid var(--side-hairline);flex-shrink:0;
+  }
+  .title-block{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+  .title-block h1{font-family:'Noto Serif SC',serif;font-weight:700;font-size:17px;letter-spacing:.02em;color:var(--ink);}
+  .status-pill{
+    background:var(--paper);border:1px solid var(--hairline);border-radius:20px;
+    padding:5px 14px;font-size:12.5px;color:var(--ink-soft);
+  }
+  .control-btn{
+    display:inline-flex;align-items:center;gap:6px;text-decoration:none;
+    background:var(--paper);border:1px solid var(--hairline);color:var(--ink-soft);
+    font-size:12.5px;font-weight:600;padding:8px 14px;border-radius:20px;
+    cursor:pointer;
+  }
+  .control-btn:hover{color:var(--ink);border-color:var(--ink-faint);}
+  .nav-actions{display:flex;align-items:center;gap:10px;}
+
+  .main{flex:1;min-height:0;display:flex;}
+
+  /* ---------- 左边：已选商品购物车 ---------- */
+  .cart-panel{
+    width:320px;flex-shrink:0;background:var(--paper);border-right:1px solid var(--hairline);
+    display:flex;flex-direction:column;min-height:0;
+  }
+  .cart-list{flex:1;min-height:0;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px;}
+  .cart-empty{padding:40px 16px;text-align:center;color:var(--ink-faint);font-size:14px;line-height:1.6;}
+  .cart-row{
+    display:flex;align-items:center;gap:10px;background:var(--paper-tint);
+    border-radius:10px;padding:8px;
+  }
+  .cart-row-img{
+    width:42px;height:42px;border-radius:8px;object-fit:cover;flex-shrink:0;background:var(--hairline);
+  }
+  .cart-row-mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px;}
+  .cart-row-label{
+    font-size:12.5px;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .cart-row-qty{display:flex;align-items:center;gap:8px;}
+  .cart-qty-btn{
+    width:22px;height:22px;border-radius:50%;background:none;
+    font-size:14px;font-weight:700;cursor:pointer;line-height:1;
+    display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;
+    border:1.5px solid var(--ink-faint);color:var(--ink-soft);
+  }
+  .cart-qty-btn:hover{border-color:var(--brand);color:var(--brand);background:rgba(170,1,1,.08);}
+  .cart-row-qty-num{min-width:14px;text-align:center;font-size:12.5px;font-weight:700;color:var(--ink);}
+  .cart-row-del{
+    background:none;border:none;color:var(--ink-faint);cursor:pointer;padding:5px;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;border-radius:6px;
+  }
+  .cart-row-del:hover{color:var(--brand);background:rgba(170,1,1,.08);}
+  .cart-row-del svg{width:16px;height:16px;}
+
+  .cart-footer{border-top:1px solid var(--hairline);padding:12px;flex-shrink:0;}
+  .cart-total-row{
+    display:flex;justify-content:space-between;align-items:baseline;
+    font-size:12.5px;color:var(--ink-soft);padding:0 2px 10px;
+  }
+  .cart-total-row b{font-family:'Noto Serif SC',serif;font-size:21px;color:var(--brand);font-weight:700;}
+  .cart-btn-row{display:flex;gap:10px;}
+  .cart-cancel-btn, .cart-confirm-btn{
+    padding:13px 10px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;
+  }
+  .cart-cancel-btn{flex:1;background:none;border:1.5px solid var(--hairline);color:var(--ink-soft);}
+  .cart-cancel-btn:hover{border-color:var(--ink-faint);color:var(--ink);}
+  .cart-confirm-btn{flex:1.6;background:rgba(170,1,1,.08);border:1.5px solid var(--brand);color:var(--brand);}
+  .cart-confirm-btn:not(:disabled):hover{background:rgba(170,1,1,.16);}
+  .cart-confirm-btn:disabled{opacity:.4;cursor:default;}
+
+  /* ---------- 右边：选菜 ---------- */
+  .product-panel{flex:1;min-width:0;display:flex;flex-direction:column;padding:16px 20px;min-height:0;}
+  .product-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+  .search-bar{position:relative;flex:1;min-width:180px;max-width:360px;}
+  .search-bar input{
+    width:100%;background:var(--paper-tint);border:1px solid var(--hairline);border-radius:20px;
+    color:var(--ink);font-size:14px;padding:10px 16px;
+  }
+  .search-bar input::placeholder{color:var(--ink-faint);}
+  .search-bar input:focus{outline:none;border-color:var(--brand);}
+  .find-btn{flex-shrink:0;}
+  .view-toggle-btn{margin-left:auto;flex-shrink:0;}
+
+  .category-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;flex-shrink:0;}
+  .category-tab{
+    font-size:12.5px;font-weight:600;cursor:pointer;
+    padding:7px 14px;border-radius:20px;background:var(--paper-tint);border:1px solid var(--hairline);color:var(--ink-soft);
+  }
+  .category-tab:hover{color:var(--ink);border-color:var(--ink-faint);}
+  .category-tab.active{background:rgba(170,1,1,.08);border-color:var(--brand);color:var(--brand);}
+
+  .product-grid-wrap{flex:1;min-height:0;overflow-y:auto;}
+  .no-results{color:var(--ink-faint);font-size:14px;padding:20px 4px;}
+
+  .product-grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));}
+  .product-grid.small{gap:8px;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));}
+
+  .dish-card{background:var(--paper);border:1px solid var(--hairline);border-radius:12px;overflow:hidden;}
+  .dish-card.checked{border-color:var(--brand);}
+  .dish-card.sold-out{opacity:.55;}
+  .dish-card-img-wrap{position:relative;aspect-ratio:4/3;background:var(--hairline);}
+  .product-grid.small .dish-card-img-wrap{aspect-ratio:1;}
+  .dish-card-img{width:100%;height:100%;object-fit:cover;display:block;}
+  .sold-out-badge{
+    position:absolute;top:6px;right:6px;font-size:11px;font-weight:700;color:#fff;
+    background:rgba(28,23,18,.78);border-radius:20px;padding:2px 8px;
+  }
+  .qty-badge{
+    position:absolute;top:6px;left:6px;font-size:11px;font-weight:700;color:#fff;
+    background:var(--brand);border-radius:20px;padding:2px 8px;min-width:18px;text-align:center;
+  }
+  .dish-card-body{padding:9px 10px 10px;display:flex;flex-direction:column;gap:7px;}
+  .product-grid.small .dish-card-body{padding:7px 8px 8px;gap:5px;}
+  .dish-card-name{
+    font-size:14px;font-weight:600;line-height:1.3;color:var(--ink);
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  }
+  .product-grid.small .dish-card-name{font-size:12.5px;-webkit-line-clamp:1;}
+  .dish-card-price{font-size:12.5px;color:var(--ink-soft);font-weight:600;}
+  .dish-card-qty-row{display:flex;justify-content:flex-end;}
+  .add-btn{
+    width:28px;height:28px;border-radius:50%;background:rgba(170,1,1,.08);
+    font-size:17px;font-weight:700;cursor:pointer;line-height:1;
+    display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;
+    border:1.5px solid var(--brand);color:var(--brand);
+  }
+  .add-btn:hover{background:rgba(170,1,1,.16);}
+  .add-btn:disabled{opacity:.35;cursor:default;background:none;border-color:var(--ink-faint);color:var(--ink-faint);}
+
+  .size-btn-group{display:flex;gap:5px;flex-wrap:wrap;}
+  .size-opt-btn{
+    font-size:11px;font-weight:600;cursor:pointer;
+    padding:5px 9px;border-radius:20px;background:none;border:1px solid var(--hairline);color:var(--ink-soft);
+  }
+  .size-opt-btn.active{background:rgba(170,1,1,.08);border-color:var(--brand);color:var(--brand);}
+
+  .spice-row{display:flex;gap:5px;flex-wrap:wrap;border-top:1px dashed var(--hairline);padding-top:7px;}
+  .spice-pill{
+    font-size:11px;font-weight:600;cursor:pointer;
+    padding:4px 8px;border-radius:20px;background:none;border:1px solid var(--hairline);color:var(--ink-soft);
+  }
+  .spice-pill.active{background:rgba(170,1,1,.08);border-color:var(--brand-soft);color:var(--brand);}
+  .spice-pill.pepper-pill{border-color:var(--pepper-brown);color:var(--pepper-brown);}
+  .spice-pill.pepper-pill.active{background:var(--pepper-brown);color:#fff;}
+
+  .pagination{
+    display:flex;align-items:center;justify-content:center;gap:16px;padding:14px 0 2px;flex-shrink:0;
+  }
+  .page-btn{
+    padding:8px 16px;border-radius:20px;background:var(--paper-tint);border:1px solid var(--hairline);
+    color:var(--ink-soft);font-size:12.5px;font-weight:600;cursor:pointer;
+  }
+  .page-btn:hover:not(:disabled){color:var(--ink);border-color:var(--ink-faint);}
+  .page-btn:disabled{opacity:.35;cursor:default;}
+  .page-indicator{font-size:12.5px;color:var(--ink-soft);font-variant-numeric:tabular-nums;}
+
+  /* ---------- 没带桌号：这一页本身就是选桌号入口 ---------- */
+  .pick-wrap{flex:1;min-height:0;overflow-y:auto;padding:44px 24px 60px;}
+  .pick-header{max-width:720px;margin:0 auto 26px;text-align:center;}
+  .pick-eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--brand);}
+  .pick-title{font-family:'Noto Serif SC',serif;font-weight:700;font-size:21px;margin:8px 0 6px;color:var(--ink);}
+  .pick-hint{font-size:12.5px;color:var(--ink-soft);}
+  .table-grid{max-width:720px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:10px;}
+  .table-cell{
+    position:relative;aspect-ratio:.92;border-radius:10px;border:1px solid var(--hairline);
+    background:var(--paper);color:var(--ink);cursor:pointer;font-family:inherit;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:6px 4px 4px;
+  }
+  .table-cell:hover{border-color:var(--brand);}
+  .table-cell-num{
+    position:absolute;top:6px;left:8px;font-family:'Noto Serif SC',serif;
+    font-size:12.5px;font-weight:700;color:var(--ink);
+  }
+  .table-cell-info{display:flex;flex-direction:column;align-items:center;gap:1px;margin-top:10px;}
+  .table-cell-amount{font-size:12.5px;font-weight:700;color:var(--brand);font-variant-numeric:tabular-nums;}
+  .table-cell-time{font-size:11px;color:var(--ink-soft);font-variant-numeric:tabular-nums;}
+  .table-cell.idle{border-style:dashed;}
+  .table-cell-idle-dot{width:5px;height:5px;border-radius:50%;background:var(--hairline);opacity:.6;margin-top:12px;}
+
+  @media (max-width:820px){
+    .main{flex-direction:column;}
+    .cart-panel{width:100%;max-height:38vh;border-right:none;border-bottom:1px solid var(--hairline);}
+  }
+</style>
+</head>
+<body>
+<nav class="top-nav">
+  <div class="title-block">
+    <h1>代客点单</h1>
+    <span class="status-pill" id="table-pill" hidden></span>
+  </div>
+  <div class="nav-actions">
+    <a class="control-btn" id="back-link" href="../index.html">← 返回总控台</a>
+    <button class="control-btn" onclick="toggleStaffLang()">EN</button>
+  </div>
+</nav>
+
+<div class="main" id="main-root"></div>
+
+<script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-compat.js"></script>
+<script src="staff-i18n.js"></script>
+<script>
+const db = firebase.firestore();
+db.settings({ experimentalAutoDetectLongPolling: true });
+const ordersRef = db.collection('orders');
+const menuStatusRef = db.collection('menuStatus').doc('soldOut');
+
+const params = new URLSearchParams(location.search);
+const table = params.get('table');
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+function displayTableName(tbl){
+  return (tbl === '测试' && getStaffLang() === 'en') ? 'Test' : tbl;
+}
+
+// 没带桌号：这一页自己就是选桌号入口（点桌号卡片会带着 table 参数重新进这个页
+// 面），返回总控台；带了桌号：这一页是点单界面，返回按钮回选桌号，不是回总控台
+function applyHeaderChrome(){
+  const pill = document.getElementById('table-pill');
+  const backLink = document.getElementById('back-link');
+  if(table){
+    pill.hidden = false;
+    pill.textContent = `桌 ${escapeHtml(displayTableName(table))}`;
+    backLink.href = 'dkdd.html';
+    backLink.textContent = '← 返回选桌号';
+  }else{
+    pill.hidden = true;
+    backLink.href = '../index.html';
+    backLink.textContent = '← 返回总控台';
+  }
+}
+applyHeaderChrome();
+
+function toggleStaffLang(){
+  setStaffLang(getStaffLang() === 'en' ? 'zh' : 'en');
+  applyHeaderChrome();
+  render();
+}
+
+// 菜单分类：锅底/招牌打头，凉菜/小吃、甜品、饮品统一排最后，跟顾客端 customer.html
+// 的 CATEGORIES 保持一致——代客点单是给员工下"这一桌的第一轮完整订单"用的，
+// 跟"员工加菜"（ygjc.html，只覆盖不用挑锅底的那几个品类）不一样，这里锅底也要选
+const CATEGORY_ORDER = ["soupBase","houseSpecial","seafood","premiumBeef","meatballs","mushrooms","vegetables","snacks","desserts","drinks","softDrinks","tea","fineWines","beer"];
+const CATEGORY_LABELS = { soupBase:"锅底", houseSpecial:"招牌必点", seafood:"海鲜", premiumBeef:"精品肉类", meatballs:"丸子", mushrooms:"菌菇", vegetables:"素菜", snacks:"凉菜/小吃", desserts:"甜品", drinks:"果香鲜饮", softDrinks:"软饮/水", tea:"茶", fineWines:"Fine Wines", beer:"啤酒" };
+
+// 菜品清单：从 客户端/customer.html 的内置菜单（BASE_DISH_DATA）里摘出员工下单
+// 用得到的字段（id/分类/中文名/图片/价格或规格/是否辣度可选），跟"员工加菜"
+// 页一样是写死的一份快照——商品管理页做的改名/改价/沽清之外的改动（新增/下架）
+// 这里不会实时跟着变，属于已知局限，跟 ygjc.html 是同一个取舍
+const DISH_LIST = [{"id":"potBeefTallow","category":"soupBase","name":"牛油锅","img":"../image/菜品/牛油锅.webp","sub":"potSingle","price":16.6,"spicy":true},{"id":"potTomato","category":"soupBase","name":"番茄锅（素）","img":"../image/菜品/番茄锅.webp","sub":"potSingle","price":15.6},{"id":"potMushroom","category":"soupBase","name":"菌汤锅（素）","img":"../image/菜品/菌汤锅.webp","sub":"potSingle","price":11.8},{"id":"potPorkBone","category":"soupBase","name":"骨汤锅","img":"../image/菜品/骨汤锅.webp","sub":"potSingle","price":9.8},{"id":"potBeefPork","category":"soupBase","name":"牛油汤 + 骨汤锅","img":"../image/菜品/牛油锅+骨汤.webp","sub":"potDual","price":16.6,"spicy":true},{"id":"potBeefMushroom","category":"soupBase","name":"牛油汤 + 菌汤锅","img":"../image/菜品/牛油果+菌汤.webp","sub":"potDual","price":16.6,"spicy":true},{"id":"potBeefTomato","category":"soupBase","name":"牛油汤 + 番茄锅","img":"../image/菜品/牛油锅+番茄.webp","sub":"potDual","price":16.6,"spicy":true},{"id":"potTomatoPork","category":"soupBase","name":"番茄锅 + 骨汤锅","img":"../image/菜品/番茄+骨汤.webp","sub":"potDual","price":13.6},{"id":"potTomatoMushroom","category":"soupBase","name":"番茄锅 + 菌汤锅","img":"../image/菜品/番茄+菌汤.webp","sub":"potDual","price":13.6},{"id":"potMushroomPork","category":"soupBase","name":"菌汤锅 + 骨汤锅","img":"../image/菜品/菌汤+骨汤.webp","sub":"potDual","price":13.6},{"id":"dipSauce","category":"soupBase","name":"蘸料","img":"../image/菜品/蘸料.webp","sub":"dipSauce","price":1.98,"unit":"person"},{"id":"beefTripePremium","category":"houseSpecial","name":"极品鲜毛肚","img":"../image/菜品/极品鲜毛肚.webp","price":14},{"id":"porkKidneySliced","category":"houseSpecial","name":"大刀腰片","img":"../image/菜品/大刀腰片.webp","price":11.8},{"id":"beefTripeLayered","category":"houseSpecial","name":"草原千层肚","img":"../image/菜品/草原千层肚.webp","price":10.8},{"id":"duckBlood","category":"houseSpecial","name":"鸭血","img":"../image/菜品/鸭血.webp","price":7.8},{"id":"porkLiverTender","category":"houseSpecial","name":"嫩滋猪肝","img":"../image/菜品/嫩滋猪肝.webp","price":7.8},{"id":"malingLuncheonMeat","category":"houseSpecial","name":"梅林午餐肉","img":"../image/菜品/梅林午餐肉.webp","price":6.6},{"id":"pigBrain","category":"houseSpecial","name":"鲜绿脑花","img":"../image/菜品/鲜绿脑花.webp","price":9.6},{"id":"spicyTenderBeef","category":"houseSpecial","name":"麻辣牛肉","img":"../image/菜品/麻辣牛肉.webp","price":12.8,"spicy":true},{"id":"seasonedBeef","category":"houseSpecial","name":"私房嫩牛肉","img":"../image/菜品/私房嫩牛肉.webp","price":11.8},{"id":"chickenGizzard","category":"houseSpecial","name":"特色小郡肝","img":"../image/菜品/特色小郡肝.webp","price":11},{"id":"braisedChickenFeet","category":"houseSpecial","name":"特色肥鸡爪","img":"../image/菜品/特色肥鸡爪.webp","price":8.8},{"id":"beefTendonFresh","category":"houseSpecial","name":"特色肥腿筋","img":"../image/菜品/特色肥腿筋.webp","price":8.6},{"id":"spicyChickenDrumstick","category":"houseSpecial","name":"麻辣鸡腿肉","img":"../image/菜品/麻辣鸡腿肉.webp","price":8.6,"spicy":true},{"id":"braisedPorkIntestine","category":"houseSpecial","name":"特色肥肠","img":"../image/菜品/特色肥肠.webp","price":7.8},{"id":"braisedBeefTendon","category":"houseSpecial","name":"特色肥牛筋儿","img":"../image/菜品/特色肥牛筋儿.webp","price":6.8},{"id":"friedEggViral","category":"houseSpecial","name":"网红炸蛋","img":"../image/菜品/网红炸蛋.webp","price":2.8},{"id":"rawEgg","category":"houseSpecial","name":"生鸡蛋","img":"../image/菜品/生鸡蛋.webp","price":1.6},{"id":"kingPrawns8","category":"seafood","name":"带头大虾","img":"../image/菜品/带头大虾.webp","price":11},{"id":"seaBassSliced","category":"seafood","name":"海鲈鱼片","img":"../image/菜品/海鲈鱼片.webp","price":16.8},{"id":"shrimpBallsHandmade","category":"seafood","name":"手打虾滑","img":"../image/菜品/手打虾滑.webp","sizes":[{"key":"large","price":13.8},{"key":"small","price":6.9}]},{"id":"babyCuttlefish","category":"seafood","name":"墨鱼仔","img":"../image/菜品/墨鱼仔.webp","price":8.2},{"id":"squid","category":"seafood","name":"鱿鱼","img":"../image/菜品/鱿鱼.webp","price":6.8},{"id":"shrimpDumpling","category":"seafood","name":"虾饺","img":"../image/菜品/虾饺2.webp","price":6.8},{"id":"japaneseWagyu","category":"premiumBeef","name":"日本和牛","img":"../image/菜品/日本和牛.webp","price":68},{"id":"premiumMarbledFattyBeef","category":"premiumBeef","name":"极品雪花肥牛","img":"../image/菜品/极品雪花肥牛.webp","sizes":[{"key":"large","price":26},{"key":"small","price":16.8}]},{"id":"angusBeefSlices","category":"premiumBeef","name":"安格斯吊龙","img":"../image/菜品/安格斯吊龙.webp","sizes":[{"key":"large","price":16.8},{"key":"small","price":12.8}]},{"id":"lambRoll","category":"premiumBeef","name":"羔羊卷","img":"../image/菜品/羔羊卷.webp","price":11.8},{"id":"beefTongueFresh","category":"premiumBeef","name":"现切牛舌","img":"../image/菜品/现切牛舌.webp","price":10.8},{"id":"fattyBeefRollOriginal","category":"premiumBeef","name":"原切肥牛","img":"../image/菜品/原切肥牛.webp","price":13.8},{"id":"porkBellyFresh","category":"premiumBeef","name":"现切五花肉","img":"../image/菜品/现切五花肉.webp","price":7.8},{"id":"thickPorkSlice","category":"premiumBeef","name":"现切老肉片","img":"../image/菜品/现切老肉片.webp","price":7.8},{"id":"meatballMix","category":"meatballs","name":"丸子拼盘","img":"../image/菜品/丸子拼盘.webp","price":16.8},{"id":"porkMeatballsCoriander","category":"meatballs","name":"香菜猪肉丸","img":"../image/菜品/香菜猪肉丸.webp","price":8.6},{"id":"crispySausageJapanese","category":"meatballs","name":"日式脆皮肠","img":"../image/菜品/日式脆皮肠.webp","price":8},{"id":"crabStick","category":"meatballs","name":"蟹肉棒","img":"../image/菜品/蟹肉棒.webp","price":6.8},{"id":"fuzhouFishBalls","category":"meatballs","name":"福州鱼丸","img":"../image/菜品/福州鱼丸.webp","sizes":[{"key":"large","price":11.8},{"key":"small","price":5.8}]},{"id":"juicyBeefBalls","category":"meatballs","name":"撒尿牛丸","img":"../image/菜品/撒尿牛丸.webp","sizes":[{"key":"large","price":7.8},{"key":"small","price":4.8}]},{"id":"chickenMeatballs","category":"meatballs","name":"鸡肉丸","img":"../image/菜品/鸡肉丸.webp","sizes":[{"key":"large","price":7.8},{"key":"small","price":4.8}]},{"id":"mushroomPlatter","category":"mushrooms","name":"菌类拼盘","img":"../image/菜品/菌类拼盘.webp","price":12},{"id":"shiitakeMushroom","category":"mushrooms","name":"香菇","img":"../image/菜品/香菇.webp","price":6.8},{"id":"enokiMushroom","category":"mushrooms","name":"金针菇","img":"../image/菜品/金针菇.webp","price":5.8},{"id":"kingOysterMushroom","category":"mushrooms","name":"杏鲍菇","img":"../image/菜品/杏鲍菇.webp","price":5.8},{"id":"oysterMushroom","category":"mushrooms","name":"平菇","img":"../image/菜品/平菇.webp","price":5.8},{"id":"blackFungus","category":"mushrooms","name":"黑木耳","img":"../image/菜品/黑木耳.webp","price":5.8},{"id":"vegPlatter","category":"vegetables","name":"蔬菜拼盘","img":"../image/菜品/蔬菜拼盘.webp","price":12},{"id":"soybeanRoll","category":"vegetables","name":"响铃卷","img":"../image/菜品/响铃卷.webp","price":7.8},{"id":"beancurdSticks","category":"vegetables","name":"腐竹","img":"../image/菜品/腐竹.webp","price":7.8},{"id":"bambooSlicesSunan","category":"vegetables","name":"蜀南竹笋片","img":"../image/菜品/蜀南竹笋片.webp","price":6.8},{"id":"driedBeanCurdSheet","category":"vegetables","name":"干豆皮","img":"../image/菜品/干豆皮.webp","price":6.8},{"id":"deepFriedTofu","category":"vegetables","name":"油豆腐","img":"../image/菜品/油豆腐.webp","price":6.8},{"id":"wulongVermicelli","category":"vegetables","name":"武隆粉丝","img":"../image/菜品/武隆粉丝.webp","price":6.5},{"id":"lotusRootSlices","category":"vegetables","name":"藕片","img":"../image/菜品/藕片.webp","price":5.8},{"id":"broccoliSprouts","category":"vegetables","name":"西兰花苔","img":"../image/菜品/西兰花苔.webp","price":5.8},{"id":"riceCake","category":"vegetables","name":"年糕","img":"../image/菜品/年糕.webp","price":5.8},{"id":"crownDaisy","category":"vegetables","name":"茼蒿菜","img":"../image/菜品/茼蒿菜.webp","price":5.8},{"id":"pakChoi","category":"vegetables","name":"上海青","img":"../image/菜品/上海青.webp","price":5.8},{"id":"lettuce","category":"vegetables","name":"生菜","img":"../image/菜品/生菜.webp","price":5.8},{"id":"kelpSeaweed","category":"vegetables","name":"海带","img":"../image/菜品/海带.webp","price":5.8},{"id":"konjacNoodles","category":"vegetables","name":"魔芋丝","img":"../image/菜品/魔芋丝.webp","price":5.8},{"id":"chineseYam","category":"vegetables","name":"山药","img":"../image/菜品/山药.webp","price":4.9},{"id":"softTofu","category":"vegetables","name":"豆腐","img":"../image/菜品/豆腐.webp","price":4.8},{"id":"instantNoodles","category":"vegetables","name":"方便面","img":"../image/菜品/方便面.webp","price":4.8},{"id":"chineseCabbage","category":"vegetables","name":"大白菜","img":"../image/菜品/大白菜.webp","price":4.8},{"id":"spinach","category":"vegetables","name":"菠菜","img":"../image/菜品/菠菜.webp","price":4.8},{"id":"sweetCorn","category":"vegetables","name":"甜玉米","img":"../image/菜品/甜玉米.webp","price":4.8},{"id":"beanSprout","category":"vegetables","name":"豆芽","img":"../image/菜品/豆芽.webp","price":4.8},{"id":"whiteRadish","category":"vegetables","name":"白萝卜","img":"../image/菜品/白萝卜.webp","price":4.8},{"id":"babyKelpSprouts","category":"vegetables","name":"海带芽","img":"../image/菜品/海带芽.webp","price":4.8},{"id":"longkouVermicelli","category":"vegetables","name":"龙口粉丝","img":"../image/菜品/龙口粉丝.webp","price":4.8},{"id":"shreddedPotato","category":"vegetables","name":"千丝土豆","img":"../image/菜品/千丝土豆.webp","price":4.8},{"id":"potatoSlices","category":"vegetables","name":"土豆","img":"../image/菜品/土豆片.webp","price":3.8},{"id":"crispyPorkStrips","category":"snacks","name":"现炸酥肉","img":"../image/菜品/酥肉.webp","price":9.9},{"id":"brownSugarRiceCake","category":"snacks","name":"红糖糍粑","img":"../image/菜品/红糖糍粑.webp","price":8.8},{"id":"blackFungusSalad","category":"snacks","name":"开胃黑木耳","img":"../image/菜品/开胃黑木耳.webp","price":6.9},{"id":"friedKingPrawn","category":"snacks","name":"炸虾","img":"../image/菜品/炸虾.webp","price":6.8},{"id":"kimchi","category":"snacks","name":"韩国泡菜","img":"../image/菜品/韩国泡菜.webp","price":4.8},{"id":"springRoll","category":"snacks","name":"春卷","img":"../image/菜品/春卷.webp","price":4.8},{"id":"cucumberSaladSpicy","category":"snacks","name":"凉拌黄瓜","img":"../image/菜品/拍黄瓜.webp","price":4.8},{"id":"friedDoughSticks","category":"snacks","name":"油条","img":"../image/菜品/油条.webp","price":4.8},{"id":"housePickledVeg","category":"snacks","name":"秘制泡菜","img":"../image/菜品/秘制泡菜.webp","price":2.8},{"id":"eggFriedRiceClassic","category":"snacks","name":"特色蛋炒饭","img":"../image/菜品/特色蛋炒饭.webp","price":3.6,"unit":"person"},{"id":"steamedRice","category":"snacks","name":"白米饭","img":"../image/菜品/白米饭.webp","price":2.6,"unit":"person"},{"id":"spiceBag","category":"snacks","name":"辣袋","img":"../image/菜品/辣袋.webp","price":9.5,"spicy":true},{"id":"mangoPomeloSago","category":"desserts","name":"杨枝甘露","img":"../image/菜品/杨枝甘露.webp","price":5.8},{"id":"matchaShavedIce","category":"desserts","name":"抹茶绵绵冰","img":"../image/菜品/抹茶绵绵冰.webp","price":5.8},{"id":"chocoShavedIce","category":"desserts","name":"巧克力绵绵冰","img":"../image/菜品/巧克力绵绵冰.webp","price":5.8},{"id":"strawberryShavedIce","category":"desserts","name":"草莓绵绵冰","img":"../image/菜品/草莓绵绵冰.webp","price":5.8},{"id":"mangoShavedIce","category":"desserts","name":"芒果绵绵冰","img":"../image/菜品/芒果绵绵冰.webp","price":5.8},{"id":"milkShavedIce","category":"desserts","name":"牛奶绵绵冰","img":"../image/菜品/牛奶绵绵冰.webp","price":4.8},{"id":"cheeseCake","category":"desserts","name":"芝士蛋糕","img":"../image/菜品/芝士蛋糕.webp","price":4.8},{"id":"brownies","category":"desserts","name":"布朗尼","img":"../image/菜品/布朗尼.webp","price":4.8},{"id":"friedSteamedBun","category":"desserts","name":"炸馒头","img":"../image/菜品/炸馒头.webp","price":4.8},{"id":"chengduRiceDumpling","category":"desserts","name":"老成都醪糟汤圆（黑芝麻）","img":"../image/菜品/老成都醪糟汤圆.webp","price":4.8},{"id":"iceJellyBrownSugar","category":"desserts","name":"特色冰粉","img":"../image/菜品/特色冰粉.webp","price":3.6},{"id":"cheeseStrawberry","category":"drinks","name":"芝芝莓莓","img":"../image/菜品/芝芝莓莓.webp","price":6.2},{"id":"cheeseMango","category":"drinks","name":"芝芝芒芒","img":"../image/菜品/芝芝芒芒.webp","price":6.2},{"id":"cheeseGrape","category":"drinks","name":"芝芝葡萄","img":"../image/菜品/芝芝葡萄.webp","price":6.2},{"id":"strawberryYakult","category":"drinks","name":"草莓养乐多","img":"../image/菜品/草莓养乐多.webp","price":6.2},{"id":"mangoLemonTea","category":"drinks","name":"芒果柠檬茶","img":"../image/菜品/芒果柠檬茶.webp","price":5.8},{"id":"jasmineStrawberry","category":"drinks","name":"茉莉草莓","img":"../image/菜品/茉莉草莓.webp","price":5.8},{"id":"passionFruitLemonTea","category":"drinks","name":"百香果柠檬茶","img":"../image/菜品/百香果柠檬茶.webp","price":5.8},{"id":"kiwiLemonTea","category":"drinks","name":"猕猴桃柠檬茶","img":"../image/菜品/猕猴桃柠檬茶.webp","price":5.8},{"id":"honeyLightMilkTea","category":"drinks","name":"蜜香轻乳茶","img":"../image/菜品/蜜香轻乳茶.webp","price":5.8},{"id":"pomegranateLemonTea","category":"drinks","name":"红石榴柠檬茶","img":"../image/菜品/红石榴柠檬茶.webp","price":5.8},{"id":"jasmineGreenGrape","category":"drinks","name":"茉莉青提","img":"../image/菜品/茉莉青提.webp","price":5.8},{"id":"waxberryLemonTea","category":"drinks","name":"杨梅柠檬茶","img":"../image/菜品/杨梅柠檬茶.webp","price":5.8},{"id":"jasmineLightMilkTea","category":"drinks","name":"茉莉轻乳茶","img":"../image/菜品/茉莉轻乳茶.webp","price":5.8},{"id":"sourPlumDrink","category":"drinks","name":"酸梅汤","img":"../image/菜品/酸梅汤.webp","sizes":[{"key":"glass","price":2.8},{"key":"bottle","price":8.8}]},{"id":"honeyLemonTea","category":"drinks","name":"蜂蜜柠檬茶","img":"../image/菜品/蜂蜜柠檬茶.webp","sizes":[{"key":"glass","price":3.5},{"key":"bottle","price":9.9}]},{"id":"wineColaRegular","category":"softDrinks","name":"可乐 330ml","img":"../image/菜品/soft drinks.webp","sub":"wineSoft","price":3.8},{"id":"wineColaZeroSugar","category":"softDrinks","name":"无糖可乐 330ml","img":"../image/菜品/soft drinks.webp","sub":"wineSoft","price":3.8},{"id":"wineColaDiet","category":"softDrinks","name":"健怡可乐 330ml","img":"../image/菜品/soft drinks.webp","sub":"wineSoft","price":3.8},{"id":"wineSevenUpRegular","category":"softDrinks","name":"七喜 300ml","img":"../image/菜品/soft drinks.webp","sub":"wineSoft","price":3.8},{"id":"wineSevenUpDiet","category":"softDrinks","name":"无糖七喜 300ml","img":"../image/菜品/soft drinks.webp","sub":"wineSoft","price":3.8},{"id":"wineFanta","category":"softDrinks","name":"芬达 Fanta 300ml","img":"../image/菜品/soft drinks.webp","sub":"wineSoft","price":3.8},{"id":"wineJdb","category":"softDrinks","name":"加多宝 Jiaduobao","img":"../image/菜品/soft drinks.webp","sub":"wineSoft","price":3.8},{"id":"wineAloe","category":"softDrinks","name":"芦荟汁 Aloe Juice","img":"../image/菜品/soft drinks.webp","sub":"wineSoft","sizes":[{"key":"drinkSmall","price":3.8},{"key":"drinkLarge","price":9}]},{"id":"wineSoyDrink","category":"softDrinks","name":"维他豆奶(小) Soy Drink","img":"../image/菜品/soft drinks.webp","sub":"wineSoft","price":4.6},{"id":"wineCoconutJuice","category":"softDrinks","name":"椰树牌椰汁","img":"../image/菜品/soft drinks.webp","sub":"wineSoft","price":4.6},{"id":"waterStill","category":"softDrinks","name":"纯净水","img":"../image/菜品/soft drinks.webp","sub":"wineSoft","sizes":[{"key":"drinkSmall","price":3.8},{"key":"drinkLarge","price":6}]},{"id":"waterSparkling","category":"softDrinks","name":"气泡水","img":"../image/菜品/soft drinks.webp","sub":"wineSoft","sizes":[{"key":"drinkSmall","price":3.8},{"key":"drinkLarge","price":6}]},{"id":"wineAppleJuice","category":"softDrinks","name":"苹果汁","img":"../image/菜品/果汁.webp","sub":"wineJuice","sizes":[{"key":"glass","price":2.8},{"key":"bottle","price":8.8}]},{"id":"wineOrangeJuice","category":"softDrinks","name":"橙汁","img":"../image/菜品/果汁.webp","sub":"wineJuice","sizes":[{"key":"glass","price":2.8},{"key":"bottle","price":8.8}]},{"id":"wineCranberryJuice","category":"softDrinks","name":"蔓越莓汁","img":"../image/菜品/果汁.webp","sub":"wineJuice","sizes":[{"key":"glass","price":2.8},{"key":"bottle","price":8.8}]},{"id":"wineMurariPinotGrigio","category":"fineWines","name":"Murari Pinot Grigio 卡斯特拉尼灰皮诺","img":"../image/菜品/wines.webp","sub":"wineWhite","sizes":[{"key":"glass","price":7.9},{"key":"bottle","price":28}]},{"id":"wineBouchardSauvignonBlanc","category":"fineWines","name":"Bouchard Aine & Fils Sauvignon Blanc 长相思","img":"../image/菜品/wines.webp","sub":"wineWhite","sizes":[{"key":"glass","price":8.5},{"key":"bottle","price":32}]},{"id":"winePeterRiesling","category":"fineWines","name":"Peter & Peter Riesling","img":"../image/菜品/wines.webp","sub":"wineWhite","sizes":[{"key":"glass","price":9.9},{"key":"bottle","price":36}]},{"id":"wineNauMaiSauvignonBlanc","category":"fineWines","name":"Nau Mai Sauvignon Blanc","img":"../image/菜品/wines.webp","sub":"wineWhite","sizes":[{"key":"bottle","price":39}]},{"id":"wineCasalVentozelaAlvarinho","category":"fineWines","name":"Casal de Ventozela Alvarinho 阿瓦里诺","img":"../image/菜品/wines.webp","sub":"wineWhite","sizes":[{"key":"bottle","price":45}]},{"id":"wineDomaneWachauGruner","category":"fineWines","name":"Domäne Wachau Grüner Veltliner Federspiel","img":"../image/菜品/wines.webp","sub":"wineWhite","sizes":[{"key":"bottle","price":49}]},{"id":"wineLouisJadotChardonnay","category":"fineWines","name":"Louis Jadot Bourgogne Chardonnay 'Couvent des Jacobins' 勃艮第霞多丽","img":"../image/菜品/wines.webp","sub":"wineWhite","sizes":[{"key":"bottle","price":65}]},{"id":"wineMarquisGoulaineSancerre","category":"fineWines","name":"Marquis de Goulaine Sancerre 'Les Lorys' 桑塞尔","img":"../image/菜品/wines.webp","sub":"wineWhite","sizes":[{"key":"bottle","price":79}]},{"id":"wineOrquestraTempranillo","category":"fineWines","name":"Orquestra Tempranillo 丹魄乐团","img":"../image/菜品/wines.webp","sub":"wineRed","sizes":[{"key":"glass","price":7.9},{"key":"bottle","price":28}]},{"id":"wineReserveAubeSyrahMerlot","category":"fineWines","name":"Reserve de L'Aube Syrah Merlot 奥布西拉梅洛珍藏","img":"../image/菜品/wines.webp","sub":"wineRed","sizes":[{"key":"glass","price":8.5},{"key":"bottle","price":32}]},{"id":"wineChateauGrandVallons","category":"fineWines","name":"Château Les Grand Vallons 波尔多-城堡","img":"../image/菜品/wines.webp","sub":"wineRed","sizes":[{"key":"glass","price":10.95},{"key":"bottle","price":39}]},{"id":"wineFincaMonicaCrianza","category":"fineWines","name":"Finca Mónica Crianza","img":"../image/菜品/wines.webp","sub":"wineRed","sizes":[{"key":"bottle","price":42}]},{"id":"wineFinDelMundoMalbec","category":"fineWines","name":"Fin del Mundo Reserva Malbec 珍藏马尔贝克","img":"../image/菜品/wines.webp","sub":"wineRed","sizes":[{"key":"bottle","price":45}]},{"id":"wineSuraniPrimitivo","category":"fineWines","name":"Surani Primitivo di Manduria","img":"../image/菜品/wines.webp","sub":"wineRed","sizes":[{"key":"bottle","price":49}]},{"id":"wineLouisJadotPinotNoir","category":"fineWines","name":"Louis Jadot Bourgogne Pinot Noir 'Couvent des Jacobins' 勃艮第黑皮诺","img":"../image/菜品/wines.webp","sub":"wineRed","sizes":[{"key":"bottle","price":69}]},{"id":"wineHautsLynchMoussas","category":"fineWines","name":"Les Hauts de Lynch Moussas 上梦多克","img":"../image/菜品/wines.webp","sub":"wineRed","sizes":[{"key":"bottle","price":89}]},{"id":"wineColombetteGrenacheRose","category":"fineWines","name":"Domaine La Colombette Grenache Rosé 歌海娜玫瑰庄","img":"../image/菜品/wines.webp","sub":"wineRose","sizes":[{"key":"glass","price":8},{"key":"bottle","price":29}]},{"id":"wineBerneRomanceRose","category":"fineWines","name":"Château de Berne Romance Rosé 普罗旺斯玫瑰","img":"../image/菜品/wines.webp","sub":"wineRose","sizes":[{"key":"glass","price":10.95},{"key":"bottle","price":39}]},{"id":"wineSerenaProsecco","category":"fineWines","name":"Serena Prosecco Frizzante 罗普罗蜜克(单人装20cl)","img":"../image/菜品/wines.webp","sub":"wineSparkling","price":9.95},{"id":"wineMontegrandeFrizzante","category":"fineWines","name":"Montegrande Bianco Frizzante 蒙特格兰德(瓶)","img":"../image/菜品/wines.webp","sub":"wineSparkling","price":29},{"id":"wineChampagneTheophile","category":"fineWines","name":"Champagne Theophile Brut NV 香槟(瓶)","img":"../image/菜品/wines.webp","sub":"wineSparkling","price":89},{"id":"wineTsingtao","category":"beer","name":"青岛啤酒 330ml","img":"../image/菜品/beers.webp","price":5.95},{"id":"wineAsahi","category":"beer","name":"朝日啤酒 330ml","img":"../image/菜品/beers.webp","price":5.95},{"id":"wineHeineken","category":"beer","name":"喜力啤酒 330ml","img":"../image/菜品/beers.webp","price":5.95},{"id":"wineHeineken00","category":"beer","name":"喜力0.0 330ml","img":"../image/菜品/beers.webp","price":5.5},{"id":"wineGuinness","category":"beer","name":"健力士 500ml","img":"../image/菜品/beers.webp","price":7.95},{"id":"wineGuinness00","category":"beer","name":"健力士0.0 500ml","img":"../image/菜品/beers.webp","price":7.5},{"id":"teaDianhong","category":"tea","name":"滇红茶","img":"../image/菜品/茶.png","price":8.8,"unit":"person"},{"id":"teaZhuyeqing","category":"tea","name":"竹叶青茶","img":"../image/菜品/茶.png","price":8.8,"unit":"person"},{"id":"teaKuqiao","category":"tea","name":"苦荞茶","img":"../image/菜品/茶.png","price":6.8,"unit":"person"}];
+const DISH_BY_ID = {};
+DISH_LIST.forEach(d => { DISH_BY_ID[d.id] = d; });
+
+let soldOutIds = new Set();
+let loaded = false;
+let selected = new Map();     // id -> { qty, size, spice, noPepper }
+let sizeChoice = new Map();   // id -> 记住上次选的规格 key，就算数量还是 0
+let searchQuery = '';
+let selectedCategory = 'all';
+let viewMode = 'large';       // 'large' | 'small'
+let currentPage = 0;
+let submitting = false;
+
+menuStatusRef.onSnapshot(snap => {
+  const data = snap.data();
+  soldOutIds = new Set((data && data.ids) || []);
+  loaded = true;
+  render();
+}, err => { loaded = true; render(); });
+
+function pageSize(){ return viewMode === 'large' ? 15 : 30; }
+
+function currentSizeKey(d){
+  const sel = selected.get(d.id);
+  if(sel && sel.size) return sel.size;
+  return sizeChoice.get(d.id) || d.sizes[0].key;
+}
+function setDishSize(id, key){
+  sizeChoice.set(id, key);
+  const sel = selected.get(id);
+  if(sel) sel.size = key;
+  render();
+}
+function dishPrice(d, sel){
+  if(d.sizes){
+    const opt = d.sizes.find(s => s.key === (sel && sel.size)) || d.sizes[0];
+    return opt.price;
+  }
+  return d.price;
+}
+function priceLabelHTML(d){
+  return `€${d.price.toFixed(2)}${d.unit === 'person' ? '/人' : ''}`;
+}
+
+function incrementQty(id){
+  const d = DISH_BY_ID[id];
+  if(!d || soldOutIds.has(id)) return;
+  const sel = selected.get(id);
+  if(sel){
+    sel.qty = Math.min(30, sel.qty + 1);
+  }else{
+    if(selected.size >= 30){ alert('这一单最多同时点 30 道不同的菜，请先下单这一批'); return; }
+    selected.set(id, {
+      qty: 1,
+      size: d.sizes ? currentSizeKey(d) : null,
+      spice: d.spicy ? '中辣' : null,
+      noPepper: false,
+    });
+  }
+  render();
+}
+function decrementQty(id){
+  const sel = selected.get(id);
+  if(!sel) return;
+  sel.qty -= 1;
+  if(sel.qty <= 0) selected.delete(id);
+  render();
+}
+function removeItem(id){
+  selected.delete(id);
+  render();
+}
+function setSpice(id, level){
+  const sel = selected.get(id);
+  if(!sel) return;
+  sel.spice = level;
+  render();
+}
+function toggleNoPepper(id){
+  const sel = selected.get(id);
+  if(!sel) return;
+  sel.noPepper = !sel.noPepper;
+  render();
+}
+
+function setCategory(cat){
+  selectedCategory = cat;
+  currentPage = 0;
+  render();
+}
+function onSearchInput(v){
+  searchQuery = v;
+  currentPage = 0;
+  render();
+}
+function runSearch(){
+  searchQuery = document.getElementById('searchInput').value;
+  currentPage = 0;
+  render();
+}
+function toggleViewMode(){
+  viewMode = viewMode === 'large' ? 'small' : 'large';
+  currentPage = 0;
+  render();
+}
+function goPrevPage(){ if(currentPage > 0){ currentPage -= 1; render(); } }
+function goNextPage(totalPages){ if(currentPage < totalPages - 1){ currentPage += 1; render(); } }
+
+function matchesFilters(d){
+  const isSearching = searchQuery.trim().length > 0;
+  if(!isSearching && selectedCategory !== 'all' && d.category !== selectedCategory) return false;
+  if(!isSearching) return true;
+  return staffDishName(d.id, d.name).toLowerCase().includes(searchQuery.trim().toLowerCase());
+}
+
+// 右边菜品格子只放一个加号——点一下加一件，调数量/减量/删除都到左边购物车里操作，
+// 格子本身不需要再放一套加减号跟数字挤在一起
+function addButtonHTML(id, soldOut){
+  return `<button type="button" class="add-btn" onclick="incrementQty('${id}')" ${soldOut ? 'disabled' : ''} aria-label="加入购物车">+</button>`;
+}
+
+function sizeButtonsHTML(d){
+  const activeKey = currentSizeKey(d);
+  const labels = { large:'大份', small:'小份', glass:'杯', bottle:'瓶', drinkSmall:'小', drinkLarge:'大' };
+  return `<div class="size-btn-group">${d.sizes.map(s => `
+    <button type="button" class="size-opt-btn ${activeKey === s.key ? 'active' : ''}" onclick="setDishSize('${d.id}','${s.key}')">${labels[s.key] || s.key} €${s.price.toFixed(2)}</button>
+  `).join('')}</div>`;
+}
+
+function spiceRowHTML(d, sel){
+  if(!d.spicy || !sel || sel.qty <= 0) return '';
+  const levels = ['微辣','中辣','特辣'];
+  return `
+    <div class="spice-row">
+      ${levels.map(lvl => `<button type="button" class="spice-pill ${sel.spice === lvl ? 'active' : ''}" onclick="setSpice('${d.id}','${lvl}')">${lvl}</button>`).join('')}
+      ${d.category === 'soupBase' ? `<button type="button" class="spice-pill pepper-pill ${sel.noPepper ? 'active' : ''}" onclick="toggleNoPepper('${d.id}')">不要花椒</button>` : ''}
+    </div>`;
+}
+
+function dishCardHTML(d){
+  const sel = selected.get(d.id);
+  const qty = sel ? sel.qty : 0;
+  const soldOut = soldOutIds.has(d.id);
+  return `
+    <div class="dish-card ${qty > 0 ? 'checked' : ''} ${soldOut ? 'sold-out' : ''}">
+      <div class="dish-card-img-wrap">
+        <img class="dish-card-img" src="${d.img}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+        ${qty > 0 ? `<span class="qty-badge">×${qty}</span>` : ''}
+        ${soldOut ? `<span class="sold-out-badge">已沽清</span>` : ''}
+      </div>
+      <div class="dish-card-body">
+        <div class="dish-card-name">${staffDishName(d.id, d.name)}</div>
+        ${d.sizes ? sizeButtonsHTML(d) : `<div class="dish-card-price">${priceLabelHTML(d)}</div>`}
+        <div class="dish-card-qty-row">${addButtonHTML(d.id, soldOut)}</div>
+        ${spiceRowHTML(d, sel)}
+      </div>
+    </div>`;
+}
+
+function renderCategoryTabs(){
+  const tabs = CATEGORY_ORDER.map(c => ({ id: c, label: CATEGORY_LABELS[c] }));
+  const allLabel = getStaffLang() === 'en' ? 'All' : '全部';
+  return `<div class="category-tabs">
+    <button type="button" class="category-tab ${selectedCategory === 'all' ? 'active' : ''}" onclick="setCategory('all')">${allLabel}</button>
+    ${tabs.map(c => `
+    <button type="button" class="category-tab ${selectedCategory === c.id ? 'active' : ''}" onclick="setCategory('${c.id}')">${staffCategoryLabel(c.id, c.label)}</button>`).join('')}</div>`;
+}
+
+function renderProductPanel(){
+  const filtered = DISH_LIST.filter(matchesFilters);
+  const size = pageSize();
+  const totalPages = Math.max(1, Math.ceil(filtered.length / size));
+  if(currentPage > totalPages - 1) currentPage = totalPages - 1;
+  const pageItems = filtered.slice(currentPage * size, currentPage * size + size);
+
+  return `
+    <div class="product-panel">
+      <div class="product-toolbar">
+        <div class="search-bar">
+          <input type="text" id="searchInput" placeholder="搜索菜品或酒水名称…" value="${escapeHtml(searchQuery)}"
+                 oninput="onSearchInput(this.value)" onkeydown="if(event.key==='Enter') runSearch()" autocomplete="off">
+        </div>
+        <button type="button" class="control-btn find-btn" onclick="runSearch()">查找商品</button>
+        <button type="button" class="control-btn view-toggle-btn" onclick="toggleViewMode()">${viewMode === 'large' ? '切换小图' : '切换大图'}</button>
+      </div>
+      ${renderCategoryTabs()}
+      <div class="product-grid-wrap">
+        ${pageItems.length === 0
+          ? `<p class="no-results">没有找到匹配的菜品</p>`
+          : `<div class="product-grid ${viewMode}">${pageItems.map(dishCardHTML).join('')}</div>`}
+      </div>
+      <div class="pagination">
+        <button type="button" class="page-btn" onclick="goPrevPage()" ${currentPage === 0 ? 'disabled' : ''}>← 上一页</button>
+        <span class="page-indicator">${currentPage + 1} / ${totalPages}</span>
+        <button type="button" class="page-btn" onclick="goNextPage(${totalPages})" ${currentPage >= totalPages - 1 ? 'disabled' : ''}>下一页 →</button>
+      </div>
+    </div>`;
+}
+
+function cartRowHTML(id){
+  const d = DISH_BY_ID[id];
+  const sel = selected.get(id);
+  if(!d || !sel) return '';
+  const price = dishPrice(d, sel);
+  const sizeLabels = { large:'大份', small:'小份', glass:'杯', bottle:'瓶', drinkSmall:'小', drinkLarge:'大' };
+  const sizeTag = d.sizes ? `（${sizeLabels[sel.size] || sel.size}）` : '';
+  const spiceTag = sel.spice ? `·${sel.spice}${sel.noPepper ? '不要花椒' : ''}` : '';
+  return `
+    <div class="cart-row">
+      <img class="cart-row-img" src="${d.img}" alt="" onerror="this.style.visibility='hidden'">
+      <div class="cart-row-mid">
+        <span class="cart-row-label">${staffDishName(d.id, d.name)}${sizeTag}${spiceTag} · €${(price * sel.qty).toFixed(2)}</span>
+        <div class="cart-row-qty">
+          <button type="button" class="cart-qty-btn" onclick="decrementQty('${id}')">−</button>
+          <span class="cart-row-qty-num">${sel.qty}</span>
+          <button type="button" class="cart-qty-btn" onclick="incrementQty('${id}')">+</button>
+        </div>
+      </div>
+      <button type="button" class="cart-row-del" onclick="removeItem('${id}')" aria-label="删除">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 6h12"/>
+          <path d="M8 6V4.5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1V6"/>
+          <path d="M5.5 6l.6 9.5a1.2 1.2 0 0 0 1.2 1.1h5.4a1.2 1.2 0 0 0 1.2-1.1L14.5 6"/>
+          <line x1="8.3" y1="8.7" x2="8.6" y2="13.8"/>
+          <line x1="11.7" y1="8.7" x2="11.4" y2="13.8"/>
+        </svg>
+      </button>
+    </div>`;
+}
+
+function cartTotal(){
+  let total = 0;
+  selected.forEach((sel, id) => {
+    const d = DISH_BY_ID[id];
+    if(d) total += dishPrice(d, sel) * sel.qty;
+  });
+  return total;
+}
+
+function renderCartPanel(){
+  const ids = DISH_LIST.filter(d => selected.has(d.id)).map(d => d.id);
+  return `
+    <div class="cart-panel">
+      <div class="cart-list">
+        ${ids.length === 0 ? `<p class="cart-empty">还没选菜<br>右边点菜品的 + 号加进来</p>` : ids.map(cartRowHTML).join('')}
+      </div>
+      <div class="cart-footer">
+        <div class="cart-total-row"><span>合计</span><b>€${cartTotal().toFixed(2)}</b></div>
+        <div class="cart-btn-row">
+          <button type="button" class="cart-cancel-btn" onclick="cancelOrder()">取消</button>
+          <button type="button" class="cart-confirm-btn" onclick="confirmOrder()" ${submitting || selected.size === 0 || !table ? 'disabled' : ''}>${submitting ? '提交中…' : '确认下单'}</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function cancelOrder(){
+  if(selected.size > 0 && !confirm('放弃这些还没提交的菜品，返回选桌号？')) return;
+  location.href = 'dkdd.html';
+}
+
+function itemsSignature(items){
+  return JSON.stringify(items.map(it => [it.name, it.qty, it.price, it.spice || '', it.size || '', (it.excludes || []).slice().sort().join(',')]).sort());
+}
+
+async function fetchTableOrders(tbl){
+  const snap = await ordersRef.where('table', '==', String(tbl)).get();
+  return snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+}
+
+async function confirmOrder(){
+  if(submitting || selected.size === 0 || !table) return;
+  const items = DISH_LIST.filter(d => selected.has(d.id)).map(d => {
+    const sel = selected.get(d.id);
+    const entry = { name: d.name, qty: sel.qty, price: dishPrice(d, sel) };
+    if(d.sizes) entry.size = sel.size || d.sizes[0].key;
+    if(d.spicy) entry.spice = sel.spice || '中辣';
+    if(sel.noPepper) entry.excludes = ['noPepper'];
+    return entry;
+  });
+  submitting = true;
+  render();
+  try{
+    const priorOrders = await fetchTableOrders(table);
+    const sig = itemsSignature(items);
+    const dup = priorOrders.find(o => (Date.now() - o.createdAt) < 3000 && itemsSignature(o.items || []) === sig);
+    if(!dup){
+      await ordersRef.add({
+        table: String(table), items, createdAt: Date.now(),
+        nickname: '员工代客', partySize: 1, status: 'pending',
+        isAddOn: priorOrders.length > 0,
+      });
+    }
+    location.href = `ddxq.html?table=${encodeURIComponent(table)}`;
+    return;
+  }catch(e){
+    alert('下单失败，请重试');
+  }
+  submitting = false;
+  render();
+}
+
+// ---------- 没带桌号：选桌号入口 ----------
+const PICKABLE_TABLES = [...Array.from({ length: 30 }, (_, i) => i + 1), 888, '测试'];
+
+// 每一桌"现在还没结账的订单"实时汇总一下——金额（items price*qty 加总）、
+// 开台时长（这些订单里最早一笔的 createdAt 到现在过了多久），跟接单看板/
+// 今日盘点用的是同一份 orders 数据、同样的算法
+let pickTableStats = {};   // 桌号(字符串) -> { revenue, firstOrderAt }
+let pickStatsUnsub = null;
+function watchPickTableStats(){
+  if(pickStatsUnsub) return;
+  pickStatsUnsub = ordersRef.onSnapshot(snap => {
+    const stats = {};
+    snap.docs.forEach(d => {
+      const o = d.data();
+      if(o.call) return;   // 呼叫服务员的单没有菜，不计入金额/开台时间
+      const key = String(o.table);
+      const revenue = (o.items || []).reduce((s, it) => s + (it.price || 0) * (it.qty || 0), 0);
+      if(!stats[key]) stats[key] = { revenue: 0, firstOrderAt: o.createdAt };
+      stats[key].revenue += revenue;
+      if(o.createdAt < stats[key].firstOrderAt) stats[key].firstOrderAt = o.createdAt;
+    });
+    pickTableStats = stats;
+    render();
+  }, err => {});
+}
+
+function formatDiningDuration(ms){
+  const mins = Math.max(0, Math.floor(ms / 60000));
+  if(mins < 60) return `${mins} 分钟`;
+  const h = Math.floor(mins / 60), m = mins % 60;
+  return m === 0 ? `${h} 小时` : `${h} 小时 ${m} 分钟`;
+}
+
+function goToTable(n){
+  location.href = `dkdd.html?table=${encodeURIComponent(n)}`;
+}
+
+function tableCellHTML(n){
+  const key = String(n);
+  const stat = pickTableStats[key];
+  const info = stat
+    ? `<span class="table-cell-info">
+         <span class="table-cell-amount">€${stat.revenue.toFixed(2)}</span>
+         <span class="table-cell-time">${formatDiningDuration(Date.now() - stat.firstOrderAt)}</span>
+       </span>`
+    : `<span class="table-cell-idle-dot"></span>`;
+  return `
+    <button class="table-cell ${stat ? 'occupied' : 'idle'}" onclick="goToTable('${n}')">
+      <span class="table-cell-num">${escapeHtml(displayTableName(key))}</span>
+      ${info}
+    </button>`;
+}
+
+function pickScreenHTML(){
+  return `
+    <div class="pick-wrap">
+      <div class="pick-header">
+        <p class="pick-eyebrow">选择桌号</p>
+        <h2 class="pick-title">请选择桌号</h2>
+        <p class="pick-hint">顾客请直接扫桌上二维码；员工帮客人点单，请选择对应桌号</p>
+      </div>
+      <div class="table-grid">${PICKABLE_TABLES.map(tableCellHTML).join('')}</div>
+    </div>`;
+}
+
+function render(){
+  const root = document.getElementById('main-root');
+  if(!table){
+    root.innerHTML = pickScreenHTML();
+    return;
+  }
+  if(!loaded){ root.innerHTML = ''; return; }
+  root.innerHTML = renderCartPanel() + renderProductPanel();
+}
+
+if(!table) watchPickTableStats();
+render();
+</script>
+</body>
+</html>

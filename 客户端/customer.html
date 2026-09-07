@@ -70,38 +70,10 @@
     content:"";position:absolute;top:0;left:0;right:0;height:4px;
     background:linear-gradient(90deg,var(--cinnabar),var(--gold) 50%,var(--cinnabar));
   }
-  /* 员工代客点单常用平板横放操作——横屏时把这套本来按手机竖屏设计的单栏
-     布局适度放宽，不然中间会挤成一条窄栏、两边全是空白。只放宽宽度，
-     内部卡片/按钮排布不变，风险最小 */
-  @media (orientation:landscape){
-    body.staff-mode #app{max-width:760px;}
-    body.staff-mode .bottom-bar-inner{max-width:720px;}
-  }
   .eyebrow{
     font-size:12px;letter-spacing:.14em;color:var(--gold-ink);
     text-transform:uppercase;font-weight:700;
   }
-  /* ---------- table picker (test mode) ---------- */
-  .pick-screen{padding:64px 24px;text-align:center;}
-  .pick-screen h1{
-    font-family:var(--brush);
-    font-weight:400;
-    font-size:44px;margin:10px 0 6px;color:var(--text);
-    text-shadow:0 2px 1px rgba(184,64,42,.3), 0 6px 14px rgba(59,44,30,.22);
-  }
-  .pick-hint{color:var(--text-muted);font-size:14px;margin-bottom:32px;}
-  .back-to-control-link{
-    display:inline-block;margin-top:28px;font-size:12.5px;color:var(--text-muted);text-decoration:none;
-  }
-  .back-to-control-link:hover{color:var(--gold-ink);}
-  .table-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
-  .table-grid button{
-    aspect-ratio:1;border-radius:14px;border:1px solid var(--card-line);
-    background:var(--card);color:var(--text);font-size:22px;font-weight:700;
-    font-family:var(--serif-display);cursor:pointer;
-  }
-  .table-grid button:hover{border-color:var(--gold-ink);color:var(--gold-ink);}
-  .table-grid button:focus-visible{outline:2px solid var(--gold-ink);outline-offset:2px;}
 
   /* ---------- header ---------- */
   header.bar{
@@ -134,12 +106,6 @@
     margin-top:2px;height:1px;position:relative;
     background:linear-gradient(90deg, var(--gold-line), transparent 85%);
   }
-  .change-table{
-    background:none;border:1px solid var(--card-line);color:var(--text-muted);
-    font-size:12px;padding:6px 10px;border-radius:20px;cursor:pointer;
-  }
-  .change-table:hover{color:var(--gold-ink);border-color:var(--gold-line);}
-
   /* ---------- panda nav ----------
      On the menu screen it's docked inline in the header (.menu-panda-slot)
      so it scrolls away with the page instead of floating forever; #panda-nav
@@ -872,7 +838,7 @@
 
   /* ---------- premium motion & depth pass ---------- */
   button, .dish-card, .cat-btn, .size-pill, .option-chip, .spice-pill,
-  .allergen-chip, .upsell-tile, .lang-panel button, .table-grid button,
+  .allergen-chip, .upsell-tile, .lang-panel button,
   .review-input, .review-field-stepper{
     transition:
       transform var(--dur-fast) var(--ease-silk),
@@ -1066,9 +1032,7 @@ const MAINTENANCE_MSG = {
 const I18N = {
   zh:{
     appTitle:"WELCOME~",
-    pickEyebrow:"选择桌号", pickTitle:"请选择桌号",
-    pickHint:"顾客请直接扫桌上二维码；员工帮客人点单，请选择对应桌号",
-    tablePrefix:"桌 ", tableEyebrow:"桌号", changeTable:"切换桌号",
+    tablePrefix:"桌 ", tableEyebrow:"桌号",
     menuTitle:"菜单", myPot:"我的", cart:"购物车", orderedItems:"已点菜品",
     addToCart:"加入购物车", addToCartSub:"小纠结？先丢进购物车！",
     callWaiter:"呼叫服务员", callWaiterSub:"随叫随到~", calling:"呼叫中…", waiterCalled:"已呼叫服务员！",
@@ -1096,9 +1060,7 @@ const I18N = {
   },
   zhHant:{
     appTitle:'WELCOME~',
-    pickEyebrow:'選擇桌號', pickTitle:'請選擇桌號',
-    pickHint:'顧客請直接掃桌上二維碼；員工幫客人點單，請選擇對應桌號',
-    tablePrefix:'桌 ', tableEyebrow:'桌號', changeTable:'切換桌號',
+    tablePrefix:'桌 ', tableEyebrow:'桌號',
     menuTitle:'菜單', myPot:'我的', cart:'購物車', orderedItems:'已點菜品',
     addToCart:'加入購物車', addToCartSub:'小糾結？先丟進購物車！',
     callWaiter:'呼叫服務員', callWaiterSub:'隨叫隨到~', calling:'呼叫中…', waiterCalled:'已呼叫服務員！',
@@ -1126,9 +1088,7 @@ const I18N = {
   },
   en:{
     appTitle:"WELCOME~",
-    pickEyebrow:"Select Table", pickTitle:"Choose Your Table",
-    pickHint:"Guests: please scan the QR code on your table. Staff: select the matching table to order on a guest's behalf.",
-    tablePrefix:"Table ", tableEyebrow:"Table", changeTable:"Change Table",
+    tablePrefix:"Table ", tableEyebrow:"Table",
     menuTitle:"Menu", myPot:"Mine", cart:"Cart", orderedItems:"Items Ordered",
     addToCart:"Add to Cart", addToCartSub:"Still deciding? Add it to your cart!",
     callWaiter:"Call Waiter", callWaiterSub:"At Your Service~", calling:"Calling…", waiterCalled:"Waiter called!",
@@ -1157,9 +1117,7 @@ const I18N = {
   },
   it:{
     appTitle:"WELCOME~",
-    pickEyebrow:"Seleziona Tavolo", pickTitle:"Scegli il Tuo Tavolo",
-    pickHint:"Clienti: scansionate il codice QR sul tavolo. Staff: selezionate il tavolo corrispondente per ordinare per un cliente.",
-    tablePrefix:"Tavolo ", tableEyebrow:"Tavolo", changeTable:"Cambia Tavolo",
+    tablePrefix:"Tavolo ", tableEyebrow:"Tavolo",
     menuTitle:"Menu", myPot:"Il Mio", cart:"Carrello", orderedItems:"Piatti Ordinati",
     addToCart:"Aggiungi al Carrello", addToCartSub:"Ancora indeciso? Mettilo nel carrello!",
     callWaiter:"Chiama il Cameriere", callWaiterSub:"Sempre al Tuo Servizio~", calling:"Chiamata in corso…", waiterCalled:"Cameriere chiamato!",
@@ -1188,9 +1146,7 @@ const I18N = {
   },
   fr:{
     appTitle:"WELCOME~",
-    pickEyebrow:"Choisir une Table", pickTitle:"Choisissez Votre Table",
-    pickHint:"Clients : veuillez scanner le code QR sur votre table. Personnel : sélectionnez la table correspondante pour commander pour un client.",
-    tablePrefix:"Table ", tableEyebrow:"Table", changeTable:"Changer de Table",
+    tablePrefix:"Table ", tableEyebrow:"Table",
     menuTitle:"Menu", myPot:"Le Mien", cart:"Panier", orderedItems:"Plats Commandés",
     addToCart:"Ajouter au Panier", addToCartSub:"Pas encore décidé ? Mettez-le dans le panier !",
     callWaiter:"Appeler le Serveur", callWaiterSub:"Toujours à Votre Service ~", calling:"Appel en cours…", waiterCalled:"Serveur appelé !",
@@ -1219,9 +1175,7 @@ const I18N = {
   },
   es:{
     appTitle:"WELCOME~",
-    pickEyebrow:"Elegir Mesa", pickTitle:"Elige Tu Mesa",
-    pickHint:"Clientes: por favor escaneen el código QR de su mesa. Personal: seleccionen la mesa correspondiente para pedir en nombre de un cliente.",
-    tablePrefix:"Mesa ", tableEyebrow:"Mesa", changeTable:"Cambiar Mesa",
+    tablePrefix:"Mesa ", tableEyebrow:"Mesa",
     menuTitle:"Menú", myPot:"Mío", cart:"Carrito", orderedItems:"Platos Pedidos",
     addToCart:"Añadir al Carrito", addToCartSub:"¿Aún indeciso? ¡Añádelo al carrito!",
     callWaiter:"Llamar al Camarero", callWaiterSub:"Siempre a tu Servicio~", calling:"Llamando…", waiterCalled:"¡Camarero llamado!",
@@ -1657,15 +1611,10 @@ function isDishVisible(id){ return !ZH_ONLY_DISH_IDS.includes(id) || state.lang 
 
 const params = new URLSearchParams(location.search);
 const urlTable = params.get('table');
-// 员工代客点单（从 index.html 总控台"员工代客点单"进来，带 ?staff=1）：不用看
-// 欢迎动画、也不用选语言，直接进选桌/点菜——员工是替客人操作，不是客人自己在看
-const isStaffMode = params.get('staff') === '1';
-document.body.classList.toggle('staff-mode', isStaffMode);
 
 let state = {
   table: urlTable || null,
-  lockedByUrl: !!urlTable,
-  screen: isStaffMode ? (urlTable ? 'menu' : 'pick') : 'welcome',
+  screen: urlTable ? 'menu' : 'welcome',
   lang: 'zh',
   welcomeVisible: false,
   langMenuOpen: false,
@@ -2506,22 +2455,6 @@ function closePandaMenu(){
   renderPandaNav();
 }
 
-function selectTable(n){
-  screenHistory.push(state.screen);
-  state.table = String(n);
-  state.screen = 'menu';
-  watchTableOrders(state.table);
-  watchSharedCart(state.table);
-  render();
-}
-
-function changeTable(){
-  if(state.lockedByUrl) return;
-  screenHistory = [];
-  state.screen = 'pick';
-  render();
-}
-
 function totalCount(){
   return Object.values(state.items).reduce((s,v)=>s+v.qty,0);
 }
@@ -2681,16 +2614,13 @@ async function submitOrder(){
   clearSharedCart();
   state.pendingSubmitAttempts = state.pendingSubmitAttempts.filter(a => a !== pendingAttempt);
 
-  // summaryItems 只是下单成功页用来展示"这一桌目前一共点了什么"的汇总，拿不到
-  // 就退而求其次只汇总"这次提交前已有的 + 这次刚提交的"，不影响订单本身已经成功
-  let summaryItems = mergeItems([...priorOrders, order]);
-  try{
-    const tableOrders = await fetchTableOrders(state.table);
-    if(tableOrders.length > 0) summaryItems = mergeItems(tableOrders);
-  }catch(e){ /* 用上面的兜底汇总就好 */ }
-
+  // 订单已经落地，立刻翻到下单成功页，不再等任何额外的网络请求——summaryItems
+  // （这一桌目前一共点了什么）先用手头已有的数据拼一版，这在绝大多数情况下就是
+  // 准的（跟这次提交前查到的 priorOrders 加上这一笔，只有"提交前那一刻查完到现在
+  // 又冒出别的批次"这种极小概率的窗口期会略有出入），比让顾客对着转圈等一次可有
+  // 可无的汇总请求要好
   state.lastOrder = {
-    table: order.table, items: order.items, summaryItems, isAddOn: order.isAddOn,
+    table: order.table, items: order.items, summaryItems: mergeItems([...priorOrders, order]), isAddOn: order.isAddOn,
     nickname: order.nickname, partySize: order.partySize,
     docId, status: 'pending', removed: false,
   };
@@ -2698,6 +2628,14 @@ async function submitOrder(){
   state.screen = 'confirm';
   state.submitting = false;
   render();
+
+  // 后台把汇总补准一次（如果这期间桌子上确实又多了别的批次），失败或者用户已经
+  // 翻页离开了都不影响——这次提交本身早就成功了
+  fetchTableOrders(state.table).then(tableOrders => {
+    if(tableOrders.length === 0 || !state.lastOrder || state.lastOrder.docId !== docId) return;
+    state.lastOrder.summaryItems = mergeItems(tableOrders);
+    if(state.screen === 'confirm') render();
+  }).catch(() => {});
 }
 
 function flameIcons(n){
@@ -2710,20 +2648,6 @@ function flameIcons(n){
   return out;
 }
 
-const PICKABLE_TABLES = [...Array.from({length:30},(_,i)=>i+1), 888, '测试'];
-
-function tablePickHTML(){
-  return `
-    <div class="pick-screen">
-      <p class="eyebrow">${t('pickEyebrow')}</p>
-      <h1>${t('pickTitle')}</h1>
-      <p class="pick-hint">${t('pickHint')}</p>
-      <div class="table-grid">
-        ${PICKABLE_TABLES.map(n=>`<button onclick="selectTable('${n}')">${t('tablePrefix')}${displayTableName(String(n))}</button>`).join('')}
-      </div>
-      <a class="back-to-control-link" href="../index.html">← 控制系统</a>
-    </div>`;
-}
 
 function sizeRowHTML(d, it){
   return `<div class="size-row">
@@ -2938,7 +2862,6 @@ function menuHTML(){
           <span class="eyebrow">${t('tableEyebrow')}</span>
           <div class="table-badge-row">
             <span class="num">${escapeHtml(displayTableName(state.table))}</span>
-            ${!state.lockedByUrl ? `<button class="change-table" onclick="changeTable()">${t('changeTable')}</button>` : ''}
           </div>
         </div>
         <div class="menu-logo-row">
@@ -3379,7 +3302,6 @@ function render(){
 
   let screenHtml;
   if(state.screen === 'welcome'){ screenHtml = welcomeHTML(); }
-  else if(state.screen === 'pick'){ screenHtml = tablePickHTML(); }
   else if(state.screen === 'confirm'){ screenHtml = confirmHTML(state.lastOrder); }
   else if(state.screen === 'myOrder'){ screenHtml = myOrderHTML(); }
   else if(state.screen === 'cart'){ screenHtml = cartHTML(); }

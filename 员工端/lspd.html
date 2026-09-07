@@ -51,6 +51,7 @@ firebase.initializeApp({
   header h1{font-family:'Noto Serif SC',serif;font-weight:700;font-size:20px;}
   .stat-line{font-size:12px;color:var(--ink-soft);margin-bottom:24px;}
   .stat-line b{color:var(--ink);font-weight:700;}
+  .stat-note{color:var(--brand);font-weight:600;}
 
   .period-tabs{display:flex;gap:2px;margin-bottom:20px;border-bottom:1px solid var(--hairline);}
   .period-tab{
@@ -529,7 +530,7 @@ function render(){
   }
   const dayCount = new Set(records.map(r => r.date)).size;
   document.getElementById('stat-line').innerHTML =
-    `历史累计营业额 <b>${formatPrice(totalRevenue())}</b> · 共 <b>${dayCount}</b> 天营业数据 · <b>${records.length}</b> 笔结账`;
+    `历史累计营业额 <b>${formatPrice(totalRevenue())}</b> · 共 <b>${dayCount}</b> 天营业数据 · <b>${records.length}</b> 笔结账 <span class="stat-note">注：仅记录扫码点单的营业状况！</span>`;
 
   currentBuckets = groupByPeriod(periodKind);
   if(viewPeriodKey == null || !currentBuckets.some(b => b.key === viewPeriodKey)){

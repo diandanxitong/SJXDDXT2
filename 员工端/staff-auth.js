@@ -15,9 +15,10 @@
 
   var overlay = null;
 
-  // 先挂一个空遮罩挡住页面内容，此时还不知道到底有没有登录过，不能先把表单
+  // 先挂一个遮罩挡住页面内容，此时还不知道到底有没有登录过，不能先把表单
   // 画出来——真登录过的人会在 onAuthStateChanged 回调里看到一闪而过的表单，
   // 体验上像是"又要登一次"。真正的表单要等确认没登录了才由 showForm() 填进去。
+  // 遮罩里先放一个转圈的 loading，不然纯黑屏一下，员工会以为系统卡住了
   function buildBlocker(){
     var el = document.createElement('div');
     el.id = 'staff-auth-overlay';
@@ -25,6 +26,13 @@
       'display:flex;align-items:center;justify-content:center;' +
       'font-family:"PingFang SC","Microsoft YaHei",sans-serif;' +
       'opacity:1;transition:opacity .15s ease;';
+    el.innerHTML =
+      '<svg width="30" height="30" viewBox="0 0 20 20" fill="none">' +
+        '<circle cx="10" cy="10" r="8" stroke="#3D332B" stroke-width="2"/>' +
+        '<path d="M10 2a8 8 0 0 1 8 8" stroke="#E3421F" stroke-width="2" stroke-linecap="round">' +
+          '<animateTransform attributeName="transform" type="rotate" from="0 10 10" to="360 10 10" dur="0.7s" repeatCount="indefinite"/>' +
+        '</path>' +
+      '</svg>';
     return el;
   }
 

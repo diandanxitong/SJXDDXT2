@@ -2631,14 +2631,15 @@ async function submitOrder(){
   const pendingAttempt = { dishIds: itemDishIds, items, createdAt: order.createdAt, signature: itemsSignature(items) };
   state.pendingSubmitAttempts.push(pendingAttempt);
 
+  let docId = null;
+  let priorOrders = [];
   try{
-    const priorOrders = await fetchTableOrders(state.table);
-    const isAddOn = priorOrders.length > 0;
-    order.isAddOn = isAddOn;
+    priorOrders = await fetchTableOrders(state.table);
+    order.isAddOn = priorOrders.length > 0;
 
     // 两道去重保护：命中任何一道，都不再重复建单，直接借用已经存在的那一笔当作
     // 这次提交的结果——不提示、不报错，安安静静跳去下单成功页，反正前面已经下成了
-    let docId = findRecentDuplicateOrder(priorOrders, items, 3000);
+    docId = findRecentDuplicateOrder(priorOrders, items, 3000);
     docId = docId && docId.id;
     if(!docId){
       docId = await claimSharedCartAndSubmit(order);
@@ -2661,29 +2662,40 @@ async function submitOrder(){
       }), 12000);
       docId = docRef.id;
     }
-
-    const tableOrders = await fetchTableOrders(state.table);
-    const summaryItems = mergeItems(tableOrders.length > 0 ? tableOrders : [...priorOrders, order]);
-
-    state.lastOrder = {
-      table: order.table, items: order.items, summaryItems, isAddOn,
-      nickname: order.nickname, partySize: order.partySize,
-      docId, status: 'pending', removed: false,
-    };
-    // 这一轮共享购物车草稿已经变成正式订单了，立刻清空——不然同桌其他设备还会
-    // 看着这些菜"待点"，容易重复加、重复下单
-    clearSharedCart();
-    // 已经亲眼确认这次提交成功了，不用再靠后面的实时监听去反推，把这条记录摘掉
-    state.pendingSubmitAttempts = state.pendingSubmitAttempts.filter(a => a !== pendingAttempt);
-    screenHistory.push('menu');
-    state.screen = 'confirm';
   }catch(e){
     // 这里报错不代表真的没建单成功——很可能是网络太差、没等到服务器确认就超时了，
     // 服务器那边说不定已经建单成功。所以不清购物车，也不摘掉 pendingAttempt，留着
     // 让 reconcilePendingSubmits 之后自己去核对：真成功了就把这些菜从购物车划掉，
     // 避免顾客以为没提交、之后加菜重新下单时把这些菜又带上重复下单
     alert(t('orderFailed'));
+    state.submitting = false;
+    render();
+    return;
   }
+
+  // 走到这里说明订单已经确确实实进了 Firebase（或者命中了刚提交过的同一笔）——
+  // 立刻就算成功，清购物车、翻到下单成功页，不能再让"结果页要用的补充信息"这种
+  // 非关键的后续查询万一失败，倒过来把已经下成的单打成"下单失败"，逼着顾客/员工
+  // 再点一次提交、变成真的重复下单（2026-09-07 发现的问题：卡在下单页看着像
+  // 没提交成功，其实订单早就进去了）
+  clearSharedCart();
+  state.pendingSubmitAttempts = state.pendingSubmitAttempts.filter(a => a !== pendingAttempt);
+
+  // summaryItems 只是下单成功页用来展示"这一桌目前一共点了什么"的汇总，拿不到
+  // 就退而求其次只汇总"这次提交前已有的 + 这次刚提交的"，不影响订单本身已经成功
+  let summaryItems = mergeItems([...priorOrders, order]);
+  try{
+    const tableOrders = await fetchTableOrders(state.table);
+    if(tableOrders.length > 0) summaryItems = mergeItems(tableOrders);
+  }catch(e){ /* 用上面的兜底汇总就好 */ }
+
+  state.lastOrder = {
+    table: order.table, items: order.items, summaryItems, isAddOn: order.isAddOn,
+    nickname: order.nickname, partySize: order.partySize,
+    docId, status: 'pending', removed: false,
+  };
+  screenHistory.push('menu');
+  state.screen = 'confirm';
   state.submitting = false;
   render();
 }

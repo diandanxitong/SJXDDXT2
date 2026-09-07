@@ -20,136 +20,137 @@ firebase.initializeApp({
 <title>沽清菜品</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Archivo+Black&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#121012;
-    --card:#1C191A;
-    --line:#332E2C;
-    --text:#F5F1EC;
-    --text-muted:#8E8883;
-    --warn:#E8A23D;
-    --urgent:#D2502F;
-    --ok:#5FBE8A;
+    --paper:#FDFCF9;
+    --paper-tint:#F7F2EA;
+    --ink:#1C1712;
+    --ink-soft:#736A60;
+    --ink-faint:#B3A99C;
+    --brand:#AA0101;
+    --brand-tint:#F7E9E4;
+    --hairline:#E6E0D6;
+    --ok:#1F7A4D;
+    --ok-tint:#E8F2EC;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   body{
-    background:var(--bg);color:var(--text);
+    background:var(--paper);color:var(--ink);
     font-family:'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif;
-    min-height:100vh;padding:22px 26px 60px;
+    min-height:100vh;padding:26px 30px 60px;
+    -webkit-font-smoothing:antialiased;
   }
-  .top-nav{margin-bottom:16px;}
-  .control-btn{
-    display:inline-flex;align-items:center;gap:6px;text-decoration:none;
-    background:var(--card);border:1px solid var(--line);color:var(--text-muted);
-    font-size:13px;font-weight:700;padding:8px 14px;border-radius:20px;
-    font-family:inherit;cursor:pointer;
+  .top-nav{margin-bottom:20px;display:flex;gap:16px;}
+  .top-nav a, .top-nav button{
+    font-size:13px;color:var(--ink-soft);text-decoration:none;font-weight:500;
+    background:none;border:none;cursor:pointer;font-family:inherit;padding:0;
   }
-  .control-btn:hover{color:var(--text);border-color:var(--text-muted);}
+  .top-nav a:hover, .top-nav button:hover{color:var(--brand);}
 
   header{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:14px;}
-  .title-block{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
-  header h1{font-family:'Archivo Black',sans-serif;font-size:22px;letter-spacing:.02em;}
-  .status-pill{
-    background:var(--card);border:1px solid var(--line);border-radius:20px;
-    padding:6px 16px;font-size:13px;color:var(--text-muted);
-  }
-  .status-pill b{color:var(--warn);font-size:15px;}
+  .title-block{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;}
+  header h1{font-family:'Noto Serif SC',serif;font-weight:700;font-size:20px;}
+  .status-pill{font-size:12px;color:var(--ink-soft);}
+  .status-pill b{color:var(--brand);font-weight:700;}
 
   .header-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
-  .sel-count{font-size:13px;color:var(--text-muted);white-space:nowrap;}
-  .sel-count b{color:var(--text);}
-  .action-btn{
-    font-family:inherit;font-size:15px;font-weight:900;cursor:pointer;
-    padding:13px 22px;border-radius:12px;white-space:nowrap;
+  .sel-count{font-size:12px;color:var(--ink-soft);white-space:nowrap;}
+  .sel-count b{color:var(--ink);}
+  .btn{
+    font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;
+    padding:9px 16px;border-radius:6px;white-space:nowrap;
   }
-  .action-btn:disabled{opacity:.4;cursor:default;}
-  .sold-out-btn{background:rgba(210,80,47,.16);border:1.5px solid var(--urgent);color:var(--urgent);}
-  .sold-out-btn:not(:disabled):hover{background:rgba(210,80,47,.26);}
-  .restore-btn{background:rgba(95,190,138,.14);border:1.5px solid var(--ok);color:var(--ok);}
-  .restore-btn:not(:disabled):hover{background:rgba(95,190,138,.24);}
+  .btn:disabled{opacity:.4;cursor:default;}
+  .sold-out-btn{background:none;border:1px solid var(--brand);color:var(--brand);}
+  .sold-out-btn:not(:disabled):hover{background:var(--brand-tint);}
+  .restore-btn{background:none;border:1px solid var(--ok);color:var(--ok);}
+  .restore-btn:not(:disabled):hover{background:var(--ok-tint);}
 
-  .search-bar{position:relative;margin-bottom:18px;max-width:420px;}
+  .search-bar{position:relative;margin-bottom:18px;max-width:360px;}
   .search-bar input{
-    width:100%;background:var(--card);border:1px solid var(--line);border-radius:20px;
-    color:var(--text);font-family:inherit;font-size:14px;padding:10px 38px 10px 16px;
+    width:100%;background:transparent;border:none;border-bottom:1px solid var(--hairline);
+    color:var(--ink);font-family:inherit;font-size:14px;padding:9px 26px 9px 2px;
   }
-  .search-bar input::placeholder{color:var(--text-muted);}
-  .search-bar input:focus{outline:none;border-color:var(--warn);}
+  .search-bar input::placeholder{color:var(--ink-faint);}
+  .search-bar input:focus{outline:none;border-bottom-color:var(--brand);}
   .search-clear-btn{
-    position:absolute;right:6px;top:50%;transform:translateY(-50%);
-    width:26px;height:26px;border-radius:50%;border:none;background:none;
-    color:var(--text-muted);font-size:16px;cursor:pointer;display:none;
+    position:absolute;right:2px;top:50%;transform:translateY(-50%);
+    width:22px;height:22px;border-radius:50%;border:none;background:none;
+    color:var(--ink-faint);font-size:14px;cursor:pointer;display:none;
     align-items:center;justify-content:center;
   }
   .search-clear-btn.visible{display:flex;}
-  .search-clear-btn:hover{color:var(--text);}
-  .no-results{color:var(--text-muted);font-size:14px;padding:10px 2px;}
+  .search-clear-btn:hover{color:var(--ink);}
+  .no-results{color:var(--ink-soft);font-size:13px;padding:10px 2px;}
 
-  .filter-row{margin-bottom:18px;}
+  .filter-row{margin-bottom:24px;}
   .view-toggle-btn{
     display:inline-flex;align-items:center;gap:6px;
-    background:var(--card);border:1px solid var(--line);color:var(--text-muted);
-    font-size:13px;font-weight:700;padding:8px 14px;border-radius:20px;
+    background:none;border:1px solid var(--hairline);color:var(--ink-soft);
+    font-size:12.5px;font-weight:600;padding:8px 14px;border-radius:6px;
     font-family:inherit;cursor:pointer;
   }
-  .view-toggle-btn:hover{color:var(--text);border-color:var(--text-muted);}
-  .view-toggle-btn.active{background:rgba(210,80,47,.16);border-color:var(--urgent);color:var(--urgent);}
+  .view-toggle-btn:hover{color:var(--ink);border-color:var(--ink-soft);}
+  .view-toggle-btn.active{background:var(--brand-tint);border-color:var(--brand);color:var(--brand);}
 
-  .cat-section{margin-bottom:22px;}
-  .cat-section h2{font-size:14px;font-weight:900;color:var(--warn);letter-spacing:.03em;margin-bottom:10px;padding-left:2px;}
-  .dish-list{list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px;}
-  .dish-row{
-    background:var(--card);border:1px solid var(--line);border-radius:10px;
+  .cat-section{margin-bottom:28px;}
+  .cat-section h2{font-family:'Noto Serif SC',serif;font-weight:700;font-size:14px;margin-bottom:10px;}
+
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  thead th{
+    text-align:left;font-weight:600;color:var(--ink-soft);font-size:12px;
+    padding:8px 12px;border-bottom:1px solid var(--hairline);white-space:nowrap;
   }
-  .dish-row.checked{border-color:var(--warn);background:rgba(232,162,61,.1);}
-  .dish-row label{
-    display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;
-  }
-  .dish-row input[type="checkbox"]{width:18px;height:18px;flex-shrink:0;accent-color:var(--warn);cursor:pointer;}
-  .dish-row-name{font-size:14px;font-weight:700;flex:1;line-height:1.35;}
+  tbody td{padding:10px 12px;border-bottom:1px solid var(--hairline);vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:var(--paper-tint);}
+  tr.row-checked{background:var(--brand-tint);}
+  .data-table-wrap{border:1px solid var(--hairline);max-width:640px;overflow-x:auto;}
+  .dish-row-checkbox{width:16px;height:16px;accent-color:var(--brand);cursor:pointer;}
+  .dish-row-name{font-size:13.5px;font-weight:600;}
   .sold-out-badge{
-    font-size:11px;font-weight:700;color:var(--urgent);border:1px solid rgba(210,80,47,.5);
-    border-radius:20px;padding:2px 9px;white-space:nowrap;
+    font-size:11px;font-weight:700;color:var(--brand);white-space:nowrap;
   }
 
   .modal-overlay{
-    position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.65);
+    position:fixed;inset:0;z-index:100;background:rgba(28,23,18,.5);
     display:flex;align-items:center;justify-content:center;padding:20px;
   }
   .modal-box{
-    background:var(--card);border:1px solid var(--line);border-radius:16px;
-    padding:24px 22px 22px;max-width:420px;width:100%;
+    background:var(--paper);border:1px solid var(--hairline);border-radius:2px;
+    padding:26px 24px 24px;max-width:420px;width:100%;
   }
   .modal-dish-list{
     list-style:none;max-height:220px;overflow-y:auto;
-    display:flex;flex-direction:column;gap:6px;margin-bottom:16px;
+    display:flex;flex-direction:column;margin-bottom:16px;border:1px solid var(--hairline);
   }
   .modal-dish-list li{
-    font-size:14px;font-weight:700;background:rgba(255,255,255,.04);
-    border-radius:8px;padding:8px 12px;
+    font-size:13.5px;font-weight:600;padding:8px 12px;border-bottom:1px solid var(--hairline);
   }
+  .modal-dish-list li:last-child{border-bottom:none;}
   .modal-warning{
-    font-size:13px;font-weight:700;color:var(--urgent);line-height:1.5;
-    background:rgba(210,80,47,.12);border:1px solid rgba(210,80,47,.4);
-    border-radius:10px;padding:10px 12px;margin-bottom:18px;
+    font-size:12.5px;font-weight:600;color:var(--brand);line-height:1.6;
+    background:var(--brand-tint);border:1px solid rgba(170,1,1,.3);
+    padding:10px 12px;margin-bottom:18px;
   }
   .modal-actions{display:flex;gap:10px;}
   .modal-cancel-btn, .modal-confirm-btn{
-    flex:1;padding:12px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;
+    flex:1;padding:11px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;
   }
-  .modal-cancel-btn{background:none;border:1px solid var(--line);color:var(--text-muted);}
-  .modal-cancel-btn:hover{border-color:var(--text-muted);color:var(--text);}
-  .modal-confirm-btn.urgent{background:rgba(210,80,47,.18);border:1px solid var(--urgent);color:var(--urgent);}
-  .modal-confirm-btn.urgent:hover{background:rgba(210,80,47,.28);}
-  .modal-confirm-btn.ok{background:rgba(95,190,138,.18);border:1px solid var(--ok);color:var(--ok);}
-  .modal-confirm-btn.ok:hover{background:rgba(95,190,138,.28);}
+  .modal-cancel-btn{background:none;border:1px solid var(--hairline);color:var(--ink-soft);}
+  .modal-cancel-btn:hover{border-color:var(--ink-soft);color:var(--ink);}
+  .modal-confirm-btn.urgent{background:var(--brand);border:1px solid var(--brand);color:#fff;}
+  .modal-confirm-btn.urgent:hover{background:#8C0101;}
+  .modal-confirm-btn.ok{background:var(--ok);border:1px solid var(--ok);color:#fff;}
+  .modal-confirm-btn.ok:hover{background:#175E3A;}
 </style>
 </head>
 <body>
 <nav class="top-nav">
-  <a class="control-btn" href="sjxddxtygd.html" id="back-to-board-nav">← 接单看板</a>
-  <button class="control-btn" id="lang-toggle-btn" onclick="toggleStaffLang()">EN</button>
+  <a href="../index.html">← 控制系统</a>
+  <a href="sjxddxtygd.html" id="back-to-board-nav">接单看板</a>
+  <button id="lang-toggle-btn" onclick="toggleStaffLang()">EN</button>
 </nav>
 <header>
   <div class="title-block">
@@ -158,8 +159,8 @@ firebase.initializeApp({
   </div>
   <div class="header-actions">
     <span class="sel-count"><span id="sel-count-label">已选</span> <b id="selCount">0</b> <span id="sel-count-suffix">项</span></span>
-    <button class="action-btn sold-out-btn" id="soldOutBtn" onclick="openSoldOutModal()" disabled>暂停售卖</button>
-    <button class="action-btn restore-btn" id="restoreBtn" onclick="openRestoreModal()" disabled>恢复售卖</button>
+    <button class="btn sold-out-btn" id="soldOutBtn" onclick="openSoldOutModal()" disabled>暂停售卖</button>
+    <button class="btn restore-btn" id="restoreBtn" onclick="openRestoreModal()" disabled>恢复售卖</button>
   </div>
 </header>
 <div class="search-bar">
@@ -200,7 +201,7 @@ function logSoldOutEvents(ids, action){
 // 员工端英文版：语言状态跟接单看板共用同一个 localStorage 开关（staff-i18n.js）
 const UI = {
   zh: {
-    pageTitle: '沽清菜品', backToBoard: '← 接单看板',
+    pageTitle: '沽清菜品', backToBoard: '接单看板',
     soldOutCountLabel: '已沽清', soldOutCountSuffix: '项',
     selCountLabel: '已选', selCountSuffix: '项',
     pauseSaleBtn: '暂停售卖', restoreSaleBtn: '恢复售卖',
@@ -214,7 +215,7 @@ const UI = {
     langToggleLabel: 'EN',
   },
   en: {
-    pageTitle: 'Mark Sold Out', backToBoard: '← Order Board',
+    pageTitle: 'Mark Sold Out', backToBoard: 'Order Board',
     soldOutCountLabel: 'Sold Out:', soldOutCountSuffix: 'items',
     selCountLabel: 'Selected:', selCountSuffix: 'items',
     pauseSaleBtn: 'Mark Sold Out', restoreSaleBtn: 'Restore Sale',
@@ -514,13 +515,11 @@ function dishRowHTML(d){
   const checked = selected.has(d.id);
   const soldOut = soldOutIds.has(d.id);
   return `
-    <li class="dish-row ${checked ? 'checked' : ''}">
-      <label>
-        <input type="checkbox" ${checked ? 'checked' : ''} onchange="toggleSelect('${d.id}')">
-        <span class="dish-row-name">${staffDishName(d.id, d.name)}</span>
-        ${soldOut ? `<span class="sold-out-badge">${t('soldOutBadge')}</span>` : ''}
-      </label>
-    </li>`;
+    <tr class="${checked ? 'row-checked' : ''}" onclick="toggleSelect('${d.id}')" style="cursor:pointer;">
+      <td><input type="checkbox" class="dish-row-checkbox" ${checked ? 'checked' : ''} onclick="event.stopPropagation();toggleSelect('${d.id}')"></td>
+      <td class="dish-row-name">${staffDishName(d.id, d.name)}</td>
+      <td>${soldOut ? `<span class="sold-out-badge">${t('soldOutBadge')}</span>` : ''}</td>
+    </tr>`;
 }
 
 function selectedNamesHTML(){
@@ -566,7 +565,10 @@ function renderList(){
   const sections = CATEGORY_ORDER.map(cat => {
     const items = DISH_LIST.filter(d => d.category === cat && matchesFilters(d));
     if(items.length === 0) return '';
-    return `<section class="cat-section"><h2>${staffCategoryLabel(cat, CATEGORY_LABELS[cat])}</h2><ul class="dish-list">${items.map(dishRowHTML).join('')}</ul></section>`;
+    return `<section class="cat-section">
+      <h2>${staffCategoryLabel(cat, CATEGORY_LABELS[cat])}</h2>
+      <div class="data-table-wrap"><table><tbody>${items.map(dishRowHTML).join('')}</tbody></table></div>
+    </section>`;
   }).join('');
   app.innerHTML = sections || `<p class="no-results">${showSoldOutOnly ? t('noSoldOutYet') : t('noMatch')}</p>`;
 }

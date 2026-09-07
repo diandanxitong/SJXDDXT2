@@ -17,7 +17,7 @@ firebase.initializeApp({
 });
 </script>
 <script src="staff-auth.js"></script>
-<title>历史营销记录</title>
+<title>数据统计</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -108,7 +108,7 @@ firebase.initializeApp({
   <a href="jrpd.html">今日盘点</a>
 </nav>
 <header>
-  <h1>历史营销记录</h1>
+  <h1>数据统计</h1>
 </header>
 <p class="stat-line" id="stat-line"></p>
 
@@ -130,7 +130,7 @@ function escapeHtml(s){
   return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 }
 // 不按日期过滤——"今日盘点"结账时写进 dailyOrders 的每一条流水都会长期留着，
-// 这里读全部记录，按周/月/季度/年重新分组，就是"历史营销记录"
+// 这里读全部记录，按周/月/季度/年重新分组，就是"数据统计"
 const dailyOrdersRef = db.collection('dailyOrders');
 
 // 单品销量——统计口径是结账时 dailyOrders.items 里的实际成交份数。items 里只存了

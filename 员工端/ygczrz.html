@@ -564,7 +564,7 @@ function sysDiagIsTestTable(t){ return t === '测试'; }
 
 // 查看范围：默认按天（原有行为），也能按周/月/季度/年把多份 dailyReports 的
 // orders/actionLogs/calls/clicks 直接拼起来，喂给下面同一套渲染函数——不用另外
-// 写一套统计逻辑，跟"历史营销记录"页的周/月/季度/年是同一个思路
+// 写一套统计逻辑，跟"数据统计"页的周/月/季度/年是同一个思路
 let sysDiagRangeKind = 'day';
 const SYSDIAG_RANGE_LABELS = { day: '按天', week: '按周', month: '按月', quarter: '按季度', year: '按年' };
 function sysDiagPad(n){ return String(n).padStart(2, '0'); }

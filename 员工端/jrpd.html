@@ -140,7 +140,7 @@ firebase.initializeApp({
 <nav class="top-nav">
   <a href="../index.html">← 控制系统</a>
   <a href="sjxddxtygd.html">接单看板</a>
-  <a href="lspd.html">历史营销记录</a>
+  <a href="lspd.html">数据统计</a>
 </nav>
 <header>
   <h1>今日盘点</h1>
@@ -580,7 +580,7 @@ function renderModal(){
       <div class="modal-overlay" onclick="if(event.target===this) closeDeleteAuth()">
         <div class="modal-box auth-modal-box">
           <p class="confirm-question">确认删除选中的 ${selectedIds.size} 条记录？</p>
-          <p class="confirm-sub">需要管理员账号确认，删除后无法恢复，且不会再出现在"历史营销记录"里。</p>
+          <p class="confirm-sub">需要管理员账号确认，删除后无法恢复，且不会再出现在"数据统计"里。</p>
           <input type="text" id="auth-user" class="field-input" placeholder="用户名" autocomplete="off"
                  onkeydown="if(event.key==='Enter') document.getElementById('auth-pass').focus()">
           <input type="password" id="auth-pass" class="field-input" placeholder="密码" autocomplete="off"

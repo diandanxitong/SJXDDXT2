@@ -1640,7 +1640,7 @@ let state = {
   // 购物车这时候不敢清空（万一是真的失败了），就先记一笔"提交过什么、什么时候提交的"
   // 在这里，等后面本桌订单的实时监听推送过来一条对得上号的订单，就知道那次其实是成功的，
   // 把这些菜从购物车里扣掉，避免顾客等会儿加菜时把这些菜跟着又下一遍
-  pendingSubmitAttempts: [], // [{ dishIds, items, createdAt, signature }]
+  pendingSubmitAttempts: [], // [{ dishIds, items, idempotencyKey }]
 };
 
 let screenHistory = [];   // 记录来源页面，供“返回”按钮回退用
@@ -1740,15 +1740,17 @@ function clearSharedCart(){
 }
 
 // 核对"卡住/报错"的下单尝试是不是其实已经成功了：本桌订单的实时推送里只要出现一笔
-// 建单时间、菜品内容都跟某次 pendingSubmitAttempt 精确对上号的订单，就说明那次不是
-// 真的失败，是网络太差、没等到确认——把这次提交的这些菜从本地购物车划掉（按提交时的
+// id 跟某次 pendingSubmitAttempt 的幂等键精确对上号的订单，就说明那次不是真的
+// 失败，是网络太差、没等到确认——把这次提交的这些菜从本地购物车划掉（按提交时的
 // 数量扣，不是直接清零，万一顾客等待期间又把同一道菜加了更多，剩下的量还留着），
-// 这样顾客之后再加菜下单，才不会把这些已经成功的菜又带上去重复下单
+// 这样顾客之后再加菜下单，才不会把这些已经成功的菜又带上去重复下单。
+// 用幂等键（就是这笔订单的文档 id）精确匹配，比之前"createdAt+菜品签名"两个字段
+// 一起比对更直接——同一个 id 只可能是同一笔提交，不存在巧合撞上的可能
 function reconcilePendingSubmits(){
   if(!state.pendingSubmitAttempts.length || !liveTableOrders.length) return;
   let anyResolved = false;
   state.pendingSubmitAttempts = state.pendingSubmitAttempts.filter(attempt => {
-    const matched = liveTableOrders.find(o => o.createdAt === attempt.createdAt && itemsSignature(o.items) === attempt.signature);
+    const matched = liveTableOrders.find(o => o.id === attempt.idempotencyKey);
     if(!matched) return true;
     anyResolved = true;
     attempt.dishIds.forEach((dishId, idx) => {
@@ -2488,43 +2490,83 @@ async function fetchTableOrders(table){
   }catch(e){ return []; }
 }
 
-// 判断两份菜品列表是不是完全一样的内容（忽略数组顺序），用来识别"重复提交"
+// 判断两份菜品列表是不是完全一样的内容（忽略数组顺序）——只在"抢草稿失败，
+// 要去确认是不是被同桌另一台设备抢先提交了"这一种场景下才会用到；本机自己的
+// 重试不再靠这个判断，靠下面的幂等键
 function itemsSignature(items){
   return JSON.stringify((items || []).map(it =>
     [it.name, it.qty, it.price, it.spice || '', it.size || '', it.cookMethod || '', (it.excludes || []).slice().sort().join(',')]
   ).sort());
 }
 
-// 去重保护①：这一桌最近 windowMs 毫秒内，是不是已经有一笔菜品完全一样的订单——
-// 同一台设备手抖点了两下、或者请求卡住后又点了一次，都可能出现这种情况
+// 这一桌最近 windowMs 毫秒内，是不是已经有一笔菜品完全一样的订单
 function findRecentDuplicateOrder(candidateOrders, items, windowMs){
   const now = Date.now();
   const sig = itemsSignature(items);
   return candidateOrders.find(o => (now - o.createdAt) < windowMs && itemsSignature(o.items) === sig) || null;
 }
 
-// 去重保护②：真正建单前先在一个事务里抢共享购物车草稿——如果草稿里这次要提交的
-// 菜品已经不在了（说明同桌另一台设备已经抢先提交并清空过这份草稿），这次事务就
-// 什么也不写，不重复建单；只有确认草稿还在，才会在同一个事务里把"建单"和"清空
-// 草稿"一起做掉，保证不会被另一台设备的同一次操作插队
-async function claimSharedCartAndSubmit(order){
-  const cartRef = tableCartsRef.doc(order.table);
-  const newOrderRef = ordersRef.doc();
-  let created = false;
+// 幂等键：代表"这一次确认下单"这个意图本身，跟菜品内容无关。第一次点"确认下单"
+// 时生成，之后不管重试多少次、隔了多久，都复用同一个——直接拿它当订单文档的
+// id，而不是当一个字段塞进订单里再去数据库里查内容。存在 sessionStorage：
+// 页面刷新还能读到（断网重试时很常见的操作——用户等得不耐烦习惯性刷新页面），
+// 关掉标签页/换一桌自动作废，不会被"员工测试机"或者"顾客下次光顾同一桌"这种
+// 无关场景污染
+const IDEMPOTENCY_KEY_PREFIX = 'pendingOrderKey:';
+let memoryIdempotencyKeys = {};   // sessionStorage 不可用时的内存兜底，按桌号存
+function genIdempotencyKey(){
+  try{ if(window.crypto && crypto.randomUUID) return crypto.randomUUID(); }catch(e){}
+  return 'k' + Date.now().toString(36) + Math.random().toString(36).slice(2);
+}
+function getOrCreateIdempotencyKey(table){
+  const storageKey = IDEMPOTENCY_KEY_PREFIX + table;
+  try{
+    const existing = sessionStorage.getItem(storageKey);
+    if(existing) return existing;
+    const fresh = genIdempotencyKey();
+    sessionStorage.setItem(storageKey, fresh);
+    return fresh;
+  }catch(e){
+    if(!memoryIdempotencyKeys[table]) memoryIdempotencyKeys[table] = genIdempotencyKey();
+    return memoryIdempotencyKeys[table];
+  }
+}
+function clearIdempotencyKey(table){
+  try{ sessionStorage.removeItem(IDEMPOTENCY_KEY_PREFIX + table); }catch(e){}
+  delete memoryIdempotencyKeys[table];
+}
+
+// 真正建单：一个事务里同时原子判定两件事——
+// ①这个幂等键之前是不是已经落地过一笔订单了（本机自己的重试，不管隔了多久）
+// ②草稿里这次要提交的菜是不是还在（不在就是同桌另一台设备已经抢先提交并清空过）
+// 两件事都在数据库层面判定，不再靠猜时间窗口或者比内容——Firestore 事务是乐观
+// 并发控制，谁先提交谁赢，输的那一方会自动重跑这个事务、重新读到最新状态
+async function attemptSubmitOrder(order, idempotencyKey){
+  const orderRef = ordersRef.doc(idempotencyKey);
+  const draftRef = tableCartsRef.doc(order.table);
+  let outcome = null;
   await db.runTransaction(async tx => {
-    const cartSnap = await tx.get(cartRef);
-    const cartItems = (cartSnap.exists && cartSnap.data().items) || {};
-    const draftStillHasItems = Object.keys(cartItems).some(id => cartItems[id] && cartItems[id].qty > 0);
-    if(!draftStillHasItems) return;
-    tx.set(newOrderRef, {
+    const orderSnap = await tx.get(orderRef);
+    if(orderSnap.exists){
+      outcome = { status: 'alreadyExists', docId: idempotencyKey };
+      return;
+    }
+    const draftSnap = await tx.get(draftRef);
+    const draftItems = (draftSnap.exists && draftSnap.data().items) || {};
+    const draftStillHasItems = Object.keys(draftItems).some(id => draftItems[id] && draftItems[id].qty > 0);
+    if(!draftStillHasItems){
+      outcome = { status: 'claimedByOther' };
+      return;
+    }
+    tx.set(orderRef, {
       table: order.table, items: order.items, createdAt: order.createdAt,
       nickname: order.nickname, partySize: order.partySize, status: 'pending',
       isAddOn: order.isAddOn,
     });
-    tx.set(cartRef, { items: {}, updatedAt: Date.now() });
-    created = true;
+    tx.set(draftRef, { items: {}, updatedAt: Date.now() });
+    outcome = { status: 'created', docId: idempotencyKey };
   });
-  return created ? newOrderRef.id : null;
+  return outcome;
 }
 
 // 同一桌可能有多笔未处理订单（加菜），按“菜名+辣度+份量”合并数量，方便顾客看到本桌目前的点单全貌
@@ -2564,19 +2606,13 @@ async function submitOrder(){
     table: state.table, items, createdAt: Date.now(),
     nickname: state.orderNickname || '', partySize: state.orderPartySize || 1,
   };
-  const signature = itemsSignature(items);
+  const idempotencyKey = getOrCreateIdempotencyKey(state.table);
 
-  // 本机是不是已经有一次"内容完全一样、还没确认成没成功"的提交挂着——如果有，
-  // 说明这次点"确认下单"其实是在重试上一次可能只是超时、其实已经成功的那次尝试。
-  // 网络差的时候，真实重试间隔可能远超下面 3 秒/15 秒那两道限时检查的窗口，所以
-  // 认出"这是同一次尝试的重试"之后，要去查一次服务器上有没有这笔单子，不设时间
-  // 上限——只要签名对得上，就认定是它，不再重新建一笔
-  const staleAttempt = state.pendingSubmitAttempts.find(a => a.signature === signature);
-
-  // 提交请求可能卡住/超时，但服务器那边实际上已经建单成功——先记一笔"提交过什么"，
-  // 万一等下报错/卡住，本桌订单实时监听那边收到这笔单子推送时能对上号，自动把这些菜
-  // 从购物车扣掉（见 reconcilePendingSubmits），不会等到成功回执才清购物车
-  const pendingAttempt = { dishIds: itemDishIds, items, createdAt: order.createdAt, signature };
+  // 提交请求可能卡住/超时，但服务器那边实际上已经建单成功——先记一笔"提交过什么、
+  // 用的哪个幂等键"，万一等下报错/卡住，本桌订单实时监听那边收到这笔单子推送时
+  // 按 id 精确对上号，自动把这些菜从购物车扣掉（见 reconcilePendingSubmits），
+  // 不会等到成功回执才清购物车
+  const pendingAttempt = { dishIds: itemDishIds, items, idempotencyKey };
   state.pendingSubmitAttempts.push(pendingAttempt);
 
   let docId = null;
@@ -2585,43 +2621,37 @@ async function submitOrder(){
     priorOrders = await fetchTableOrders(state.table);
     order.isAddOn = priorOrders.length > 0;
 
-    if(staleAttempt){
-      docId = findRecentDuplicateOrder(priorOrders, items, Infinity);
-      docId = docId && docId.id;
-    }
+    const result = await attemptSubmitOrder(order, idempotencyKey);
 
-    // 三道去重保护：命中任何一道，都不再重复建单，直接借用已经存在的那一笔当作
-    // 这次提交的结果——不提示、不报错，安安静静跳去下单成功页，反正前面已经下成了
-    if(!docId){
-      docId = findRecentDuplicateOrder(priorOrders, items, 3000);
-      docId = docId && docId.id;
-    }
-    if(!docId){
-      docId = await claimSharedCartAndSubmit(order);
-      if(!docId){
-        const freshOrders = await fetchTableOrders(state.table);
-        const borrowed = findRecentDuplicateOrder(freshOrders, items, 15000);
-        docId = borrowed && borrowed.id;
+    if(result.status === 'created' || result.status === 'alreadyExists'){
+      docId = result.docId;
+    }else{
+      // claimedByOther：草稿已经空了，说明同桌另一台设备刚刚抢先提交过——幂等键
+      // 在这里帮不上忙（两台设备各自的键本来就是不相关的随机值），只能退回内容
+      // 比对，去查一下最近有没有一笔一样的订单，找到就直接借用；给一个宽松但有
+      // 上限的窗口（60 秒），既接得住真实的同桌协作场景，也不会跟顾客一小时后
+      // 真的想再点一份一样的菜搞混
+      const freshOrders = await fetchTableOrders(state.table);
+      const borrowed = findRecentDuplicateOrder(freshOrders, items, 60000);
+      if(borrowed){
+        docId = borrowed.id;
+      }else{
+        // 极小概率兜底：查不到那笔（比如它还没同步过来），直接用本机这个幂等键
+        // 把订单落地，避免两边都以为对方会交、结果谁都没交
+        const docRef = await withTimeout(ordersRef.doc(idempotencyKey).set({
+          table: order.table, items: order.items, createdAt: order.createdAt,
+          nickname: order.nickname, partySize: order.partySize,
+          status: 'pending', isAddOn: order.isAddOn,
+        }), 12000);
+        docId = idempotencyKey;
       }
-    }
-
-    if(!docId){
-      const docRef = await withTimeout(ordersRef.add({
-        table: order.table,
-        items: order.items,
-        createdAt: order.createdAt,
-        nickname: order.nickname,
-        partySize: order.partySize,
-        status: 'pending',
-        isAddOn: order.isAddOn,
-      }), 12000);
-      docId = docRef.id;
     }
   }catch(e){
     // 这里报错不代表真的没建单成功——很可能是网络太差、没等到服务器确认就超时了，
-    // 服务器那边说不定已经建单成功。所以不清购物车，也不摘掉 pendingAttempt，留着
-    // 让 reconcilePendingSubmits 之后自己去核对：真成功了就把这些菜从购物车划掉，
-    // 避免顾客以为没提交、之后加菜重新下单时把这些菜又带上重复下单
+    // 服务器那边说不定已经建单成功。所以不清购物车、不清幂等键，也不摘掉
+    // pendingAttempt，留着让 reconcilePendingSubmits 之后自己去核对：真成功了就把
+    // 这些菜从购物车划掉；下次重试也会从 sessionStorage 里读到同一个幂等键，
+    // 不会因为这次"看起来失败了"就换一个新键、绕开数据库的原子判定
     alert(t('orderFailed'));
     state.submitting = false;
     render();
@@ -2634,6 +2664,7 @@ async function submitOrder(){
   // 再点一次提交、变成真的重复下单（2026-09-07 发现的问题：卡在下单页看着像
   // 没提交成功，其实订单早就进去了）
   clearSharedCart();
+  clearIdempotencyKey(state.table);
   state.pendingSubmitAttempts = state.pendingSubmitAttempts.filter(a => a !== pendingAttempt);
 
   // 订单已经落地，立刻翻到下单成功页，不再等任何额外的网络请求——summaryItems

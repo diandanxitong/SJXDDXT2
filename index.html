@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-auth-compat.js"></script>
 <script>
@@ -15,42 +16,213 @@ firebase.initializeApp({
   appId: '1:56738241418:web:1ea87e2445e9d09e3d8673',
 });
 </script>
-<script src="员工端/staff-auth.js"></script>
-<title>扫码点单系统 - 入口</title>
+<title>蜀九香都柏林营销管理系统</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#1B1613;--card:#2A2119;--card-line:#3D332B;
-    --ember:#E3421F;--text:#F3ECE1;--text-muted:#AFA396;
+    --paper:#FDFCF9;
+    --paper-tint:#F7F2EA;
+    --ink:#1C1712;
+    --ink-soft:#736A60;
+    --ink-faint:#B3A99C;
+    --brand:#AA0101;
+    --brand-soft:#C23434;
+    --hairline:#E6E0D6;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
   body{
-    background:var(--bg);color:var(--text);min-height:100vh;
-    display:flex;align-items:center;justify-content:center;
-    font-family:'PingFang SC','Microsoft YaHei',sans-serif;
+    background:var(--paper);color:var(--ink);
+    font-family:'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif;
+    -webkit-font-smoothing:antialiased;
   }
-  .wrap{width:100%;max-width:420px;padding:24px;}
-  h1{font-size:22px;margin-bottom:24px;text-align:center;}
-  a.entry{
-    display:block;background:var(--card);border:1px solid var(--card-line);
-    border-radius:14px;padding:20px;margin-bottom:14px;color:var(--text);
-    text-decoration:none;
+  [hidden]{display:none!important;}
+  a{color:inherit;}
+
+  /* 跟 员工端/staff-auth.js 一样的思路：先挡一块空白，等 Firebase 确认登录
+     状态再决定显示哪个画面，避免已登录的人看到登录表单闪一下 */
+  #auth-blocker{position:fixed;inset:0;background:var(--paper);}
+
+  /* ---------- 登录 ---------- */
+  .login-screen{
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:48px 24px;
   }
-  a.entry:hover{border-color:var(--ember);}
-  a.entry .title{font-size:17px;font-weight:700;}
-  a.entry .desc{font-size:13px;color:var(--text-muted);margin-top:6px;}
+  .login-col{width:100%;max-width:340px;display:flex;flex-direction:column;align-items:center;}
+  .brand-mark{width:126px;height:auto;margin-bottom:26px;}
+  .brand-name{
+    font-family:'Noto Serif SC',serif;font-weight:700;font-size:23px;
+    color:var(--ink);letter-spacing:.04em;text-align:center;
+  }
+  .brand-system{
+    font-size:12.5px;color:var(--ink-soft);letter-spacing:.28em;
+    margin-top:10px;text-align:center;
+  }
+  .brand-rule{width:36px;height:2px;background:var(--brand);margin:26px 0 34px;}
+
+  .login-form{width:100%;}
+  .field{margin-bottom:22px;}
+  .field-label{display:block;font-size:12.5px;color:var(--ink-soft);margin-bottom:9px;font-weight:500;}
+  .field-input{
+    display:block;width:100%;border:none;border-bottom:1px solid var(--hairline);
+    background:transparent;font-family:inherit;font-size:15px;color:var(--ink);
+    padding:9px 2px;transition:border-color .15s ease;
+  }
+  .field-input:focus{outline:none;border-bottom-color:var(--brand);}
+  .field-error{font-size:12.5px;color:var(--brand);min-height:18px;margin:-8px 0 12px;}
+  .login-btn{
+    width:100%;margin-top:6px;padding:14px;border:none;border-radius:2px;
+    background:var(--ink);color:var(--paper);font-family:inherit;font-size:14.5px;font-weight:600;
+    letter-spacing:.06em;cursor:pointer;transition:background .15s ease;
+  }
+  .login-btn:hover{background:var(--brand);}
+  .login-btn:disabled{opacity:.5;cursor:default;}
+  .login-btn:focus-visible{outline:2px solid var(--brand);outline-offset:2px;}
+  .login-footnote{margin-top:56px;font-size:11px;color:var(--ink-faint);letter-spacing:.1em;}
+
+  /* ---------- 总控台 ---------- */
+  .console-screen{min-height:100vh;padding:26px 28px 60px;}
+  .console-header{
+    display:flex;align-items:center;gap:14px;padding-bottom:22px;margin-bottom:40px;
+    border-bottom:1px solid var(--hairline);max-width:640px;margin-left:auto;margin-right:auto;
+  }
+  .console-logo{width:42px;height:auto;flex-shrink:0;}
+  .console-heading{display:flex;flex-direction:column;line-height:1.35;}
+  .console-brand{font-family:'Noto Serif SC',serif;font-weight:700;font-size:15.5px;color:var(--ink);}
+  .console-sub{font-size:10.5px;color:var(--ink-soft);letter-spacing:.16em;margin-top:3px;}
+  .logout-link{
+    margin-left:auto;background:none;border:none;font-family:inherit;font-size:12.5px;
+    color:var(--ink-soft);cursor:pointer;padding:6px 4px;
+  }
+  .logout-link:hover{color:var(--brand);}
+  .logout-link:focus-visible{outline:2px solid var(--brand);outline-offset:2px;}
+
+  .console-main{max-width:820px;margin:0 auto;}
+  .tile-list{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+  .tile{
+    display:flex;flex-direction:column;gap:10px;
+    padding:26px 24px;text-decoration:none;border:1px solid var(--hairline);
+    transition:background .15s ease,border-color .15s ease;
+  }
+  .tile:hover{background:var(--paper-tint);border-color:var(--ink-soft);}
+  .tile:focus-visible{outline:2px solid var(--brand);outline-offset:-2px;}
+  .tile-title{
+    font-family:'Noto Serif SC',serif;font-weight:700;font-size:16.5px;color:var(--ink);
+    display:flex;align-items:center;justify-content:space-between;gap:8px;
+  }
+  .tile-desc{font-size:13px;color:var(--ink-soft);line-height:1.55;}
+  .tile-arrow{
+    font-size:18px;color:var(--ink-faint);flex-shrink:0;
+    opacity:0;transform:translateX(-4px);transition:opacity .15s ease,transform .15s ease,color .15s ease;
+  }
+  .tile:hover .tile-arrow{opacity:1;transform:translateX(0);color:var(--brand);}
+
+  @media (max-width:720px){
+    .tile-list{grid-template-columns:1fr;}
+  }
+  @media (max-width:480px){
+    .console-header{padding-bottom:18px;margin-bottom:28px;}
+    .tile{padding:22px 20px;}
+  }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <h1>点单系统 · 总控台</h1>
-  <a class="entry" href="客户端/customer.html">
-    <div class="title">员工代客点单</div>
-    <div class="desc">客人不方便扫码时，在此选桌号代为点菜下单</div>
-  </a>
-  <a class="entry" href="员工端/sjxddxtygd.html">
-    <div class="title">员工接单看板</div>
-    <div class="desc">实时查看各桌订单，处理后移出看板</div>
-  </a>
+
+<div id="auth-blocker"></div>
+
+<div class="login-screen" id="login-screen" hidden>
+  <div class="login-col">
+    <img class="brand-mark" src="image/LOGO/logo.webp" alt="蜀九香">
+    <div class="brand-name">蜀九香都柏林</div>
+    <div class="brand-system">营销管理系统</div>
+    <div class="brand-rule"></div>
+    <div class="login-form">
+      <div class="field">
+        <label class="field-label" for="li-user">用户名</label>
+        <input class="field-input" id="li-user" type="text" autocomplete="off"
+               onkeydown="if(event.key==='Enter') document.getElementById('li-pass').focus()">
+      </div>
+      <div class="field">
+        <label class="field-label" for="li-pass">密码</label>
+        <input class="field-input" id="li-pass" type="password" autocomplete="off"
+               onkeydown="if(event.key==='Enter') submitLogin()">
+      </div>
+      <p class="field-error" id="li-error"></p>
+      <button class="login-btn" id="li-submit" onclick="submitLogin()">登录</button>
+    </div>
+  </div>
+  <p class="login-footnote">蜀九香 · 都柏林</p>
 </div>
+
+<div class="console-screen" id="console-screen" hidden>
+  <header class="console-header">
+    <img class="console-logo" src="image/LOGO/logo.webp" alt="蜀九香">
+    <div class="console-heading">
+      <span class="console-brand">蜀九香都柏林</span>
+      <span class="console-sub">营销管理系统</span>
+    </div>
+    <button class="logout-link" onclick="firebase.auth().signOut()">退出登录</button>
+  </header>
+  <main class="console-main">
+    <div class="tile-list">
+      <a class="tile" href="客户端/customer.html">
+        <div class="tile-title">员工代客点单 <span class="tile-arrow">›</span></div>
+        <div class="tile-desc">客人不方便扫码时，在此选桌号代为点菜下单</div>
+      </a>
+      <a class="tile" href="员工端/sjxddxtygd.html">
+        <div class="tile-title">员工接单看板 <span class="tile-arrow">›</span></div>
+        <div class="tile-desc">实时查看各桌订单，处理后移出看板</div>
+      </a>
+      <a class="tile" href="员工端/lspd.html">
+        <div class="tile-title">历史营销记录 <span class="tile-arrow">›</span></div>
+        <div class="tile-desc">按周、月、季度、年查看营业额和单品销量</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<script>
+var EMAIL_SUFFIX = '@sjxddxt.local';
+function toEmail(u){
+  u = u.toLowerCase();
+  return u.indexOf('@') === -1 ? u + EMAIL_SUFFIX : u;
+}
+
+function showLogin(){
+  document.getElementById('auth-blocker').hidden = true;
+  document.getElementById('console-screen').hidden = true;
+  document.getElementById('login-screen').hidden = false;
+  document.getElementById('li-user').focus();
+}
+function showConsole(){
+  document.getElementById('auth-blocker').hidden = true;
+  document.getElementById('login-screen').hidden = true;
+  document.getElementById('console-screen').hidden = false;
+}
+
+function submitLogin(){
+  var u = document.getElementById('li-user').value.trim();
+  var p = document.getElementById('li-pass').value;
+  var errEl = document.getElementById('li-error');
+  var btn = document.getElementById('li-submit');
+  if(!u || !p){ errEl.textContent = '请输入用户名和密码'; return; }
+  btn.disabled = true;
+  btn.textContent = '登录中…';
+  firebase.auth().signInWithEmailAndPassword(toEmail(u), p).catch(function(err){
+    errEl.textContent = err.code === 'auth/too-many-requests'
+      ? '尝试次数过多，请稍后再试'
+      : '用户名或密码错误';
+    document.getElementById('li-pass').value = '';
+    btn.disabled = false;
+    btn.textContent = '登录';
+  });
+}
+
+firebase.auth().onAuthStateChanged(function(user){
+  if(user) showConsole(); else showLogin();
+});
+</script>
 </body>
 </html>

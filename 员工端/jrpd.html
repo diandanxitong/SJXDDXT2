@@ -20,167 +20,133 @@ firebase.initializeApp({
 <title>今日盘点</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Archivo+Black&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#121012;
-    --card:#1C191A;
-    --line:#332E2C;
-    --text:#F5F1EC;
-    --text-muted:#8E8883;
-    --warn:#E8A23D;
-    --urgent:#D2502F;
-    --ok:#5FBE8A;
+    --paper:#FDFCF9;
+    --paper-tint:#F7F2EA;
+    --ink:#1C1712;
+    --ink-soft:#736A60;
+    --ink-faint:#B3A99C;
+    --brand:#AA0101;
+    --brand-tint:#F7E9E4;
+    --hairline:#E6E0D6;
+    --ok:#1F7A4D;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   body{
-    background:var(--bg);color:var(--text);
+    background:var(--paper);color:var(--ink);
     font-family:'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif;
-    min-height:100vh;padding:22px 26px 60px;
+    min-height:100vh;padding:26px 30px 60px;
+    -webkit-font-smoothing:antialiased;
   }
-  .top-nav{margin-bottom:16px;display:flex;gap:10px;flex-wrap:wrap;}
-  .control-btn{
-    display:inline-flex;align-items:center;gap:6px;text-decoration:none;
-    background:var(--card);border:1px solid var(--line);color:var(--text-muted);
-    font-size:13px;font-weight:700;padding:8px 14px;border-radius:20px;
-    font-family:inherit;cursor:pointer;
-  }
-  .control-btn:hover{color:var(--text);border-color:var(--text-muted);}
+  .num{font-variant-numeric:tabular-nums;}
 
-  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:14px;}
-  header h1{font-family:'Archivo Black',sans-serif;font-size:22px;letter-spacing:.02em;}
+  .top-nav{margin-bottom:20px;display:flex;gap:16px;}
+  .top-nav a{font-size:13px;color:var(--ink-soft);text-decoration:none;font-weight:500;}
+  .top-nav a:hover{color:var(--brand);}
+
+  header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:14px;}
+  header h1{font-family:'Noto Serif SC',serif;font-weight:700;font-size:20px;}
+  .stat-line{font-size:12px;color:var(--ink-soft);margin-bottom:28px;}
+  .stat-line b{color:var(--ink);font-weight:700;}
+
   .header-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
-  .report-btn{
-    font-family:inherit;font-size:15px;font-weight:900;cursor:pointer;
-    padding:13px 22px;border-radius:12px;white-space:nowrap;
-    background:rgba(95,190,138,.16);border:1.5px solid var(--ok);color:var(--ok);
+  .btn{
+    font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;
+    padding:9px 16px;border-radius:2px;white-space:nowrap;
   }
-  .report-btn:hover{background:rgba(95,190,138,.26);}
-  .clear-btn{
-    font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;
-    padding:12px 18px;border-radius:12px;white-space:nowrap;
-    background:none;border:1px solid rgba(210,80,47,.5);color:var(--urgent);
-  }
-  .clear-btn:hover{background:rgba(210,80,47,.12);}
-  .clear-btn:disabled{opacity:.4;cursor:default;background:none;}
-  .select-count{font-size:13px;color:var(--text-muted);white-space:nowrap;}
-  .cancel-select-btn{
-    font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;
-    padding:12px 18px;border-radius:12px;white-space:nowrap;
-    background:none;border:1px solid var(--line);color:var(--text-muted);
-  }
-  .cancel-select-btn:hover{color:var(--text);border-color:var(--text-muted);}
-  .confirm-clear-btn{
-    font-family:inherit;font-size:13.5px;font-weight:900;cursor:pointer;
-    padding:12px 18px;border-radius:12px;white-space:nowrap;
-    background:rgba(210,80,47,.16);border:1.5px solid var(--urgent);color:var(--urgent);
-  }
-  .confirm-clear-btn:hover{background:rgba(210,80,47,.26);}
-  .confirm-clear-btn:disabled{opacity:.4;cursor:default;background:rgba(210,80,47,.16);}
+  .btn-outline{background:none;border:1px solid var(--hairline);color:var(--ink-soft);}
+  .btn-outline:hover{border-color:var(--ink-soft);color:var(--ink);}
+  .btn-primary{background:var(--ink);border:1px solid var(--ink);color:var(--paper);}
+  .btn-primary:hover{background:var(--brand);border-color:var(--brand);}
+  .btn-danger-outline{background:none;border:1px solid var(--brand);color:var(--brand);}
+  .btn-danger-outline:hover{background:var(--brand-tint);}
+  .btn-danger{background:var(--brand);border:1px solid var(--brand);color:#fff;}
+  .btn-danger:hover{background:#8C0101;}
+  .btn:disabled{opacity:.4;cursor:default;background:none;}
+  .select-count{font-size:12px;color:var(--ink-soft);white-space:nowrap;}
 
-  .revenue-banner{
-    background:linear-gradient(160deg,var(--card) 0%,var(--bg) 100%);
-    border:1px solid var(--line);border-radius:16px;
-    padding:20px 24px;margin-bottom:24px;
-    display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px;
-  }
-  .revenue-label{font-size:14px;font-weight:700;color:var(--text-muted);}
-  .revenue-amount{font-family:'Archivo Black',sans-serif;font-size:34px;color:var(--ok);letter-spacing:.01em;}
-  .revenue-sub{font-size:12.5px;color:var(--text-muted);width:100%;}
-
-  .table-group{padding-bottom:18px;margin-bottom:18px;border-bottom:1px dashed var(--line);}
-  .table-group:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+  .table-group{margin-bottom:32px;}
   .table-group-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
-  .table-group-num{font-family:'Archivo Black',sans-serif;font-size:17px;letter-spacing:.01em;}
-  .table-group-meta{font-size:12.5px;color:var(--text-muted);}
-  .table-group-meta b{color:var(--ok);font-size:14px;}
-  .record-list{list-style:none;display:flex;flex-direction:column;gap:8px;}
-  .record-row{
-    background:var(--card);border:1px solid var(--line);border-radius:10px;
-    padding:12px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  .table-group-num{font-family:'Noto Serif SC',serif;font-weight:700;font-size:15px;}
+  .table-group-meta{font-size:12px;color:var(--ink-soft);}
+  .table-group-meta b{color:var(--ink);font-weight:700;}
+
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  thead th{
+    text-align:left;font-weight:600;color:var(--ink-soft);font-size:12px;
+    padding:9px 12px;border-bottom:1px solid var(--hairline);white-space:nowrap;
   }
-  .record-row.selectable{cursor:pointer;}
-  .record-row.selected{border-color:var(--urgent);background:rgba(210,80,47,.08);}
-  .record-checkbox{width:18px;height:18px;flex-shrink:0;accent-color:var(--urgent);cursor:pointer;}
-  .record-seq{font-family:'Archivo Black',sans-serif;font-size:13px;color:var(--warn);white-space:nowrap;}
-  .record-time{font-size:12px;color:var(--text-muted);white-space:nowrap;}
-  .record-items{font-size:12px;color:var(--text-muted);flex:1;min-width:120px;}
-  .record-revenue{font-family:'Archivo Black',sans-serif;font-size:15px;color:var(--ok);white-space:nowrap;margin-left:auto;}
-  .empty-hint{color:var(--text-muted);font-size:14px;padding:20px 2px;}
+  thead th.num{text-align:right;}
+  tbody td{padding:11px 12px;border-bottom:1px solid var(--hairline);vertical-align:middle;}
+  tbody td.num{text-align:right;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:var(--paper-tint);}
+  .data-table-wrap{border:1px solid var(--hairline);max-width:900px;overflow-x:auto;}
+  .record-checkbox{width:16px;height:16px;accent-color:var(--brand);cursor:pointer;}
+  tr.row-selected{background:var(--brand-tint);}
+  .record-seq{color:var(--ink-soft);}
+  .record-items{color:var(--ink-soft);max-width:420px;}
+  .empty-hint{color:var(--ink-soft);font-size:13px;padding:24px 2px;max-width:520px;line-height:1.6;}
 
   .modal-overlay{
-    position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.65);
+    position:fixed;inset:0;z-index:100;background:rgba(28,23,18,.5);
     display:flex;align-items:center;justify-content:center;padding:20px;
   }
   .modal-box{
-    background:var(--card);border:1px solid var(--line);border-radius:16px;
-    padding:24px 22px 22px;max-width:440px;width:100%;
+    background:var(--paper);border:1px solid var(--hairline);border-radius:2px;
+    padding:26px 24px 24px;max-width:440px;width:100%;
   }
   .report-total-row{
     display:flex;justify-content:space-between;align-items:baseline;
-    padding-bottom:16px;margin-bottom:16px;border-bottom:1px dashed var(--line);
+    padding-bottom:16px;margin-bottom:16px;border-bottom:1px solid var(--hairline);
   }
-  .report-total-label{font-size:14px;font-weight:700;color:var(--text-muted);}
-  .report-total-amount{font-family:'Archivo Black',sans-serif;font-size:26px;color:var(--ok);}
+  .report-total-label{font-size:13px;font-weight:600;color:var(--ink-soft);}
+  .report-total-amount{font-family:'Noto Serif SC',serif;font-weight:700;font-size:22px;color:var(--ink);}
   .report-cat-scroll{max-height:56vh;overflow-y:auto;margin:0 -4px 16px;padding:0 4px;}
-  .report-cat-section{margin-bottom:14px;}
+  .report-cat-section{margin-bottom:16px;}
   .report-cat-section:last-child{margin-bottom:0;}
-  .report-cat-title{font-size:13px;font-weight:900;color:var(--warn);margin-bottom:8px;}
-  .report-dish-list{list-style:none;display:flex;flex-direction:column;gap:6px;}
+  .report-cat-title{font-size:12px;font-weight:700;color:var(--ink-soft);letter-spacing:.04em;margin-bottom:8px;}
+  .report-dish-list{list-style:none;display:flex;flex-direction:column;}
   .report-dish-list li{
     display:flex;align-items:center;gap:10px;
-    background:rgba(255,255,255,.04);border-radius:8px;padding:8px 12px;
+    border-bottom:1px solid var(--hairline);padding:8px 2px;
   }
-  .rank-badge{
-    font-family:'Archivo Black',sans-serif;font-size:12px;
-    width:22px;height:22px;border-radius:50%;flex-shrink:0;
-    display:flex;align-items:center;justify-content:center;
-    background:var(--bg);color:var(--text-muted);
-  }
-  .report-dish-list li:nth-child(1) .rank-badge{background:var(--warn);color:#1a1408;}
-  .report-dish-list li:nth-child(2) .rank-badge{background:#B8B0A6;color:#1a1408;}
-  .report-dish-list li:nth-child(3) .rank-badge{background:#B0784A;color:#1a1408;}
-  .report-dish-name{flex:1;font-size:14px;font-weight:700;}
-  .report-dish-qty{font-size:13px;color:var(--text-muted);white-space:nowrap;}
+  .report-dish-list li:last-child{border-bottom:none;}
+  .rank-badge{font-size:13px;width:20px;flex-shrink:0;text-align:center;}
+  .report-dish-name{flex:1;font-size:13.5px;font-weight:600;}
+  .report-dish-qty{font-size:12.5px;color:var(--ink-soft);white-space:nowrap;}
   .modal-close-btn{
-    width:100%;padding:12px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;
-    background:none;border:1px solid var(--line);color:var(--text-muted);
+    width:100%;padding:11px;border-radius:2px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;
+    background:none;border:1px solid var(--hairline);color:var(--ink-soft);
   }
-  .modal-close-btn:hover{border-color:var(--text-muted);color:var(--text);}
+  .modal-close-btn:hover{border-color:var(--ink-soft);color:var(--ink);}
 
-  .auth-modal-box{max-width:320px;text-align:center;}
-  .confirm-question{font-size:16px;font-weight:900;margin-bottom:10px;}
-  .confirm-sub{font-size:13px;color:var(--text-muted);margin-bottom:20px;line-height:1.5;}
-  .login-input{
-    width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;
-    color:var(--text);font-family:inherit;font-size:14px;padding:12px 14px;margin-bottom:12px;
+  .auth-modal-box{max-width:320px;}
+  .confirm-question{font-size:15px;font-weight:700;margin-bottom:10px;}
+  .confirm-sub{font-size:12px;color:var(--ink-soft);margin-bottom:20px;line-height:1.6;}
+  .field-input{
+    width:100%;background:transparent;border:none;border-bottom:1px solid var(--hairline);
+    color:var(--ink);font-family:inherit;font-size:14px;padding:9px 2px;margin-bottom:16px;
   }
-  .login-input:focus{outline:none;border-color:var(--warn);}
-  .login-error{font-size:12.5px;color:var(--urgent);margin-bottom:12px;}
+  .field-input:focus{outline:none;border-bottom-color:var(--brand);}
+  .login-error{font-size:12px;color:var(--brand);margin:-10px 0 12px;}
   .confirm-actions{display:flex;gap:10px;}
-  .confirm-cancel-btn, .confirm-yes-btn{
-    flex:1;padding:12px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;
-  }
-  .confirm-cancel-btn{background:none;border:1px solid var(--line);color:var(--text-muted);}
-  .confirm-cancel-btn:hover{border-color:var(--text-muted);color:var(--text);}
-  .confirm-yes-btn{background:rgba(210,80,47,.18);border:1px solid var(--urgent);color:var(--urgent);}
-  .confirm-yes-btn:hover{background:rgba(210,80,47,.28);}
+  .confirm-actions .btn{flex:1;padding:11px;}
 </style>
 </head>
 <body>
 <nav class="top-nav">
-  <a class="control-btn" href="sjxddxtygd.html">← 接单看板</a>
-  <a class="control-btn" href="lspd.html">📅 历史盘点</a>
+  <a href="../index.html">← 控制系统</a>
+  <a href="sjxddxtygd.html">接单看板</a>
+  <a href="lspd.html">历史营销记录</a>
 </nav>
 <header>
   <h1>今日盘点</h1>
   <div class="header-actions" id="header-actions"></div>
 </header>
-<div class="revenue-banner">
-  <span class="revenue-label">当天所有桌总营业额</span>
-  <span class="revenue-amount" id="totalRevenue">€0.00</span>
-  <span class="revenue-sub" id="recordCountHint"></span>
-</div>
+<p class="stat-line" id="stat-line"></p>
 <div id="app"></div>
 <div id="modal-root"></div>
 
@@ -549,26 +515,25 @@ function recordRowHTML(r){
   const itemSummary = (r.items || []).map(it => `${it.name}×${it.qty}`).join('、');
   const selected = selectedIds.has(r.id);
   return `
-    <li class="record-row ${selectMode ? 'selectable' : ''} ${selected ? 'selected' : ''}"
-        ${selectMode ? `onclick="toggleSelectRecord('${r.id}')"` : ''}>
-      ${selectMode ? `<input type="checkbox" class="record-checkbox" ${selected?'checked':''} onclick="event.stopPropagation();toggleSelectRecord('${r.id}')">` : ''}
-      <span class="record-seq">#${String(r.seq).padStart(3,'0')}</span>
-      <span class="record-time">${formatTime(r.archivedAt)}</span>
-      <span class="record-items">${itemSummary}</span>
-      <span class="record-revenue">${formatPrice(r.revenue || 0)}</span>
-    </li>`;
+    <tr class="${selected ? 'row-selected' : ''}" ${selectMode ? `onclick="toggleSelectRecord('${r.id}')" style="cursor:pointer;"` : ''}>
+      ${selectMode ? `<td><input type="checkbox" class="record-checkbox" ${selected?'checked':''} onclick="event.stopPropagation();toggleSelectRecord('${r.id}')"></td>` : ''}
+      <td class="record-seq num">#${String(r.seq).padStart(3,'0')}</td>
+      <td class="num">${formatTime(r.archivedAt)}</td>
+      <td class="record-items">${itemSummary}</td>
+      <td class="num">${formatPrice(r.revenue || 0)}</td>
+    </tr>`;
 }
 
 function headerActionsHTML(){
   if(selectMode){
     return `
       <span class="select-count">已选 ${selectedIds.size} 条</span>
-      <button class="cancel-select-btn" onclick="toggleSelectMode()">取消</button>
-      <button class="confirm-clear-btn" onclick="openDeleteAuth()" ${selectedIds.size===0?'disabled':''}>确认清除</button>`;
+      <button class="btn btn-outline" onclick="toggleSelectMode()">取消</button>
+      <button class="btn btn-danger-outline" onclick="openDeleteAuth()" ${selectedIds.size===0?'disabled':''}>确认清除</button>`;
   }
   return `
-    <button class="clear-btn" onclick="toggleSelectMode()" ${records.length===0?'disabled':''}>🗑 清除</button>
-    <button class="report-btn" onclick="openReport()">📊 生成报告</button>`;
+    <button class="btn btn-outline" onclick="toggleSelectMode()" ${records.length===0?'disabled':''}>清除记录</button>
+    <button class="btn btn-primary" onclick="openReport()">生成报告</button>`;
 }
 
 // 按桌号分组：桌1只展示桌1的记录，桌与桌之间用分割线隔开（见 .table-group 的 border-bottom）
@@ -598,7 +563,13 @@ function tableGroupHTML(g){
         <span class="table-group-num">桌 ${escapeHtml(g.table)}</span>
         <span class="table-group-meta">共 ${g.records.length} 笔 · 今日小计 <b>${formatPrice(g.revenue)}</b></span>
       </div>
-      <ul class="record-list">${g.records.map(recordRowHTML).join('')}</ul>
+      <div class="data-table-wrap"><table>
+        <thead><tr>
+          ${selectMode ? '<th></th>' : ''}
+          <th>单号</th><th>时间</th><th>菜品明细</th><th class="num">营业额</th>
+        </tr></thead>
+        <tbody>${g.records.map(recordRowHTML).join('')}</tbody>
+      </table></div>
     </section>`;
 }
 
@@ -609,15 +580,15 @@ function renderModal(){
       <div class="modal-overlay" onclick="if(event.target===this) closeDeleteAuth()">
         <div class="modal-box auth-modal-box">
           <p class="confirm-question">确认删除选中的 ${selectedIds.size} 条记录？</p>
-          <p class="confirm-sub">需要管理员账号确认，删除后无法恢复，且不会再出现在"历史盘点"里。</p>
-          <input type="text" id="auth-user" class="login-input" placeholder="用户名" autocomplete="off"
+          <p class="confirm-sub">需要管理员账号确认，删除后无法恢复，且不会再出现在"历史营销记录"里。</p>
+          <input type="text" id="auth-user" class="field-input" placeholder="用户名" autocomplete="off"
                  onkeydown="if(event.key==='Enter') document.getElementById('auth-pass').focus()">
-          <input type="password" id="auth-pass" class="login-input" placeholder="密码" autocomplete="off"
+          <input type="password" id="auth-pass" class="field-input" placeholder="密码" autocomplete="off"
                  onkeydown="if(event.key==='Enter') handleDeleteAuthSubmit()">
           ${authError ? `<p class="login-error">${authError}</p>` : ''}
           <div class="confirm-actions">
-            <button class="confirm-cancel-btn" onclick="closeDeleteAuth()">取消</button>
-            <button class="confirm-yes-btn" onclick="handleDeleteAuthSubmit()">确认删除</button>
+            <button class="btn btn-outline" onclick="closeDeleteAuth()">取消</button>
+            <button class="btn btn-danger" onclick="handleDeleteAuthSubmit()">确认删除</button>
           </div>
         </div>
       </div>`;
@@ -637,7 +608,7 @@ function renderModal(){
         </div>
         <div class="report-cat-scroll">
           ${categories.length === 0
-            ? `<p style="color:var(--text-muted);font-size:13px;">暂无数据</p>`
+            ? `<p style="color:var(--ink-soft);font-size:13px;">暂无数据</p>`
             : categories.map(c => `
               <div class="report-cat-section">
                 <p class="report-cat-title">${c.label}</p>
@@ -657,19 +628,19 @@ function renderModal(){
 }
 
 function render(){
-  document.getElementById('totalRevenue').textContent = formatPrice(totalRevenue());
   document.getElementById('header-actions').innerHTML = headerActionsHTML();
 
   const app = document.getElementById('app');
+  const statEl = document.getElementById('stat-line');
   if(!loaded){
-    document.getElementById('recordCountHint').textContent = '';
+    statEl.innerHTML = '';
     app.innerHTML = '';
   }else if(records.length === 0){
-    document.getElementById('recordCountHint').textContent = '';
+    statEl.innerHTML = '';
     app.innerHTML = `<p class="empty-hint">今天还没有桌子结账离开，盘点记录会在员工点"顾客已经结账离开，移出看板"后自动生成。</p>`;
   }else{
     const groups = groupByTable(records);
-    document.getElementById('recordCountHint').textContent = `今日共 ${groups.length} 桌 · ${records.length} 笔结账`;
+    statEl.innerHTML = `当天总营业额 <b>${formatPrice(totalRevenue())}</b> · 今日共 <b>${groups.length}</b> 桌 · <b>${records.length}</b> 笔结账`;
     app.innerHTML = groups.map(tableGroupHTML).join('');
   }
 

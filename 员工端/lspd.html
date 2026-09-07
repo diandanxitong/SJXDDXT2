@@ -17,180 +17,110 @@ firebase.initializeApp({
 });
 </script>
 <script src="staff-auth.js"></script>
-<title>历史盘点</title>
+<title>历史营销记录</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Archivo+Black&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#121012;
-    --card:#1C191A;
-    --line:#332E2C;
-    --text:#F5F1EC;
-    --text-muted:#8E8883;
-    --warn:#E8A23D;
-    --urgent:#D2502F;
-    --ok:#5FBE8A;
+    --paper:#FDFCF9;
+    --paper-tint:#F7F2EA;
+    --ink:#1C1712;
+    --ink-soft:#736A60;
+    --ink-faint:#B3A99C;
+    --brand:#AA0101;
+    --brand-tint:#F7E9E4;
+    --hairline:#E6E0D6;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   body{
-    background:var(--bg);color:var(--text);
+    background:var(--paper);color:var(--ink);
     font-family:'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif;
-    min-height:100vh;padding:22px 26px 60px;
+    min-height:100vh;padding:26px 30px 60px;
+    -webkit-font-smoothing:antialiased;
   }
-  .top-nav{margin-bottom:16px;display:flex;gap:10px;flex-wrap:wrap;}
-  .control-btn{
-    display:inline-flex;align-items:center;gap:6px;text-decoration:none;
-    background:var(--card);border:1px solid var(--line);color:var(--text-muted);
-    font-size:13px;font-weight:700;padding:8px 14px;border-radius:20px;
-    font-family:inherit;cursor:pointer;
-  }
-  .control-btn:hover{color:var(--text);border-color:var(--text-muted);}
+  .num{font-variant-numeric:tabular-nums;}
 
-  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:14px;}
-  header h1{font-family:'Archivo Black',sans-serif;font-size:22px;letter-spacing:.02em;}
-  .header-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
-  .clear-btn{
-    font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;
-    padding:12px 18px;border-radius:12px;white-space:nowrap;
-    background:none;border:1px solid rgba(210,80,47,.5);color:var(--urgent);
+  .top-nav{margin-bottom:20px;display:flex;gap:16px;}
+  .top-nav a{
+    font-size:13px;color:var(--ink-soft);text-decoration:none;font-weight:500;
   }
-  .clear-btn:hover{background:rgba(210,80,47,.12);}
-  .clear-btn:disabled{opacity:.4;cursor:default;background:none;}
-  .select-count{font-size:13px;color:var(--text-muted);white-space:nowrap;}
-  .cancel-select-btn{
-    font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;
-    padding:12px 18px;border-radius:12px;white-space:nowrap;
-    background:none;border:1px solid var(--line);color:var(--text-muted);
-  }
-  .cancel-select-btn:hover{color:var(--text);border-color:var(--text-muted);}
-  .confirm-clear-btn{
-    font-family:inherit;font-size:13.5px;font-weight:900;cursor:pointer;
-    padding:12px 18px;border-radius:12px;white-space:nowrap;
-    background:rgba(210,80,47,.16);border:1.5px solid var(--urgent);color:var(--urgent);
-  }
-  .confirm-clear-btn:hover{background:rgba(210,80,47,.26);}
-  .confirm-clear-btn:disabled{opacity:.4;cursor:default;background:rgba(210,80,47,.16);}
+  .top-nav a:hover{color:var(--brand);}
 
-  .revenue-banner{
-    background:linear-gradient(160deg,var(--card) 0%,var(--bg) 100%);
-    border:1px solid var(--line);border-radius:16px;
-    padding:20px 24px;margin-bottom:20px;
-    display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px;
-  }
-  .revenue-label{font-size:14px;font-weight:700;color:var(--text-muted);}
-  .revenue-amount{font-family:'Archivo Black',sans-serif;font-size:34px;color:var(--ok);letter-spacing:.01em;}
-  .revenue-sub{font-size:12.5px;color:var(--text-muted);width:100%;}
+  header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:14px;}
+  header h1{font-family:'Noto Serif SC',serif;font-weight:700;font-size:20px;}
+  .stat-line{font-size:12px;color:var(--ink-soft);margin-bottom:24px;}
+  .stat-line b{color:var(--ink);font-weight:700;}
 
-  .period-tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+  .period-tabs{display:flex;gap:2px;margin-bottom:20px;border-bottom:1px solid var(--hairline);}
   .period-tab{
-    font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;
-    padding:9px 18px;border-radius:20px;
-    background:var(--card);border:1px solid var(--line);color:var(--text-muted);
+    font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;
+    padding:9px 4px;margin-right:22px;background:none;border:none;border-bottom:2px solid transparent;
+    color:var(--ink-soft);
   }
-  .period-tab:hover{color:var(--text);border-color:var(--text-muted);}
-  .period-tab.active{background:rgba(232,162,61,.16);border-color:var(--warn);color:var(--warn);}
+  .period-tab:hover{color:var(--ink);}
+  .period-tab.active{color:var(--brand);border-bottom-color:var(--brand);}
 
-  .period-list{list-style:none;display:flex;flex-direction:column;gap:10px;max-width:640px;}
-  .period-card{
-    background:var(--card);border:1px solid var(--line);border-radius:12px;
-    padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+  .filter-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:28px;}
+  .filter-label{font-size:12px;color:var(--ink-soft);}
+  select{
+    font-family:inherit;font-size:13px;color:var(--ink);
+    padding:8px 12px;border-radius:2px;border:1px solid var(--hairline);background:var(--paper);
+    cursor:pointer;
   }
-  .period-card.selectable{cursor:pointer;}
-  .period-card.selected{border-color:var(--urgent);background:rgba(210,80,47,.08);}
-  .period-card.viewing{border-color:var(--warn);background:rgba(232,162,61,.08);}
-  .period-checkbox{width:18px;height:18px;flex-shrink:0;accent-color:var(--urgent);cursor:pointer;}
-  .period-card-main{display:flex;flex-direction:column;gap:4px;}
-  .period-card-label{font-size:15px;font-weight:900;}
-  .period-card-meta{font-size:12.5px;color:var(--text-muted);}
-  .period-card-revenue{font-family:'Archivo Black',sans-serif;font-size:20px;color:var(--ok);white-space:nowrap;margin-left:auto;}
+  select:focus{outline:none;border-color:var(--brand);}
+  .period-summary{font-size:12px;color:var(--ink-soft);}
+  .period-summary b{color:var(--ink);font-weight:700;}
 
-  .empty-hint{color:var(--text-muted);font-size:14px;padding:20px 2px;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  thead th{
+    text-align:left;font-weight:600;color:var(--ink-soft);font-size:12px;
+    padding:9px 12px;border-bottom:1px solid var(--hairline);white-space:nowrap;
+  }
+  thead th.num{text-align:right;}
+  tbody td{padding:11px 12px;border-bottom:1px solid var(--hairline);vertical-align:middle;}
+  tbody td.num{text-align:right;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:var(--paper-tint);}
+  .data-table-wrap{border:1px solid var(--hairline);max-width:720px;overflow-x:auto;}
+  .rank-cell{color:var(--ink-soft);width:28px;}
+  tr.top-rank .rank-cell{color:var(--brand);font-weight:700;}
 
-  .section-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:32px 0 4px;}
-  .section-title{font-size:16px;font-weight:900;}
-  .sales-rank-period-label{font-size:12.5px;color:var(--text-muted);margin-top:3px;}
-  .sales-rank-hint{font-size:12.5px;color:var(--text-muted);margin-bottom:12px;}
-  .sales-filter-select{
-    font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;
-    padding:8px 14px;border-radius:20px;
-    background:var(--card);border:1px solid var(--line);color:var(--text);
-  }
-  .sales-rank-box{
-    background:var(--card);border:1px solid var(--line);border-radius:16px;
-    padding:8px;max-width:640px;
-  }
-  .sales-rank-list{list-style:none;display:flex;flex-direction:column;gap:6px;}
-  .sales-rank-item{
-    padding:10px 12px;display:flex;align-items:center;gap:14px;border-radius:10px;
-  }
-  .sales-rank-num{font-family:'Archivo Black',sans-serif;font-size:15px;color:var(--text-muted);width:22px;flex-shrink:0;text-align:center;}
-  .sales-rank-item.top .sales-rank-num{color:var(--warn);}
-  .sales-rank-name{flex:1;font-size:14.5px;font-weight:700;}
-  .sales-rank-cat{font-size:12px;color:var(--text-muted);white-space:nowrap;}
-  .sales-rank-qty{font-family:'Archivo Black',sans-serif;font-size:16px;color:var(--ok);white-space:nowrap;}
-  .sales-pager{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 8px 4px;flex-wrap:wrap;}
-  .pager-status{font-size:12px;color:var(--text-muted);}
+  .empty-hint{color:var(--ink-soft);font-size:13px;padding:24px 2px;max-width:520px;line-height:1.6;}
+
+  .section-title{font-family:'Noto Serif SC',serif;font-weight:700;font-size:16px;margin:40px 0 16px;}
+
+  .pager{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;flex-wrap:wrap;border-top:1px solid var(--hairline);}
+  .pager-status{font-size:12px;color:var(--ink-soft);}
   .pager-btn{
-    font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;
-    padding:7px 14px;border-radius:20px;
-    background:none;border:1px solid var(--line);color:var(--text-muted);
+    font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;
+    padding:6px 12px;border-radius:2px;
+    background:none;border:1px solid var(--hairline);color:var(--ink-soft);
   }
-  .pager-btn:hover:not(:disabled){color:var(--text);border-color:var(--text-muted);}
+  .pager-btn:hover:not(:disabled){color:var(--ink);border-color:var(--ink-soft);}
   .pager-btn:disabled{opacity:.35;cursor:default;}
-
-  .modal-overlay{
-    position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.65);
-    display:flex;align-items:center;justify-content:center;padding:20px;
-  }
-  .modal-box{
-    background:var(--card);border:1px solid var(--line);border-radius:16px;
-    padding:24px 22px 22px;max-width:320px;width:100%;text-align:center;
-  }
-  .confirm-question{font-size:16px;font-weight:900;margin-bottom:10px;}
-  .confirm-sub{font-size:13px;color:var(--text-muted);margin-bottom:20px;line-height:1.5;}
-  .login-input{
-    width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;
-    color:var(--text);font-family:inherit;font-size:14px;padding:12px 14px;margin-bottom:12px;
-  }
-  .login-input:focus{outline:none;border-color:var(--warn);}
-  .login-error{font-size:12.5px;color:var(--urgent);margin-bottom:12px;}
-  .confirm-actions{display:flex;gap:10px;}
-  .confirm-cancel-btn, .confirm-yes-btn{
-    flex:1;padding:12px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;
-  }
-  .confirm-cancel-btn{background:none;border:1px solid var(--line);color:var(--text-muted);}
-  .confirm-cancel-btn:hover{border-color:var(--text-muted);color:var(--text);}
-  .confirm-yes-btn{background:rgba(210,80,47,.18);border:1px solid var(--urgent);color:var(--urgent);}
-  .confirm-yes-btn:hover{background:rgba(210,80,47,.28);}
 </style>
 </head>
 <body>
 <nav class="top-nav">
-  <a class="control-btn" href="sjxddxtygd.html">← 接单看板</a>
-  <a class="control-btn" href="jrpd.html">📊 今日盘点</a>
+  <a href="../index.html">← 控制系统</a>
+  <a href="sjxddxtygd.html">接单看板</a>
+  <a href="jrpd.html">今日盘点</a>
 </nav>
 <header>
-  <h1>历史盘点</h1>
-  <div class="header-actions" id="header-actions"></div>
+  <h1>历史营销记录</h1>
 </header>
-<div class="revenue-banner">
-  <span class="revenue-label">历史累计营业额</span>
-  <span class="revenue-amount" id="totalRevenue">€0.00</span>
-  <span class="revenue-sub" id="totalHint"></span>
-</div>
+<p class="stat-line" id="stat-line"></p>
+
 <div class="period-tabs" id="period-tabs"></div>
 <div id="app"></div>
-<div class="section-header">
-  <div>
-    <h2 class="section-title">单品销量排行</h2>
-    <p class="sales-rank-period-label" id="sales-rank-period-label"></p>
-  </div>
-  <select class="sales-filter-select" id="sales-filter-select" onchange="setSalesFilter(this.value)"></select>
+
+<h2 class="section-title">单品销量</h2>
+<div class="filter-row">
+  <span class="filter-label">分类</span>
+  <select id="sales-filter-select" onchange="setSalesFilter(this.value)"></select>
 </div>
-<p class="sales-rank-hint">点上面某一个周期卡片，看那个周期的销量排行</p>
 <div id="sales-rank-app"></div>
-<div id="modal-root"></div>
 
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-compat.js"></script>
 <script>
@@ -199,14 +129,14 @@ db.settings({ experimentalAutoDetectLongPolling: true });
 function escapeHtml(s){
   return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 }
-// 不按日期过滤——“今日盘点”结账时写进 dailyOrders 的每一条流水都会长期留着，
-// 这里读全部记录，按周/月/季度/年重新分组，就是“历史盘点”
+// 不按日期过滤——"今日盘点"结账时写进 dailyOrders 的每一条流水都会长期留着，
+// 这里读全部记录，按周/月/季度/年重新分组，就是"历史营销记录"
 const dailyOrdersRef = db.collection('dailyOrders');
 
-// 单品销量排行——统计口径是结账时 dailyOrders.items 里的实际成交份数，不是顾客端
-// 加购物车的点击次数，员工要看的是"卖了多少份"。items 里只存了下单时的菜名文本，
-// 没有 dishId/分类，所以靠下面这份跟 gqcp.html/ygjc.html 一样的静态菜单目录，按
-// 菜名反查分类——历史上改过名字或已下架的菜会落进"其他"分类，不影响销量数字本身。
+// 单品销量——统计口径是结账时 dailyOrders.items 里的实际成交份数。items 里只存了
+// 下单时的菜名文本，没有 dishId/分类，所以靠下面这份跟 gqcp.html/ygjc.html 一样的
+// 静态菜单目录，按菜名反查分类——历史上改过名字或已下架的菜会落进"其他"分类，
+// 不影响销量数字本身。
 const CATEGORY_LABELS = {"soupBase": "锅底", "houseSpecial": "招牌必点", "seafood": "海鲜", "premiumBeef": "精品肉类", "meatballs": "丸子", "mushrooms": "菌菇", "vegetables": "素菜", "snacks": "凉菜/小吃", "desserts": "甜品", "drinks": "果香鲜饮", "softDrinks": "软饮/水", "tea": "茶", "fineWines": "Fine Wines", "beer": "啤酒", "other": "其他"};
 const DISH_LIST = [
 {"id": "potBeefTallow", "category": "soupBase", "name": "牛油锅"},
@@ -381,7 +311,6 @@ const DISH_LIST = [
 const NAME_TO_CATEGORY = {};
 DISH_LIST.forEach(d => { NAME_TO_CATEGORY[d.name] = d.category; });
 
-
 function pad(n){ return String(n).padStart(2, '0'); }
 function formatPrice(v){ return '€' + v.toFixed(2); }
 
@@ -417,7 +346,7 @@ const PERIOD_KEY_FNS = {
   quarter: dateStr => { const [y, m] = dateStr.split('-').map(Number); return `${y}-Q${Math.ceil(m / 3)}`; },
   year: dateStr => dateStr.slice(0, 4),
 };
-const PERIOD_TAB_LABELS = { week: '按周', month: '按月', quarter: '按季度', year: '按年' };
+const PERIOD_TAB_LABELS = { week: '周', month: '月', quarter: '季度', year: '年' };
 
 function periodLabel(kind, key, dates){
   if(kind === 'week'){
@@ -438,22 +367,11 @@ function periodLabel(kind, key, dates){
   return `${key}年`;
 }
 
-// 注意：跟"今日盘点"页一样，这只是前端的一道软性关卡——这套系统没有真正的
-// 账号体系，Firestore 规则也没法按用户名密码限制删除。技术上懂一点的人可以绕过
-// 这道校验直接调 Firestore API 删记录。真要做到只有管理员能删，需要接入
-// Firebase Authentication 才行。
-const ADMIN_USER = 'admingk';
-const ADMIN_PASS = '321';
-const PERIOD_UNIT_LABELS = { week: '周', month: '月', quarter: '季度', year: '年' };
-
 let records = [];
 let loaded = false;
 let periodKind = 'month';
-let currentBuckets = [];   // 当前 periodKind 下渲染出的分组，headerActions/删除逻辑都从这里取 ids
-let selectMode = false;
-let selectedKeys = new Set();
-let authModalOpen = false;
-let authError = '';
+let currentBuckets = [];   // 当前 periodKind 下的分组，下拉框从这里取
+let viewPeriodKey = null;  // 下拉框选中的具体周期
 
 dailyOrdersRef.onSnapshot(snap => {
   records = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
@@ -462,7 +380,6 @@ dailyOrdersRef.onSnapshot(snap => {
 }, err => {});
 
 let salesCategoryFilter = 'all';
-let viewPeriodKey = null;     // 销量排行现在跟着周期列表走：正在看哪个周/月/季度/年
 let salesPage = 0;
 const SALES_PAGE_SIZE = 10;
 
@@ -471,23 +388,17 @@ function setSalesFilter(cat){
   salesPage = 0;
   renderSalesRank();
 }
-
 function setViewPeriod(key){
-  if(viewPeriodKey === key) return;
   viewPeriodKey = key;
   salesPage = 0;
-  render();
+  renderPeriodSummary();
+  renderSalesRank();
 }
+function salesRankPrevPage(){ if(salesPage > 0){ salesPage--; renderSalesRank(); } }
+function salesRankNextPage(totalPages){ if(salesPage < totalPages - 1){ salesPage++; renderSalesRank(); } }
+function salesRankFirstPage(){ if(salesPage > 0){ salesPage = 0; renderSalesRank(); } }
 
-function salesRankPrevPage(){
-  if(salesPage > 0){ salesPage--; renderSalesRank(); }
-}
-function salesRankNextPage(totalPages){
-  if(salesPage < totalPages - 1){ salesPage++; renderSalesRank(); }
-}
-
-// 只统计当前正在看的那个周期（viewPeriodKey）里卖出的份数——跟顶部"历史累计营业额"
-// 那个全历史汇总不一样，这里是"点哪个周期看哪个周期"
+// 只统计下拉框选中的那个周期里卖出的份数
 function aggregateSales(){
   const keyFn = PERIOD_KEY_FNS[periodKind];
   const map = new Map();
@@ -511,41 +422,41 @@ function salesFilterOptionsHTML(){
   return opts.join('');
 }
 
-function salesRankItemHTML(item, rank){
-  return `
-    <li class="sales-rank-item ${rank <= 3 ? 'top' : ''}">
-      <span class="sales-rank-num">${rank}</span>
-      <span class="sales-rank-name">${escapeHtml(item.name)}</span>
-      <span class="sales-rank-cat">${CATEGORY_LABELS[item.category] || item.category}</span>
-      <span class="sales-rank-qty">${item.qty} 份</span>
-    </li>`;
-}
-
 function renderSalesRank(){
   const select = document.getElementById('sales-filter-select');
   if(select) select.innerHTML = salesFilterOptionsHTML();
-  const bucket = currentBuckets.find(b => b.key === viewPeriodKey);
-  const labelEl = document.getElementById('sales-rank-period-label');
-  if(labelEl) labelEl.textContent = bucket ? bucket.label : '';
   const app = document.getElementById('sales-rank-app');
   if(!loaded){ app.innerHTML = ''; return; }
   const ranked = aggregateSales();
   if(ranked.length === 0){
-    app.innerHTML = `<p class="empty-hint">这个周期/分类下还没有销量数据。</p>`;
+    app.innerHTML = `<p class="empty-hint">这个周期、这个分类下还没有销量数据。</p>`;
     return;
   }
   const totalPages = Math.max(1, Math.ceil(ranked.length / SALES_PAGE_SIZE));
   if(salesPage >= totalPages) salesPage = totalPages - 1;
   const pageItems = ranked.slice(salesPage * SALES_PAGE_SIZE, salesPage * SALES_PAGE_SIZE + SALES_PAGE_SIZE);
-  const pagerHTML = totalPages > 1 ? `
-    <div class="sales-pager">
-      <button class="pager-btn" onclick="salesRankPrevPage()" ${salesPage===0?'disabled':''}>‹ 上一页</button>
-      <span class="pager-status">第 ${salesPage+1} / ${totalPages} 页 · 共 ${ranked.length} 个</span>
-      <button class="pager-btn" onclick="salesRankNextPage(${totalPages})" ${salesPage===totalPages-1?'disabled':''}>下一页 ›</button>
-    </div>` : `<div class="sales-pager"><span class="pager-status">共 ${ranked.length} 个</span></div>`;
-  app.innerHTML = `<div class="sales-rank-box">
-    <ul class="sales-rank-list">${pageItems.map((item, i) => salesRankItemHTML(item, salesPage * SALES_PAGE_SIZE + i + 1)).join('')}</ul>
-    ${pagerHTML}
+  const rowsHTML = pageItems.map((item, i) => {
+    const rank = salesPage * SALES_PAGE_SIZE + i + 1;
+    return `<tr class="${rank <= 3 ? 'top-rank' : ''}">
+      <td class="num rank-cell">${rank}</td>
+      <td>${escapeHtml(item.name)}</td>
+      <td>${CATEGORY_LABELS[item.category] || item.category}</td>
+      <td class="num">${item.qty}</td>
+    </tr>`;
+  }).join('');
+  const pagerHTML = `
+    <div class="pager">
+      <button class="pager-btn" onclick="salesRankFirstPage()" ${salesPage===0?'disabled':''}>回到第一页</button>
+      <button class="pager-btn" onclick="salesRankPrevPage()" ${salesPage===0?'disabled':''}>上一页</button>
+      <span class="pager-status">第 ${salesPage+1} / ${totalPages} 页 · 共 ${ranked.length} 项</span>
+      <button class="pager-btn" onclick="salesRankNextPage(${totalPages})" ${salesPage===totalPages-1?'disabled':''}>下一页</button>
+    </div>`;
+  app.innerHTML = `<div class="data-table-wrap">
+    <table>
+      <thead><tr><th class="num">名次</th><th>菜品</th><th>分类</th><th class="num">份数</th></tr></thead>
+      <tbody>${rowsHTML}</tbody>
+    </table>
+    ${totalPages > 1 ? pagerHTML : ''}
   </div>`;
 }
 
@@ -570,79 +481,13 @@ function groupByPeriod(kind){
     .sort((a, b) => b.key.localeCompare(a.key));
 }
 
-// 切换周/月/季度/年会换一套分组 key，之前勾选的（比如某一周）在新分组里没意义，直接清空重选；
-// 正在看的周期也要清空，render() 里会自动挑新分组下最新的那个周期
+// 切换周/月/季度/年会换一套分组 key，下拉框选中的周期也要清空，
+// render() 里会自动挑新分组下最新的那个周期
 function setPeriodKind(kind){
   periodKind = kind;
-  selectMode = false;
-  selectedKeys = new Set();
   viewPeriodKey = null;
   salesPage = 0;
   render();
-}
-
-// “清除”：进入勾选模式，不需要管理员账号——账号密码只在真正提交删除的那一步才校验
-function toggleSelectMode(){
-  selectMode = !selectMode;
-  selectedKeys = new Set();
-  render();
-}
-function toggleSelectPeriod(key){
-  if(selectedKeys.has(key)) selectedKeys.delete(key); else selectedKeys.add(key);
-  render();
-}
-
-// 一个"周期"卡片背后是一批 dailyOrders 记录（比如整月），删的时候要把这些记录的
-// doc id 全部收集起来，而不是只删这一条汇总
-function selectedRecordIds(){
-  const ids = [];
-  currentBuckets.forEach(b => { if(selectedKeys.has(b.key)) ids.push(...b.ids); });
-  return ids;
-}
-function selectedOrderCount(){
-  let n = 0;
-  currentBuckets.forEach(b => { if(selectedKeys.has(b.key)) n += b.orders; });
-  return n;
-}
-
-function openDeleteAuth(){
-  if(selectedKeys.size === 0) return;
-  authError = '';
-  authModalOpen = true;
-  renderModal();
-}
-function closeDeleteAuth(){
-  authModalOpen = false;
-  renderModal();
-}
-
-function handleDeleteAuthSubmit(){
-  const user = (document.getElementById('auth-user').value || '').trim();
-  const pass = document.getElementById('auth-pass').value || '';
-  if(user === ADMIN_USER && pass === ADMIN_PASS){
-    confirmDeleteSelected();
-  }else{
-    authError = '用户名或密码错误';
-    renderModal();
-  }
-}
-
-// 删掉选中的那几个统计周期背后的全部流水记录——同一批也会从"今日盘点"（如果还在
-// 当天范围内）和其它分组方式里一起消失，因为都是同一个 dailyOrders collection
-async function confirmDeleteSelected(){
-  const ids = selectedRecordIds();
-  authModalOpen = false;
-  selectMode = false;
-  selectedKeys = new Set();
-  renderModal();
-  render();
-  try{
-    for(let i = 0; i < ids.length; i += 400){
-      const batch = db.batch();
-      ids.slice(i, i + 400).forEach(id => batch.delete(dailyOrdersRef.doc(id)));
-      await batch.commit();
-    }
-  }catch(e){ /* 网络问题的话，onSnapshot 下次推送会看到还剩多少没删掉，可以再选一次重删 */ }
 }
 
 function periodTabsHTML(){
@@ -650,86 +495,55 @@ function periodTabsHTML(){
     <button class="period-tab ${periodKind === kind ? 'active' : ''}" onclick="setPeriodKind('${kind}')">${PERIOD_TAB_LABELS[kind]}</button>`).join('');
 }
 
-function periodCardHTML(b){
-  const selected = selectedKeys.has(b.key);
-  const viewing = !selectMode && viewPeriodKey === b.key;
-  return `
-    <li class="period-card selectable ${selected ? 'selected' : ''} ${viewing ? 'viewing' : ''}"
-        onclick="${selectMode ? `toggleSelectPeriod('${b.key}')` : `setViewPeriod('${b.key}')`}">
-      ${selectMode ? `<input type="checkbox" class="period-checkbox" ${selected?'checked':''} onclick="event.stopPropagation();toggleSelectPeriod('${b.key}')">` : ''}
-      <div class="period-card-main">
-        <span class="period-card-label">${b.label}</span>
-        <span class="period-card-meta">${b.days} 天营业 · ${b.orders} 笔结账</span>
-      </div>
-      <span class="period-card-revenue">${formatPrice(b.revenue)}</span>
-    </li>`;
+function periodSelectOptionsHTML(){
+  return currentBuckets.map(b =>
+    `<option value="${b.key}" ${viewPeriodKey === b.key ? 'selected' : ''}>${b.label}</option>`).join('');
 }
 
-function headerActionsHTML(){
-  if(selectMode){
-    return `
-      <span class="select-count">已选 ${selectedKeys.size} 个${PERIOD_UNIT_LABELS[periodKind]}</span>
-      <button class="cancel-select-btn" onclick="toggleSelectMode()">取消</button>
-      <button class="confirm-clear-btn" onclick="openDeleteAuth()" ${selectedKeys.size===0?'disabled':''}>确认清除</button>`;
-  }
-  return `<button class="clear-btn" onclick="toggleSelectMode()" ${currentBuckets.length===0?'disabled':''}>🗑 清除</button>`;
-}
-
-function renderModal(){
-  const root = document.getElementById('modal-root');
-  if(!authModalOpen){ root.innerHTML = ''; return; }
-  root.innerHTML = `
-    <div class="modal-overlay" onclick="if(event.target===this) closeDeleteAuth()">
-      <div class="modal-box">
-        <p class="confirm-question">确认删除选中的 ${selectedKeys.size} 个统计周期？</p>
-        <p class="confirm-sub">会连带删掉里面全部 ${selectedOrderCount()} 笔结账流水，需要管理员账号确认，删除后无法恢复，其它分组方式（周/月/季度/年）和"今日盘点"里也不会再出现。</p>
-        <input type="text" id="auth-user" class="login-input" placeholder="用户名" autocomplete="off"
-               onkeydown="if(event.key==='Enter') document.getElementById('auth-pass').focus()">
-        <input type="password" id="auth-pass" class="login-input" placeholder="密码" autocomplete="off"
-               onkeydown="if(event.key==='Enter') handleDeleteAuthSubmit()">
-        ${authError ? `<p class="login-error">${authError}</p>` : ''}
-        <div class="confirm-actions">
-          <button class="confirm-cancel-btn" onclick="closeDeleteAuth()">取消</button>
-          <button class="confirm-yes-btn" onclick="handleDeleteAuthSubmit()">确认删除</button>
-        </div>
-      </div>
-    </div>`;
-  const userInput = document.getElementById('auth-user');
-  if(userInput) userInput.focus();
+// 下拉框选中周期后，旁边这行小字显示该周期的营业额/天数/笔数
+function renderPeriodSummary(){
+  const el = document.getElementById('period-summary');
+  if(!el) return;
+  const b = currentBuckets.find(x => x.key === viewPeriodKey);
+  el.innerHTML = b
+    ? `营业额 <b>${formatPrice(b.revenue)}</b> · <b>${b.days}</b> 天营业 · <b>${b.orders}</b> 笔结账`
+    : '';
 }
 
 function render(){
-  document.getElementById('totalRevenue').textContent = formatPrice(totalRevenue());
   document.getElementById('period-tabs').innerHTML = periodTabsHTML();
 
   const app = document.getElementById('app');
   currentBuckets = [];
   if(!loaded){
-    document.getElementById('totalHint').textContent = '';
+    document.getElementById('stat-line').textContent = '';
     app.innerHTML = '';
-    document.getElementById('header-actions').innerHTML = headerActionsHTML();
-    renderModal();
     renderSalesRank();
     return;
   }
   if(records.length === 0){
-    document.getElementById('totalHint').textContent = '';
-    app.innerHTML = `<p class="empty-hint">还没有历史盘点数据——每天在接单看板点"顾客已经结账离开，移出看板"后，流水会自动记进来。</p>`;
-    document.getElementById('header-actions').innerHTML = headerActionsHTML();
-    renderModal();
+    document.getElementById('stat-line').textContent = '';
+    app.innerHTML = `<p class="empty-hint">还没有历史营销数据——每天在接单看板点"顾客已经结账离开，移出看板"后，流水会自动记进来。</p>`;
     renderSalesRank();
     return;
   }
   const dayCount = new Set(records.map(r => r.date)).size;
-  document.getElementById('totalHint').textContent = `共 ${dayCount} 天营业数据 · ${records.length} 笔结账`;
+  document.getElementById('stat-line').innerHTML =
+    `历史累计营业额 <b>${formatPrice(totalRevenue())}</b> · 共 <b>${dayCount}</b> 天营业数据 · <b>${records.length}</b> 笔结账`;
 
   currentBuckets = groupByPeriod(periodKind);
   if(viewPeriodKey == null || !currentBuckets.some(b => b.key === viewPeriodKey)){
     viewPeriodKey = currentBuckets.length ? currentBuckets[0].key : null;
   }
-  app.innerHTML = `<ul class="period-list">${currentBuckets.map(periodCardHTML).join('')}</ul>`;
-  document.getElementById('header-actions').innerHTML = headerActionsHTML();
-  renderModal();
+
+  app.innerHTML = `
+    <div class="filter-row">
+      <span class="filter-label">周期</span>
+      <select id="period-select" onchange="setViewPeriod(this.value)">${periodSelectOptionsHTML()}</select>
+      <span class="period-summary" id="period-summary"></span>
+    </div>`;
+  renderPeriodSummary();
+
   renderSalesRank();
 }
 

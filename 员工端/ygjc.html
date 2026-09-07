@@ -84,8 +84,14 @@ firebase.initializeApp({
   .search-clear-btn:hover{color:var(--text);}
   .no-results{color:var(--text-muted);font-size:14px;padding:10px 2px;}
 
-  .cat-section{margin-bottom:22px;}
-  .cat-section h2{font-size:14px;font-weight:900;color:var(--ok);letter-spacing:.03em;margin-bottom:10px;padding-left:2px;}
+  .category-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;}
+  .category-tab{
+    font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;
+    padding:8px 16px;border-radius:20px;background:var(--card);border:1px solid var(--line);color:var(--text-muted);
+  }
+  .category-tab:hover{color:var(--text);border-color:var(--text-muted);}
+  .category-tab.active{background:rgba(95,190,138,.16);border-color:var(--ok);color:var(--ok);}
+
   .dish-list{list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px;}
   .dish-row{
     background:var(--card);border:1px solid var(--line);border-radius:10px;
@@ -172,6 +178,7 @@ firebase.initializeApp({
   <input type="text" id="searchInput" placeholder="搜索菜品或酒水名称…" oninput="onSearchInput(this.value)" autocomplete="off">
   <button class="search-clear-btn" id="searchClearBtn" onclick="clearSearch()">✕</button>
 </div>
+<div class="category-tabs" id="category-tabs"></div>
 <div id="app"></div>
 <div id="modal-root"></div>
 
@@ -215,6 +222,7 @@ function t(key){ return UI[getStaffLang()][key]; }
 function toggleStaffLang(){
   setStaffLang(getStaffLang() === 'en' ? 'zh' : 'en');
   applyStaticI18n();
+  renderCategoryTabs();
   renderList();
 }
 
@@ -413,6 +421,23 @@ let dishSizeChoice = new Map();   // id -> size key，就算数量还是 0 也�
 let modalOpen = false;
 let loaded = false;
 let searchQuery = '';
+// 分类按钮：一次只看一个分类，不是把十几个分类的菜一次性全堆出来——
+// 跟顾客点单页顶部的分类导航是同一套分类，员工也熟悉。搜索的时候不受
+// 当前选中分类限制，全部分类一起搜
+let selectedCategory = CATEGORY_ORDER[0];
+
+function setCategory(cat){
+  selectedCategory = cat;
+  renderCategoryTabs();
+  renderList();
+}
+
+function renderCategoryTabs(){
+  const el = document.getElementById('category-tabs');
+  if(!el) return;
+  el.innerHTML = CATEGORY_ORDER.map(cat => `
+    <button type="button" class="category-tab ${selectedCategory === cat ? 'active' : ''}" onclick="setCategory('${cat}')">${staffCategoryLabel(cat, CATEGORY_LABELS[cat])}</button>`).join('');
+}
 
 function onSearchInput(value){
   searchQuery = value;
@@ -593,17 +618,19 @@ function renderList(){
     app.innerHTML = `<p class="no-results">${t('noTableMsg')}</p>`;
     return;
   }
-  const sections = CATEGORY_ORDER.map(cat => {
-    const items = DISH_LIST.filter(d => d.category === cat && matchesFilters(d));
-    if(items.length === 0) return '';
-    return `<section class="cat-section"><h2>${staffCategoryLabel(cat, CATEGORY_LABELS[cat])}</h2><ul class="dish-list">${items.map(dishRowHTML).join('')}</ul></section>`;
-  }).join('');
-  app.innerHTML = sections || `<p class="no-results">${t('noMatch')}</p>`;
+  // 正在搜索的时候不管当前选了哪个分类，全部分类一起搜；没有搜索词就只看
+  // 选中的那一个分类，不再把十几个分类的菜一次性全部列出来
+  const isSearching = searchQuery.trim().length > 0;
+  const items = DISH_LIST.filter(d => (isSearching || d.category === selectedCategory) && matchesFilters(d));
+  app.innerHTML = items.length === 0
+    ? `<p class="no-results">${t('noMatch')}</p>`
+    : `<ul class="dish-list">${items.map(dishRowHTML).join('')}</ul>`;
 }
 
 function render(){
   document.getElementById('selCount').textContent = selected.size;
   document.getElementById('addBtn').disabled = !table || selected.size === 0;
+  renderCategoryTabs();
   renderList();
   renderModal();
 }

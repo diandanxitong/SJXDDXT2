@@ -56,7 +56,7 @@ firebase.initializeApp({
   .control-btn{
     display:inline-flex;align-items:center;gap:6px;text-decoration:none;
     background:var(--card);border:1px solid var(--line);color:var(--text-muted);
-    font-size:13px;font-weight:700;padding:8px 14px;border-radius:20px;
+    font-size:13px;font-weight:700;padding:8px 14px;border-radius:6px;
     font-family:inherit;cursor:pointer;
   }
   .control-btn:hover{color:var(--text);border-color:var(--text-muted);}
@@ -81,7 +81,7 @@ firebase.initializeApp({
   .system-toggle-btn.is-disabled:hover{background:rgba(52,211,153,.26);color:var(--ok);border-color:var(--ok);}
 
   .password-input{
-    width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;
+    width:100%;background:var(--bg);border:1px solid var(--line);border-radius:6px;
     color:var(--text);font-family:inherit;font-size:16px;letter-spacing:.08em;padding:11px 14px;margin-bottom:8px;
     text-align:center;
   }
@@ -95,26 +95,26 @@ firebase.initializeApp({
     .live-dot{animation:pulse 1.8s ease-in-out infinite;}
   }
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
-  .header-center{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:12px;}
+  .header-center{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:18px;}
   /* 齿轮下拉：把不常点的"盘点/日志"几个入口收起来，固定在页面最右边，
      其余按钮就能在标题和齿轮之间的空间里居中，不用被一长排入口挤得偏左 */
   .gear-menu-wrap{position:relative;justify-self:end;}
   .gear-btn{font-size:16px;padding:8px 12px;}
   .gear-dropdown{
     position:absolute;top:calc(100% + 8px);right:0;z-index:50;min-width:172px;
-    background:var(--card);border:1px solid var(--line);border-radius:14px;
+    background:var(--card);border:1px solid var(--line);border-radius:8px;
     padding:6px;display:flex;flex-direction:column;gap:2px;
     box-shadow:0 12px 28px rgba(0,0,0,.35);
   }
   .gear-dropdown[hidden]{display:none;}
   .gear-dropdown a{
-    display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:10px;
+    display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:6px;
     color:var(--text-muted);text-decoration:none;font-size:13px;font-weight:700;font-family:inherit;
   }
   .gear-dropdown a:hover{background:rgba(255,255,255,.06);color:var(--text);}
   .status{color:var(--text-muted);font-size:13px;}
   .count-pill{
-    position:relative;background:var(--card);border:1px solid var(--line);border-radius:20px;
+    position:relative;background:var(--card);border:1px solid var(--line);border-radius:6px;
     padding:6px 16px;font-size:13px;color:var(--text-muted);
     font-family:inherit;cursor:pointer;
   }
@@ -142,7 +142,7 @@ firebase.initializeApp({
     display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;
   }
   .order-card{
-    background:var(--card);border-radius:16px;border:1px solid var(--line);
+    background:var(--card);border-radius:10px;border:1px solid var(--line);
     border-left:5px solid var(--normal);padding:18px 18px 16px;
     display:flex;flex-direction:column;gap:12px;
   }
@@ -183,7 +183,7 @@ firebase.initializeApp({
      独立页面（ddxq.html）里，不放在这里，避免桌数一多、每张卡片信息量太大导致误操作 */
   .status-panel{
     display:flex;flex-direction:column;align-items:center;justify-content:center;
-    gap:6px;padding:22px 8px;border-radius:12px;text-align:center;
+    gap:6px;padding:22px 8px;border-radius:8px;text-align:center;
   }
   .status-panel.state-new, .status-panel.state-add{
     background:rgba(245,158,11,.14);border:2px solid var(--warn);
@@ -203,7 +203,7 @@ firebase.initializeApp({
   .card-body{display:flex;flex-direction:column;gap:12px;}
   .card-body.blurred{filter:blur(6px);pointer-events:none;user-select:none;}
   .call-overlay{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;}
-  .call-overlay-abs{position:absolute;inset:0;background:rgba(15,23,42,.55);border-radius:12px;z-index:5;}
+  .call-overlay-abs{position:absolute;inset:0;background:rgba(15,23,42,.55);border-radius:8px;z-index:5;}
   .call-overlay-inline{padding:26px 0 6px;}
   .call-bell{font-size:42px;line-height:1;animation:bell-ring 1s ease-in-out infinite;}
   @keyframes bell-ring{
@@ -230,7 +230,7 @@ firebase.initializeApp({
   }
   .call-boss-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
   .call-dismiss-btn{
-    padding:9px 18px;border-radius:20px;border:1px solid var(--call);
+    padding:9px 18px;border-radius:6px;border:1px solid var(--call);
     background:rgba(56,189,248,.18);color:var(--call);font-weight:700;cursor:pointer;font-size:13px;
   }
   .call-dismiss-btn:hover{background:rgba(56,189,248,.28);}
@@ -240,13 +240,13 @@ firebase.initializeApp({
     display:flex;align-items:center;justify-content:center;padding:20px;
   }
   .confirm-box{
-    background:var(--card);border:1px solid var(--line);border-radius:16px;
+    background:var(--card);border:1px solid var(--line);border-radius:10px;
     padding:26px 22px 22px;max-width:320px;width:100%;text-align:center;
   }
   .confirm-question{font-size:17px;font-weight:900;margin-bottom:20px;}
   .confirm-actions{display:flex;gap:10px;}
   .confirm-cancel-btn, .confirm-yes-btn{
-    flex:1;padding:12px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;
+    flex:1;padding:12px;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;
   }
   .confirm-cancel-btn{background:none;border:1px solid var(--line);color:var(--text-muted);}
   .confirm-cancel-btn:hover{border-color:var(--text-muted);color:var(--text);}
@@ -282,7 +282,7 @@ firebase.initializeApp({
   /* 状态方框底部两个大按钮：结账（常用、放绿色）+ 查看详细订单（次要、灰边框） */
   .preview-actions{display:flex;gap:8px;margin-top:2px;}
   .checkout-btn, .view-detail-btn{
-    flex:1;min-width:0;padding:13px 6px;border-radius:10px;font-size:14px;cursor:pointer;font-weight:900;
+    flex:1;min-width:0;padding:13px 6px;border-radius:6px;font-size:14px;cursor:pointer;font-weight:900;
     font-family:inherit;text-decoration:none;text-align:center;
     display:flex;align-items:center;justify-content:center;gap:6px;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
@@ -301,12 +301,12 @@ firebase.initializeApp({
     max-width:320px;
   }
   .checkout-fail-card{
-    background:var(--card);border:1px solid var(--urgent);border-radius:12px;
+    background:var(--card);border:1px solid var(--urgent);border-radius:8px;
     padding:12px 14px;font-size:13px;line-height:1.5;box-shadow:0 8px 20px rgba(0,0,0,.35);
   }
   .checkout-fail-card b{color:var(--urgent);}
   .checkout-fail-dismiss{
-    margin-top:8px;width:100%;padding:7px;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;
+    margin-top:8px;width:100%;padding:7px;border-radius:6px;font-size:12.5px;font-weight:700;cursor:pointer;
     background:none;border:1px solid var(--line);color:var(--text-muted);font-family:inherit;
   }
   .checkout-fail-dismiss:hover{border-color:var(--text-muted);color:var(--text);}
@@ -333,7 +333,6 @@ firebase.initializeApp({
     <button class="control-btn gear-btn" id="gear-btn" onclick="toggleGearMenu()" aria-haspopup="true" aria-expanded="false" aria-label="更多">⚙️</button>
     <div class="gear-dropdown" id="gear-dropdown" hidden>
       <a href="jrpd.html" id="gear-jrpd">📊 今日盘点</a>
-      <a href="lspd.html" id="gear-lspd">📅 历史盘点</a>
       <a href="ygczrz.html" id="gear-ygczrz">🗒 员工操作日志</a>
     </div>
   </div>
@@ -372,7 +371,7 @@ const UI = {
     systemDisableBtn: '⛔ 关闭系统', systemEnableBtn: '🔓 重新开启系统',
     loading: '加载中…', connError: '连接异常，正在重试…', liveStatusPrefix: '实时更新：',
     pendingLabel: '待处理', pendingSuffix: ' 桌', gearMore: '更多',
-    gearToday: '📊 今日盘点', gearHistory: '📅 历史盘点', gearLog: '🗒 员工操作日志',
+    gearToday: '📊 今日盘点', gearLog: '🗒 员工操作日志',
     emptyPending: '暂无待处理的桌号', viewAll: '← 查看全部', emptyAll: '暂无订单，等待顾客点单中…',
     confirmedBadge: '已确认', statusNewBig: '🔴 新订单', statusNewSub: '等待送入厨房',
     statusAddBig: '🔴 加菜', statusAddSub: '有新加菜品待处理',
@@ -397,7 +396,7 @@ const UI = {
     systemDisableBtn: '⛔ Close System', systemEnableBtn: '🔓 Reopen System',
     loading: 'Loading…', connError: 'Connection lost, retrying…', liveStatusPrefix: 'Live: ',
     pendingLabel: 'Pending', pendingSuffix: ' tables', gearMore: 'More',
-    gearToday: "📊 Today's Report", gearHistory: '📅 History', gearLog: '🗒 Staff Log',
+    gearToday: "📊 Today's Report", gearLog: '🗒 Staff Log',
     emptyPending: 'No tables pending', viewAll: '← View All', emptyAll: 'No orders yet, waiting for customers…',
     confirmedBadge: 'Confirmed', statusNewBig: '🔴 New Order', statusNewSub: 'Waiting to send to kitchen',
     statusAddBig: '🔴 Add-on', statusAddSub: 'New add-on items pending',
@@ -435,7 +434,6 @@ function applyStaticI18n(){
   document.getElementById('pending-label').textContent = t('pendingLabel');
   document.getElementById('pending-suffix').textContent = t('pendingSuffix');
   document.getElementById('gear-jrpd').textContent = t('gearToday');
-  document.getElementById('gear-lspd').textContent = t('gearHistory');
   document.getElementById('gear-ygczrz').textContent = t('gearLog');
   if(!audioUnlocked){
     document.getElementById('sound-toggle').textContent = document.getElementById('sound-toggle').disabled ? t('soundOn') : t('soundOff');
@@ -468,7 +466,7 @@ function updateSystemToggleBtn(){
   btn.textContent = systemDisabled ? t('systemEnableBtn') : t('systemDisableBtn');
 }
 
-// 齿轮下拉：收着今日盘点/历史盘点/员工操作日志这几个不常用的入口，点齿轮开合，
+// 齿轮下拉：收着今日盘点/员工操作日志这几个不常用的入口，点齿轮开合，
 // 点下拉外面任意位置也能收起
 function toggleGearMenu(){
   const dropdown = document.getElementById('gear-dropdown');

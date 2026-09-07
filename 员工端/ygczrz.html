@@ -146,6 +146,12 @@ firebase.initializeApp({
     font-family:inherit; cursor:pointer; font-size:12px;
   }
   .sysdiag-header .stamp{ color:#666; font-size:10.5px; }
+  .range-tabs{ display:flex; gap:4px; }
+  .range-tab{
+    background:#111; border:1px solid #444; color:#999; padding:4px 10px;
+    font-family:inherit; font-size:11.5px; cursor:pointer;
+  }
+  .range-tab.active{ background:#2d5; border-color:#2d5; color:#111; font-weight:bold; }
   .sysdiag .meta-row{ display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px; }
   .sysdiag-tabs{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
   .sysdiag-tab{
@@ -164,10 +170,6 @@ firebase.initializeApp({
   }
   .sysdiag .q-head .idx{ color:#8f8; }
   .sysdiag .q-head .name{ font-weight:bold; }
-  .sysdiag .q-sql{
-    background:#f0f0f0; color:#555; padding:5px 10px; font-size:11px;
-    border-bottom:1px solid #ddd; white-space:pre-wrap;
-  }
   .sysdiag .q-foot{ padding:4px 10px; color:#888; font-size:10.5px; border-top:1px solid #ddd; }
   .sysdiag .q-wrap{ overflow-x:auto; }
   .sysdiag table{ border-collapse:collapse; width:100%; font-size:11.5px; white-space:nowrap; }
@@ -194,6 +196,7 @@ firebase.initializeApp({
 <div id="modal-root"></div>
 
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 const db = firebase.firestore();
 function escapeHtml(s){
@@ -547,6 +550,7 @@ let sysDiagSelectedDate = '';  // 当前正在查看哪一天
 // 不是真的没人加菜，是历史数据缺口，补不回来——从 9-07 起才是完整数据
 const ADDON_TRACKING_SINCE = '2026-09-07';
 let sysDiagStockoutHTML = '<p class="empty-note">加载中…</p>';  // 库存这张表跟日期无关，算一次存着
+let sysDiagStockoutRows = [];  // 跟上面那份 HTML 是同一次计算出来的，导出 Excel 用
 
 function sysDiagMoney(v){ return '€' + (v || 0).toFixed(2); }
 function sysDiagPct(a, b){ return b > 0 ? ((a / b) * 100).toFixed(1) + '%' : '—'; }
@@ -558,14 +562,128 @@ function sysDiagFmtTime(ms){
 function sysDiagFmtMin(ms){ return ms == null ? '—' : (ms / 60000).toFixed(1); }
 function sysDiagIsTestTable(t){ return t === '测试'; }
 
-// 登录成功后拉一次最近的快照列表（够用很久，暂不做翻页），填日期下拉框、画趋势表，
-// 默认选中最新的一天
+// 查看范围：默认按天（原有行为），也能按周/月/季度/年把多份 dailyReports 的
+// orders/actionLogs/calls/clicks 直接拼起来，喂给下面同一套渲染函数——不用另外
+// 写一套统计逻辑，跟"历史营销记录"页的周/月/季度/年是同一个思路
+let sysDiagRangeKind = 'day';
+const SYSDIAG_RANGE_LABELS = { day: '按天', week: '按周', month: '按月', quarter: '按季度', year: '按年' };
+function sysDiagPad(n){ return String(n).padStart(2, '0'); }
+function sysDiagParseDateKey(dateStr){
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+function sysDiagIsoWeekInfo(dateStr){
+  const d = sysDiagParseDateKey(dateStr);
+  const target = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const dayNr = (target.getDay() + 6) % 7;
+  target.setDate(target.getDate() - dayNr + 3);
+  const firstThursday = new Date(target.getFullYear(), 0, 4);
+  const firstDayNr = (firstThursday.getDay() + 6) % 7;
+  firstThursday.setDate(firstThursday.getDate() - firstDayNr + 3);
+  const week = 1 + Math.round((target - firstThursday) / (7 * 24 * 3600 * 1000));
+  return { year: target.getFullYear(), week };
+}
+function sysDiagMondayOfWeek(dateStr){
+  const d = sysDiagParseDateKey(dateStr);
+  const dayNr = (d.getDay() + 6) % 7;
+  d.setDate(d.getDate() - dayNr);
+  return d;
+}
+function sysDiagFormatShortDate(d){ return `${d.getMonth() + 1}月${d.getDate()}日`; }
+const SYSDIAG_PERIOD_KEY_FNS = {
+  week: dateStr => { const { year, week } = sysDiagIsoWeekInfo(dateStr); return `${year}-W${sysDiagPad(week)}`; },
+  month: dateStr => dateStr.slice(0, 7),
+  quarter: dateStr => { const [y, m] = dateStr.split('-').map(Number); return `${y}-Q${Math.ceil(m / 3)}`; },
+  year: dateStr => dateStr.slice(0, 4),
+};
+function sysDiagPeriodLabel(kind, key, dates){
+  if(kind === 'week'){
+    const firstDate = dates.slice().sort()[0];
+    const monday = sysDiagMondayOfWeek(firstDate);
+    const sunday = new Date(monday); sunday.setDate(sunday.getDate() + 6);
+    const weekNum = key.split('-W')[1];
+    return `${monday.getFullYear()}年 第${weekNum}周（${sysDiagFormatShortDate(monday)} - ${sysDiagFormatShortDate(sunday)}）`;
+  }
+  if(kind === 'month'){ const [y, m] = key.split('-'); return `${y}年${parseInt(m, 10)}月`; }
+  if(kind === 'quarter'){ const [y, q] = key.split('-Q'); return `${y}年 第${q}季度`; }
+  return `${key}年`;
+}
+// 把 sysDiagReports（每天一份快照）按周期分组，同一组里的 orders/actionLogs/
+// calls/clicks 直接拼起来
+function sysDiagGroupReportsByPeriod(kind){
+  const keyFn = SYSDIAG_PERIOD_KEY_FNS[kind];
+  const map = new Map();
+  sysDiagReports.forEach(r => {
+    const key = keyFn(r.date);
+    if(!map.has(key)) map.set(key, { key, dates: [], orders: [], actionLogs: [], calls: [], clicks: [] });
+    const b = map.get(key);
+    b.dates.push(r.date);
+    b.orders.push(...(r.orders || []));
+    b.actionLogs.push(...(r.actionLogs || []));
+    b.calls.push(...(r.calls || []));
+    b.clicks.push(...(r.clicks || []));
+  });
+  return Array.from(map.values())
+    .map(b => Object.assign(b, { label: sysDiagPeriodLabel(kind, b.key, b.dates) }))
+    .sort((a, b) => b.key.localeCompare(a.key));
+}
+let sysDiagPeriodBuckets = [];   // sysDiagRangeKind != 'day' 时当前分组结果
+
+function setSysDiagRange(kind){
+  if(sysDiagRangeKind === kind) return;
+  sysDiagRangeKind = kind;
+  sysDiagRefreshRangeUI();
+}
+// 切换"按天/按周/…"或者数据刚加载完，都要重新铺一遍下拉框选项，并默认选最新那个
+function sysDiagRefreshRangeUI(){
+  const rangeTabsEl = document.getElementById('sysdiag-range-tabs');
+  if(rangeTabsEl){
+    rangeTabsEl.innerHTML = Object.keys(SYSDIAG_RANGE_LABELS).map(k =>
+      `<button class="range-tab ${sysDiagRangeKind === k ? 'active' : ''}" onclick="setSysDiagRange('${k}')">${SYSDIAG_RANGE_LABELS[k]}</button>`).join('');
+  }
+  const selectEl = document.getElementById('sysdiag-date-select');
+  const labelEl = document.getElementById('sysdiag-date-label');
+  if(sysDiagRangeKind === 'day'){
+    if(labelEl) labelEl.textContent = '查看日期';
+    if(selectEl){
+      selectEl.innerHTML = sysDiagReports.length === 0
+        ? `<option value="">暂无记录</option>`
+        : sysDiagReports.map(r => `<option value="${r.date}">${r.date}</option>`).join('');
+      selectEl.onchange = () => sysDiagSelectDate(selectEl.value);
+    }
+    if(sysDiagReports.length > 0) sysDiagSelectDate(sysDiagReports[0].date);
+    return;
+  }
+  if(labelEl) labelEl.textContent = '查看周期';
+  sysDiagPeriodBuckets = sysDiagGroupReportsByPeriod(sysDiagRangeKind);
+  if(selectEl){
+    selectEl.innerHTML = sysDiagPeriodBuckets.length === 0
+      ? `<option value="">暂无记录</option>`
+      : sysDiagPeriodBuckets.map(b => `<option value="${b.key}">${b.label}</option>`).join('');
+    selectEl.onchange = () => sysDiagSelectPeriod(selectEl.value);
+  }
+  if(sysDiagPeriodBuckets.length > 0) sysDiagSelectPeriod(sysDiagPeriodBuckets[0].key);
+}
+function sysDiagSelectPeriod(key){
+  const bucket = sysDiagPeriodBuckets.find(b => b.key === key);
+  if(!bucket) return;
+  const earliestDate = bucket.dates.slice().sort()[0];
+  const stamp = `汇总 ${bucket.dates.length} 天（${bucket.label}）`;
+  const warnHTML = earliestDate < ADDON_TRACKING_SINCE
+    ? `⚠ 这个周期里包含 ${ADDON_TRACKING_SINCE} 之前的日期，那几天的加菜次数/加菜金额/加菜占比不准确，不是真的没人加菜。`
+    : '';
+  sysDiagRenderData(bucket.orders, bucket.actionLogs, bucket.calls, bucket.clicks, stamp, warnHTML);
+}
+
+// 登录成功后拉一次最近的快照列表，填日期下拉框、画趋势表，默认选中最新的一天。
+// 上限设成 3650（约10年）——现在一天一份，量很小，但按季度/年查看要靠这些快照
+// 拼起来，卡在 60 天会让"按季度/按年"缺数据
 async function sysDiagInit(){
   const resultsEl = document.getElementById('sysdiag-results');
   if(resultsEl) resultsEl.innerHTML = '<p class="empty-note">加载中…</p>';
   try{
     const [reportsSnap, soldOutSnap, menuStatusDoc] = await Promise.all([
-      dailyReportsRef.orderBy('date', 'desc').limit(60).get(),
+      dailyReportsRef.orderBy('date', 'desc').limit(3650).get(),
       soldOutEventsRef.get(),
       menuStatusRef.get(),
     ]);
@@ -576,13 +694,9 @@ async function sysDiagInit(){
     if(resultsEl) resultsEl.innerHTML = `<p class="empty-note">加载失败：${escapeHtml(e.message || e)}</p>`;
     return;
   }
-  const selectEl = document.getElementById('sysdiag-date-select');
-  if(selectEl){
-    selectEl.innerHTML = sysDiagReports.length === 0
-      ? `<option value="">暂无记录</option>`
-      : sysDiagReports.map(r => `<option value="${r.date}">${r.date}</option>`).join('');
-  }
   if(sysDiagReports.length === 0){
+    const selectEl = document.getElementById('sysdiag-date-select');
+    if(selectEl) selectEl.innerHTML = `<option value="">暂无记录</option>`;
     const metaEl = document.getElementById('sysdiag-meta');
     if(metaEl) metaEl.innerHTML = '';
     const trendEl = document.getElementById('sysdiag-trend');
@@ -597,7 +711,7 @@ async function sysDiagInit(){
     sysDiagShowCategory(sysDiagCategory);
     return;
   }
-  sysDiagSelectDate(sysDiagReports[0].date);
+  sysDiagRefreshRangeUI();
 }
 
 function sysDiagSelectDate(date){
@@ -607,20 +721,27 @@ function sysDiagSelectDate(date){
   const selectEl = document.getElementById('sysdiag-date-select');
   if(selectEl) selectEl.value = date;
 
-  const orders = (report.orders || []).filter(r => !sysDiagIsTestTable(r.table));
-  const actionLogs = report.actionLogs || [];
-  const calls = report.calls || [];
-  const clicks = report.clicks || [];
+  const stamp = `生成于 ${new Date(report.generatedAt).toLocaleString('zh-CN', { hour12:false })}`;
+  const warnHTML = date < ADDON_TRACKING_SINCE
+    ? `⚠ ${date} 早于加菜埋点上线（${ADDON_TRACKING_SINCE} 起才完整），这天的加菜次数/加菜金额/加菜占比不准确，不是真的没人加菜。`
+    : '';
+  sysDiagRenderData(report.orders || [], report.actionLogs || [], report.calls || [], report.clicks || [], stamp, warnHTML);
+}
+
+// 不管是选了具体某一天，还是选了某个周/月/季度/年区间（多天数据已经拼成一份），
+// 都走这同一套渲染逻辑——区别只在于喂进来的 orders/actionLogs/calls/clicks
+// 是一天的还是好几天拼起来的
+let sysDiagCurrentView = null;  // 导出 Excel 用——存一份当前正在看的原始数据，不用现从 HTML 里扒
+
+function sysDiagRenderData(rawOrders, actionLogs, calls, clicks, stampText, warnHTML){
+  const orders = rawOrders.filter(r => !sysDiagIsTestTable(r.table));
+  sysDiagCurrentView = { label: stampText, orders, actionLogs, calls, clicks };
 
   const stampEl = document.getElementById('sysdiag-stamp');
-  if(stampEl) stampEl.textContent = `生成于 ${new Date(report.generatedAt).toLocaleString('zh-CN', { hour12:false })}`;
+  if(stampEl) stampEl.textContent = stampText;
 
   const warnEl = document.getElementById('sysdiag-warning');
-  if(warnEl){
-    warnEl.innerHTML = date < ADDON_TRACKING_SINCE
-      ? `⚠ ${date} 早于加菜埋点上线（${ADDON_TRACKING_SINCE} 起才完整），这天的加菜次数/加菜金额/加菜占比不准确，不是真的没人加菜。`
-      : '';
-  }
+  if(warnEl) warnEl.innerHTML = warnHTML;
 
   const trendEl = document.getElementById('sysdiag-trend');
   if(trendEl) trendEl.innerHTML = sysDiagRenderTrend(sysDiagReports);
@@ -677,7 +798,6 @@ function sysDiagRenderTrend(reports){
   });
   return `<section class="q">
       <div class="q-head"><span class="idx">趋势</span><span class="name">近期每日趋势</span></div>
-      <div class="q-sql">最近 ${rows.length} 天的自动记录，按日期从新到旧排列——选中的那天会高亮，下面选个日期看当天详情；标 ⚠ 的那几天早于加菜埋点上线，加菜金额一栏不准确</div>
       <div class="q-wrap"><table>
         <thead><tr><th>日期</th><th class="num">结账笔数</th><th class="num">营业额</th><th class="num">客单价</th><th class="num">加菜金额</th><th class="num">呼叫次数</th><th class="num">点击量</th></tr></thead>
         <tbody>${rows.map(r => `<tr class="${r.date === sysDiagSelectedDate ? 'total-row' : ''}">
@@ -690,7 +810,7 @@ function sysDiagRenderTrend(reports){
     </section>`;
 }
 
-function sysDiagQueryBlock(idx, name, note, columns, rows, rowsHtmlFn){
+function sysDiagQueryBlock(idx, name, columns, rows, rowsHtmlFn){
   const body = rows.length === 0
     ? `<div class="empty-note">没有数据</div>`
     : `<div class="q-wrap"><table>
@@ -699,7 +819,6 @@ function sysDiagQueryBlock(idx, name, note, columns, rows, rowsHtmlFn){
       </table></div>`;
   return `<section class="q">
       <div class="q-head"><span class="idx">${idx}</span><span class="name">${name}</span></div>
-      <div class="q-sql">${escapeHtml(note)}</div>
       ${body}
       <div class="q-foot">共 ${rows.length} 条</div>
     </section>`;
@@ -745,7 +864,6 @@ function sysDiagRenderDishPerformance(orders, clicks){
     return Object.assign(m, { clicks: c, conv: c ? sysDiagPct(m.orders, c) : '—', avgPrice: m.qty ? m.revenue/m.qty : 0 });
   });
   return sysDiagQueryBlock('3', '单品表现',
-    '按菜品汇总（所选日期范围内），按营业额从高到低排序',
     [
       {label:'菜品'},{label:'销量',num:true},{label:'营业额',num:true},{label:'均价',num:true},
       {label:'出现笔数',num:true},{label:'加菜数量',num:true},{label:'加菜金额',num:true},
@@ -767,7 +885,6 @@ function sysDiagRenderHourly(orders){
   });
   const rows = buckets.filter(b => b.checkouts > 0);
   return sysDiagQueryBlock('1', '分时段分布',
-    '按小时统计下单笔数与营业额，用来看高峰时段（只列有数据的小时）',
     [{label:'时段'},{label:'结账笔数',num:true},{label:'营业额',num:true}],
     rows, b => `<tr><td>${String(b.hour).padStart(2,'0')}:00–${String(b.hour).padStart(2,'0')}:59</td><td class="num">${b.checkouts}</td><td class="num">${sysDiagMoney(b.revenue)}</td></tr>`);
 }
@@ -775,7 +892,6 @@ function sysDiagRenderHourly(orders){
 function sysDiagRenderCheckoutRecords(orders){
   const rows = orders.slice().sort((a,b) => b.archivedAt - a.archivedAt);
   return sysDiagQueryBlock('8', '结账流水',
-    '结账原始记录，按时间从新到旧排列',
     [
       {label:'单号'},{label:'日期'},{label:'时间'},{label:'桌号'},{label:'菜品明细'},{label:'菜品数量',num:true},
       {label:'营业额',num:true},{label:'批次数',num:true},{label:'加菜批次',num:true},{label:'用餐(分钟)',num:true},
@@ -804,7 +920,6 @@ function sysDiagRenderTableAddonFrequency(orders){
   });
   const rows = Array.from(map.values()).sort((a,b) => b.addonBatches - a.addonBatches);
   return sysDiagQueryBlock('5', '桌号加菜频率',
-    '按桌号汇总：这张桌子这段时间一共来了几场客人、其中几场有加菜、平均每场加菜几次',
     [
       {label:'桌号'},{label:'来客场次',num:true},{label:'有加菜的场次',num:true},{label:'加菜渗透率',num:true},
       {label:'加菜次数合计',num:true},{label:'场均加菜次数',num:true},{label:'加菜金额合计',num:true},{label:'营业额合计',num:true},
@@ -853,8 +968,8 @@ function sysDiagRenderStockoutIntervals(events, currentSoldOutIds){
     rows.push({ dishId, name, start: null, end: null, ongoing: true });
   });
   rows.sort((a,b) => (b.end || now) - (a.end || now));
+  sysDiagStockoutRows = rows;  // 导出 Excel 用
   return sysDiagQueryBlock('7', '沽清区间',
-    '把每道菜的沽清、恢复售卖两条记录配对起来，算出每次沽清了多久（全部历史，不受上面日期选择影响，仍在沽清中的排最前面）',
     [{label:'菜品'},{label:'沽清开始'},{label:'恢复售卖'},{label:'沽清天数',num:true}],
     rows, r => `<tr class="${r.ongoing ? 'total-row' : ''}">
       <td>${escapeHtml(r.name)}</td>
@@ -871,7 +986,6 @@ function sysDiagRenderAddonLog(orders){
   }));
   rows.sort((a,b) => b.time - a.time);
   return sysDiagQueryBlock('6', '加菜明细',
-    '每一笔加菜：菜品、数量、金额、顾客自己加的还是员工代加的',
     [
       {label:'日期'},{label:'时间'},{label:'桌号'},{label:'菜品'},{label:'数量',num:true},
       {label:'单价',num:true},{label:'金额',num:true},{label:'来源'},
@@ -885,7 +999,6 @@ function sysDiagRenderAddonLog(orders){
 function sysDiagRenderCallLog(calls){
   const rows = calls.slice().sort((a,b) => b.createdAt - a.createdAt);
   return sysDiagQueryBlock('2', '呼叫服务员记录',
-    '顾客按"呼叫服务员"的记录，按时间从新到旧排列',
     [{label:'日期'},{label:'时间'},{label:'桌号'}],
     rows, c => `<tr><td>${c.date}</td><td>${sysDiagFmtTime(c.createdAt)}</td><td>${escapeHtml(c.table)}</td></tr>`);
 }
@@ -894,7 +1007,6 @@ function sysDiagRenderStaffActionLog(actionLogs){
   const rows = actionLogs.slice().sort((a,b) => b.createdAt - a.createdAt);
   const actionLabel = a => a === 'deleteItem' ? '删单品' : a === 'deleteOrder' ? '删整单' : a === 'editItemQty' ? '改数量' : a;
   return sysDiagQueryBlock('9', '员工操作日志',
-    '员工删单品/删整单/改数量的操作记录，按时间从新到旧排列',
     [{label:'日期'},{label:'时间'},{label:'操作'},{label:'操作人'},{label:'桌号'},{label:'详情'}],
     rows, l => {
       const d = new Date(l.createdAt);
@@ -907,9 +1019,57 @@ function sysDiagRenderStaffActionLog(actionLogs){
 function sysDiagRenderClickLog(clicks){
   const rows = clicks.slice().sort((a,b) => b.date === a.date ? b.count - a.count : b.date.localeCompare(a.date));
   return sysDiagQueryBlock('4', '单品点击记录',
-    '每道菜每天被点"+"加入购物车的次数，按日期从新到旧、点击量从高到低排列',
     [{label:'日期'},{label:'菜品'},{label:'点击量',num:true}],
     rows, c => `<tr><td>${c.date}</td><td>${escapeHtml(c.name)}</td><td class="num">${c.count}</td></tr>`);
+}
+
+// 导出 Excel：把当前正在看的这份数据（不管是选了哪一天，还是选了哪个周/月/季度/
+// 年区间）打包成一个多 sheet 的 .xlsx，直接触发浏览器下载——用的是跟渲染表格
+// 同一份原始数据（sysDiagCurrentView），不是从页面 HTML 里现扒
+function sysDiagExportExcel(){
+  if(!sysDiagCurrentView || typeof XLSX === 'undefined') return;
+  const { label, orders, actionLogs, calls, clicks } = sysDiagCurrentView;
+  const wb = XLSX.utils.book_new();
+  const fmtTime = ms => ms ? new Date(ms).toLocaleString('zh-CN', { hour12:false }) : '';
+
+  const checkoutRows = orders.slice().sort((a,b) => b.archivedAt - a.archivedAt).map(r => ({
+    单号: `#${String(r.seq).padStart(3,'0')}`, 日期: r.date, 时间: fmtTime(r.archivedAt), 桌号: r.table,
+    菜品数量: (r.items||[]).reduce((s,it)=>s+it.qty,0), 营业额: r.revenue,
+    批次数: r.batchCount || '', 加菜批次: r.addOnBatchCount != null ? r.addOnBatchCount : '',
+    用餐分钟: r.firstOrderAt ? ((r.archivedAt - r.firstOrderAt) / 60000).toFixed(1) : '',
+  }));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(checkoutRows), '结账流水');
+
+  const itemRows = [];
+  orders.forEach(r => (r.items || []).forEach(it => {
+    itemRows.push({ 日期: r.date, 桌号: r.table, 菜品: it.name, 数量: it.qty, 单价: it.price, 小计: +((it.qty||0)*(it.price||0)).toFixed(2), 加菜: it.isAddOn ? '是' : '否' });
+  }));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(itemRows), '菜品明细');
+
+  const callRows = calls.slice().sort((a,b) => b.createdAt - a.createdAt).map(c => ({ 日期: c.date, 时间: fmtTime(c.createdAt), 桌号: c.table }));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(callRows), '呼叫服务员记录');
+
+  const clickRows = clicks.slice().sort((a,b) => b.date === a.date ? b.count - a.count : b.date.localeCompare(a.date))
+    .map(c => ({ 日期: c.date, 菜品: c.name, 点击量: c.count }));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(clickRows), '单品点击记录');
+
+  const actionLabel = a => a === 'deleteItem' ? '删单品' : a === 'deleteOrder' ? '删整单' : a === 'editItemQty' ? '改数量' : a;
+  const logRows = actionLogs.slice().sort((a,b) => b.createdAt - a.createdAt).map(l => ({
+    时间: fmtTime(l.createdAt), 操作: actionLabel(l.action), 操作人: l.operator, 桌号: l.table, 详情: l.detail,
+  }));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(logRows), '员工操作日志');
+
+  const now = Date.now();
+  const stockoutRows = sysDiagStockoutRows.map(r => ({
+    菜品: r.name,
+    沽清开始: r.start == null ? '未记录（早于统计上线）' : fmtTime(r.start),
+    恢复售卖: r.ongoing ? '仍在沽清中' : fmtTime(r.end),
+    沽清天数: r.start == null ? '' : (((r.end || now) - r.start) / 86400000).toFixed(1),
+  }));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(stockoutRows), '沽清区间');
+
+  const safeLabel = label.replace(/[\\/:*?"<>|]/g, '_');
+  XLSX.writeFile(wb, `经营数据_${safeLabel}.xlsx`);
 }
 
 function sysDiagHTML(){
@@ -917,8 +1077,10 @@ function sysDiagHTML(){
     <div class="sysdiag">
       <header class="sysdiag-header">
         <h1>经营数据查询台</h1>
-        <label>查看日期</label>
-        <select id="sysdiag-date-select" onchange="sysDiagSelectDate(this.value)"><option>加载中…</option></select>
+        <div class="range-tabs" id="sysdiag-range-tabs"></div>
+        <label id="sysdiag-date-label">查看日期</label>
+        <select id="sysdiag-date-select"><option>加载中…</option></select>
+        <button onclick="sysDiagExportExcel()">导出 Excel</button>
         <div class="spacer"></div>
         <span class="stamp" id="sysdiag-stamp"></span>
       </header>

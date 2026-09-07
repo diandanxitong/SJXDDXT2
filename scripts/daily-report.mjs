@@ -57,11 +57,11 @@ if (overrideDate) {
   // （免费额度下延迟一两个小时很常见），一旦拖过了午夜，两次触发就都落到了
   // 次日凌晨——这时候不能再当"今天"生成（当天才刚开始，数据是空的），要当成
   // "昨晚没赶上的补录"，生成昨天那一份（反正昨天已经结束了，不管现在几点补，
-  // 数据都是完整、确定的）。凌晨之后留了到中午 13 点的补录窗口，足够覆盖正常
+  // 数据都是完整、确定的）。凌晨之后留了到早上 8 点的补录窗口，足够覆盖正常
   // 的触发延迟。
   if (hourNum === 23) {
     targetDate = londonDateStr(Date.now());
-  } else if (hourNum < 13) {
+  } else if (hourNum < 8) {
     targetDate = londonDateStr(Date.now() - 24 * 60 * 60 * 1000);
     console.log(`现在英国时间 ${hour}:${minute}，判定为延迟触发，补录昨天 date=${targetDate}。`);
   } else {

@@ -2506,29 +2506,38 @@ function findRecentDuplicateOrder(candidateOrders, items, windowMs){
   return candidateOrders.find(o => (now - o.createdAt) < windowMs && itemsSignature(o.items) === sig) || null;
 }
 
-// 幂等键：代表"这一次确认下单"这个意图本身，跟菜品内容无关。第一次点"确认下单"
-// 时生成，之后不管重试多少次、隔了多久，都复用同一个——直接拿它当订单文档的
-// id，而不是当一个字段塞进订单里再去数据库里查内容。存在 sessionStorage：
-// 页面刷新还能读到（断网重试时很常见的操作——用户等得不耐烦习惯性刷新页面），
-// 关掉标签页/换一桌自动作废，不会被"员工测试机"或者"顾客下次光顾同一桌"这种
-// 无关场景污染
+// 幂等键：代表"这一次提交这份内容"这个意图，不是"这一桌这一轮确认下单"这个
+// 大概念——键必须跟内容绑在一起。存的是 { key, fingerprint }：取键的时候先比
+// 一下这次要提交的内容跟上次存的指纹是否一样，一样才复用同一个 key（重试，
+// 不管隔了多久）；不一样（比如顾客看到"失败"以为没提交上，往购物车又加了一道
+// 菜再重试）就必须发一把新键——不然会命中上一次那个只有旧内容的订单文档，
+// 判定成"已存在"直接复用，新加的那道菜就悄无声息地丢了，界面还显示"成功"，
+// 是比重复下单更隐蔽的一种丢单。
+// 存在 sessionStorage：页面刷新还能读到（断网重试时很常见的操作——用户等得
+// 不耐烦习惯性刷新页面），关掉标签页/换一桌自动作废，不会被"员工测试机"或者
+// "顾客下次光顾同一桌"这种无关场景污染
 const IDEMPOTENCY_KEY_PREFIX = 'pendingOrderKey:';
-let memoryIdempotencyKeys = {};   // sessionStorage 不可用时的内存兜底，按桌号存
+let memoryIdempotencyKeys = {};   // sessionStorage 不可用时的内存兜底，按桌号存 { key, fingerprint }
 function genIdempotencyKey(){
   try{ if(window.crypto && crypto.randomUUID) return crypto.randomUUID(); }catch(e){}
   return 'k' + Date.now().toString(36) + Math.random().toString(36).slice(2);
 }
-function getOrCreateIdempotencyKey(table){
+function getOrCreateIdempotencyKey(table, items){
   const storageKey = IDEMPOTENCY_KEY_PREFIX + table;
+  const fingerprint = itemsSignature(items);
   try{
-    const existing = sessionStorage.getItem(storageKey);
-    if(existing) return existing;
-    const fresh = genIdempotencyKey();
-    sessionStorage.setItem(storageKey, fresh);
-    return fresh;
+    let cached = null;
+    try{ cached = JSON.parse(sessionStorage.getItem(storageKey) || 'null'); }catch(e){ cached = null; }
+    if(cached && cached.key && cached.fingerprint === fingerprint) return cached.key;
+    const fresh = { key: genIdempotencyKey(), fingerprint };
+    sessionStorage.setItem(storageKey, JSON.stringify(fresh));
+    return fresh.key;
   }catch(e){
-    if(!memoryIdempotencyKeys[table]) memoryIdempotencyKeys[table] = genIdempotencyKey();
-    return memoryIdempotencyKeys[table];
+    const cached = memoryIdempotencyKeys[table];
+    if(cached && cached.fingerprint === fingerprint) return cached.key;
+    const fresh = { key: genIdempotencyKey(), fingerprint };
+    memoryIdempotencyKeys[table] = fresh;
+    return fresh.key;
   }
 }
 function clearIdempotencyKey(table){
@@ -2536,11 +2545,43 @@ function clearIdempotencyKey(table){
   delete memoryIdempotencyKeys[table];
 }
 
+// 草稿里存的是"菜品 id -> 选择"，订单文档要的是"菜名/单价/规格都算好了"的
+// 展示用列表——这个转换要在事务里、用事务这次读到的 draftItems 现算，不能用
+// 外部传进来的一份提前算好的快照（见 attemptSubmitOrder 的说明）
+function buildOrderItemsFromDraft(draftItems){
+  const activeIds = Object.keys(draftItems).filter(id => draftItems[id] && draftItems[id].qty > 0);
+  const orderedIds = MENU.map(d => d.id).filter(id => activeIds.includes(id));
+  const out = [];
+  orderedIds.forEach(id => {
+    const d = MENU_BY_ID[id];
+    if(!d) return;   // 菜单里已经找不到这道菜了（比如被下架），跳过，不让事务因此崩掉
+    const it = draftItems[id];
+    const entry = { name: dishZhName(d, it), qty: it.qty, price: dishUnitPrice(d, it) };
+    if(d.spicy) entry.spice = it.spice;
+    if(d.sizes) entry.size = it.size || defaultSizeKey(d);
+    if(d.category === 'dumplings') entry.cookMethod = it.cookMethod || 'steamed';
+    const excludeKeys = Object.keys(it.excludes || {}).filter(k => it.excludes[k]);
+    if(excludeKeys.length) entry.excludes = excludeKeys;
+    out.push(entry);
+  });
+  return out;
+}
+
 // 真正建单：一个事务里同时原子判定两件事——
 // ①这个幂等键之前是不是已经落地过一笔订单了（本机自己的重试，不管隔了多久）
 // ②草稿里这次要提交的菜是不是还在（不在就是同桌另一台设备已经抢先提交并清空过）
 // 两件事都在数据库层面判定，不再靠猜时间窗口或者比内容——Firestore 事务是乐观
-// 并发控制，谁先提交谁赢，输的那一方会自动重跑这个事务、重新读到最新状态
+// 并发控制，谁先提交谁赢，输的那一方会自动重跑这个事务、重新读到最新状态。
+//
+// 关键点：写进订单的 items 必须从这次事务里刚读到的 draftItems 现算，不能用
+// 外部传进来的 order.items（提交前在本机算好的一份快照）。原因是 Firestore
+// 事务重试的时候，"存在性判断"会用重跑时读到的最新草稿，但如果写入用的是
+// 外部闭包住的旧快照，两者就不一致了——比如 A 提交时事务读到草稿是 [X,Y]，
+// 期间 B 往草稿里加了 Z，Firestore 检测到冲突自动重跑整个事务，重跑后读到的
+// 草稿是 [X,Y,Z]、存在性判断照样通过，但如果写入还是用最初那份 [X,Y] 快照，
+// Z 就会在"草稿被整份清空"的同时永久丢失，且没有任何报错。现在改成直接拿
+// 这次事务读到的 draftItems 转换成订单内容，写入的永远是"清空前那一刻草稿里
+// 真正有什么"，不会再有这个缺口
 async function attemptSubmitOrder(order, idempotencyKey){
   const orderRef = ordersRef.doc(idempotencyKey);
   const draftRef = tableCartsRef.doc(order.table);
@@ -2553,13 +2594,13 @@ async function attemptSubmitOrder(order, idempotencyKey){
     }
     const draftSnap = await tx.get(draftRef);
     const draftItems = (draftSnap.exists && draftSnap.data().items) || {};
-    const draftStillHasItems = Object.keys(draftItems).some(id => draftItems[id] && draftItems[id].qty > 0);
-    if(!draftStillHasItems){
+    const itemsFromDraft = buildOrderItemsFromDraft(draftItems);
+    if(itemsFromDraft.length === 0){
       outcome = { status: 'claimedByOther' };
       return;
     }
     tx.set(orderRef, {
-      table: order.table, items: order.items, createdAt: order.createdAt,
+      table: order.table, items: itemsFromDraft, createdAt: order.createdAt,
       nickname: order.nickname, partySize: order.partySize, status: 'pending',
       isAddOn: order.isAddOn,
     });
@@ -2606,7 +2647,7 @@ async function submitOrder(){
     table: state.table, items, createdAt: Date.now(),
     nickname: state.orderNickname || '', partySize: state.orderPartySize || 1,
   };
-  const idempotencyKey = getOrCreateIdempotencyKey(state.table);
+  const idempotencyKey = getOrCreateIdempotencyKey(state.table, items);
 
   // 提交请求可能卡住/超时，但服务器那边实际上已经建单成功——先记一笔"提交过什么、
   // 用的哪个幂等键"，万一等下报错/卡住，本桌订单实时监听那边收到这笔单子推送时

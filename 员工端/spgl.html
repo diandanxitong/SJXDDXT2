@@ -49,12 +49,14 @@ firebase.initializeApp({
 
   header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:14px;}
   header h1{font-family:'Noto Serif SC',serif;font-weight:700;font-size:20px;}
+  .header-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
   .stat-line{font-size:12px;color:var(--ink-soft);margin-bottom:24px;}
   .stat-line b{color:var(--ink);font-weight:700;}
 
   .btn{
     font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;
     padding:9px 16px;border-radius:6px;white-space:nowrap;
+    text-decoration:none;display:inline-block;
   }
   .btn:disabled{opacity:.4;cursor:default;}
   .btn-outline{background:none;border:1px solid var(--hairline);color:var(--ink-soft);}
@@ -156,11 +158,13 @@ firebase.initializeApp({
 <nav class="top-nav">
   <a href="../index.html">← 控制系统</a>
   <a href="sjxddxtygd.html">接单看板</a>
-  <a href="gqcp.html">沽清菜品</a>
 </nav>
 <header>
   <h1>商品管理</h1>
-  <button class="btn btn-primary" onclick="openAddModal()">+ 新增菜品</button>
+  <div class="header-actions">
+    <a class="btn btn-outline" href="gqcp.html">沽清菜品</a>
+    <button class="btn btn-primary" onclick="openAddModal()">+ 新增菜品</button>
+  </div>
 </header>
 <p class="stat-line" id="stat-line"></p>
 <div class="filter-row">

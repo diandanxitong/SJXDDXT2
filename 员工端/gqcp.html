@@ -48,11 +48,10 @@ firebase.initializeApp({
   }
   .top-nav a:hover, .top-nav button:hover{color:var(--brand);}
 
-  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:14px;}
-  .title-block{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;}
+  header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:14px;}
   header h1{font-family:'Noto Serif SC',serif;font-weight:700;font-size:20px;}
-  .status-pill{font-size:12px;color:var(--ink-soft);}
-  .status-pill b{color:var(--brand);font-weight:700;}
+  .stat-line{font-size:12px;color:var(--ink-soft);margin-bottom:24px;}
+  .stat-line b{color:var(--brand);font-weight:700;}
 
   .header-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
   .sel-count{font-size:12px;color:var(--ink-soft);white-space:nowrap;}
@@ -67,10 +66,18 @@ firebase.initializeApp({
   .restore-btn{background:none;border:1px solid var(--ok);color:var(--ok);}
   .restore-btn:not(:disabled):hover{background:var(--ok-tint);}
 
-  .search-bar{position:relative;margin-bottom:18px;max-width:360px;}
+  .filter-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:20px;}
+  .filter-label{font-size:12px;color:var(--ink-soft);}
+  select{
+    font-family:inherit;font-size:13px;color:var(--ink);
+    padding:8px 12px;border-radius:6px;border:1px solid var(--hairline);background:var(--paper);
+    cursor:pointer;
+  }
+  select:focus{outline:none;border-color:var(--brand);}
+  .search-bar{position:relative;max-width:260px;flex:1;min-width:180px;}
   .search-bar input{
     width:100%;background:transparent;border:none;border-bottom:1px solid var(--hairline);
-    color:var(--ink);font-family:inherit;font-size:14px;padding:9px 26px 9px 2px;
+    color:var(--ink);font-family:inherit;font-size:14px;padding:8px 26px 8px 2px;
   }
   .search-bar input::placeholder{color:var(--ink-faint);}
   .search-bar input:focus{outline:none;border-bottom-color:var(--brand);}
@@ -83,14 +90,6 @@ firebase.initializeApp({
   .search-clear-btn.visible{display:flex;}
   .search-clear-btn:hover{color:var(--ink);}
   .no-results{color:var(--ink-soft);font-size:13px;padding:10px 2px;}
-
-  .filter-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:24px;}
-  .filter-row select{
-    font-family:inherit;font-size:12.5px;color:var(--ink);
-    padding:8px 12px;border-radius:6px;border:1px solid var(--hairline);background:var(--paper);
-    cursor:pointer;
-  }
-  .filter-row select:focus{outline:none;border-color:var(--brand);}
   .view-toggle-btn{
     display:inline-flex;align-items:center;gap:6px;
     background:none;border:1px solid var(--hairline);color:var(--ink-soft);
@@ -99,9 +98,6 @@ firebase.initializeApp({
   }
   .view-toggle-btn:hover{color:var(--ink);border-color:var(--ink-soft);}
   .view-toggle-btn.active{background:var(--brand-tint);border-color:var(--brand);color:var(--brand);}
-
-  .cat-section{margin-bottom:28px;}
-  .cat-section h2{font-family:'Noto Serif SC',serif;font-weight:700;font-size:14px;margin-bottom:10px;}
 
   table{width:100%;border-collapse:collapse;font-size:13px;}
   thead th{
@@ -112,12 +108,22 @@ firebase.initializeApp({
   tbody tr:last-child td{border-bottom:none;}
   tbody tr:hover{background:var(--paper-tint);}
   tr.row-checked{background:var(--brand-tint);}
-  .data-table-wrap{border:1px solid var(--hairline);max-width:640px;overflow-x:auto;}
+  .data-table-wrap{border:1px solid var(--hairline);overflow-x:auto;}
   .dish-row-checkbox{width:16px;height:16px;accent-color:var(--brand);cursor:pointer;}
   .dish-row-name{font-size:13px;font-weight:600;}
   .sold-out-badge{
     font-size:11px;font-weight:700;color:var(--brand);white-space:nowrap;
   }
+
+  .pager{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;flex-wrap:wrap;border-top:1px solid var(--hairline);}
+  .pager-status{font-size:12px;color:var(--ink-soft);}
+  .pager-btn{
+    font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;
+    padding:6px 12px;border-radius:6px;
+    background:none;border:1px solid var(--hairline);color:var(--ink-soft);
+  }
+  .pager-btn:hover:not(:disabled){color:var(--ink);border-color:var(--ink-soft);}
+  .pager-btn:disabled{opacity:.35;cursor:default;}
 
   .modal-overlay{
     position:fixed;inset:0;z-index:100;background:rgba(28,23,18,.5);
@@ -159,23 +165,22 @@ firebase.initializeApp({
   <button id="lang-toggle-btn" onclick="toggleStaffLang()">EN</button>
 </nav>
 <header>
-  <div class="title-block">
-    <h1 id="page-title">沽清菜品</h1>
-    <span class="status-pill"><span id="sold-out-count-label">已沽清</span> <b id="soldOutCount">0</b> <span id="sold-out-count-suffix">项</span></span>
-  </div>
+  <h1 id="page-title">沽清菜品</h1>
   <div class="header-actions">
     <span class="sel-count"><span id="sel-count-label">已选</span> <b id="selCount">0</b> <span id="sel-count-suffix">项</span></span>
     <button class="btn sold-out-btn" id="soldOutBtn" onclick="openSoldOutModal()" disabled>暂停售卖</button>
     <button class="btn restore-btn" id="restoreBtn" onclick="openRestoreModal()" disabled>恢复售卖</button>
   </div>
 </header>
-<div class="search-bar">
-  <input type="text" id="searchInput" placeholder="搜索菜品或酒水名称…" oninput="onSearchInput(this.value)" autocomplete="off">
-  <button class="search-clear-btn" id="searchClearBtn" onclick="clearSearch()">✕</button>
-</div>
+<p class="stat-line" id="stat-line"></p>
 <div class="filter-row">
-  <button class="view-toggle-btn" id="viewToggleBtn" onclick="toggleSoldOutOnlyView()">显示已沽清菜品</button>
+  <span class="filter-label">分类</span>
   <select id="categoryFilter" onchange="setCategoryFilter(this.value)"></select>
+  <button class="view-toggle-btn" id="viewToggleBtn" onclick="toggleSoldOutOnlyView()">显示已沽清菜品</button>
+  <div class="search-bar">
+    <input type="text" id="searchInput" placeholder="搜索菜品或酒水名称…" oninput="onSearchInput(this.value)" autocomplete="off">
+    <button class="search-clear-btn" id="searchClearBtn" onclick="clearSearch()">✕</button>
+  </div>
 </div>
 <div id="app"></div>
 <div id="modal-root"></div>
@@ -209,7 +214,6 @@ function logSoldOutEvents(ids, action){
 const UI = {
   zh: {
     pageTitle: '沽清菜品', backToBoard: '接单看板',
-    soldOutCountLabel: '已沽清', soldOutCountSuffix: '项',
     selCountLabel: '已选', selCountSuffix: '项',
     pauseSaleBtn: '暂停售卖', restoreSaleBtn: '恢复售卖',
     searchPlaceholder: '搜索菜品或酒水名称…',
@@ -223,7 +227,6 @@ const UI = {
   },
   en: {
     pageTitle: 'Mark Sold Out', backToBoard: 'Order Board',
-    soldOutCountLabel: 'Sold Out:', soldOutCountSuffix: 'items',
     selCountLabel: 'Selected:', selCountSuffix: 'items',
     pauseSaleBtn: 'Mark Sold Out', restoreSaleBtn: 'Restore Sale',
     searchPlaceholder: 'Search dish or drink name…',
@@ -249,14 +252,24 @@ function applyStaticI18n(){
   document.getElementById('back-to-board-nav').textContent = t('backToBoard');
   document.getElementById('lang-toggle-btn').textContent = t('langToggleLabel');
   document.getElementById('page-title').textContent = t('pageTitle');
-  document.getElementById('sold-out-count-label').textContent = t('soldOutCountLabel');
-  document.getElementById('sold-out-count-suffix').textContent = t('soldOutCountSuffix');
   document.getElementById('sel-count-label').textContent = t('selCountLabel');
   document.getElementById('sel-count-suffix').textContent = t('selCountSuffix');
   document.getElementById('soldOutBtn').textContent = t('pauseSaleBtn');
   document.getElementById('restoreBtn').textContent = t('restoreSaleBtn');
   document.getElementById('searchInput').placeholder = t('searchPlaceholder');
   document.getElementById('viewToggleBtn').textContent = showSoldOutOnly ? t('showAll') : t('showSoldOutOnly');
+}
+
+function statLineHTML(){
+  return getStaffLang() === 'en'
+    ? `Catalog: <b>${DISH_LIST.length}</b> items &middot; Sold out: <b>${soldOutIds.size}</b>`
+    : `商品目录共 <b>${DISH_LIST.length}</b> 项，已沽清 <b>${soldOutIds.size}</b> 项`;
+}
+
+function pagerLabels(){
+  return getStaffLang() === 'en'
+    ? { first: 'First', prev: 'Prev', next: 'Next', status: (p, tp, n) => `Page ${p} / ${tp} · ${n} items`, colName: 'Dish', colCategory: 'Category', colStatus: 'Status' }
+    : { first: '回到第一页', prev: '上一页', next: '下一页', status: (p, tp, n) => `第 ${p} / ${tp} 页 · 共 ${n} 项`, colName: '菜品', colCategory: '分类', colStatus: '状态' };
 }
 
 // 菜品清单：id / 分类 / 中文名，跟顾客端 customer.html 里的 DISH_DATA 保持一致
@@ -441,11 +454,17 @@ let loaded = false;
 let searchQuery = '';
 let showSoldOutOnly = false;
 let categoryFilter = 'all';
+let page = 0;
+const PAGE_SIZE = 20;
 
 function setCategoryFilter(cat){
   categoryFilter = cat;
+  page = 0;
   renderList();
 }
+function firstPage(){ if(page > 0){ page = 0; renderList(); } }
+function prevPage(){ if(page > 0){ page--; renderList(); } }
+function nextPage(totalPages){ if(page < totalPages - 1){ page++; renderList(); } }
 function categoryFilterOptionsHTML(){
   const opts = [`<option value="all">${t('allCategories')}</option>`]
     .concat(CATEGORY_ORDER.map(cat => `<option value="${cat}" ${categoryFilter === cat ? 'selected' : ''}>${staffCategoryLabel(cat, CATEGORY_LABELS[cat])}</option>`));
@@ -454,6 +473,7 @@ function categoryFilterOptionsHTML(){
 
 function toggleSoldOutOnlyView(){
   showSoldOutOnly = !showSoldOutOnly;
+  page = 0;
   const btn = document.getElementById('viewToggleBtn');
   btn.textContent = showSoldOutOnly ? t('showAll') : t('showSoldOutOnly');
   btn.classList.toggle('active', showSoldOutOnly);
@@ -462,6 +482,7 @@ function toggleSoldOutOnlyView(){
 
 function onSearchInput(value){
   searchQuery = value;
+  page = 0;
   document.getElementById('searchClearBtn').classList.toggle('visible', searchQuery.length > 0);
   renderList();   // search box lives outside #app, so it doesn't need (and shouldn't trigger) a full render()
 }
@@ -471,6 +492,7 @@ function clearSearch(){
   const input = document.getElementById('searchInput');
   if(input) input.value = '';
   document.getElementById('searchClearBtn').classList.remove('visible');
+  page = 0;
   renderList();
 }
 
@@ -536,6 +558,7 @@ function dishRowHTML(d){
     <tr class="${checked ? 'row-checked' : ''}" onclick="toggleSelect('${d.id}')" style="cursor:pointer;">
       <td><input type="checkbox" class="dish-row-checkbox" ${checked ? 'checked' : ''} onclick="event.stopPropagation();toggleSelect('${d.id}')"></td>
       <td class="dish-row-name">${staffDishName(d.id, d.name)}</td>
+      <td>${staffCategoryLabel(d.category, CATEGORY_LABELS[d.category])}</td>
       <td>${soldOut ? `<span class="sold-out-badge">${t('soldOutBadge')}</span>` : ''}</td>
     </tr>`;
 }
@@ -582,21 +605,37 @@ function renderList(){
     app.innerHTML = '';
     return;
   }
-  const cats = categoryFilter === 'all' ? CATEGORY_ORDER : [categoryFilter];
-  const sections = cats.map(cat => {
-    const items = DISH_LIST.filter(d => d.category === cat && matchesFilters(d));
-    if(items.length === 0) return '';
-    return `<section class="cat-section">
-      <h2>${staffCategoryLabel(cat, CATEGORY_LABELS[cat])}</h2>
-      <div class="data-table-wrap"><table><tbody>${items.map(dishRowHTML).join('')}</tbody></table></div>
-    </section>`;
-  }).join('');
-  app.innerHTML = sections || `<p class="no-results">${showSoldOutOnly ? t('noSoldOutYet') : t('noMatch')}</p>`;
+  const rows = DISH_LIST.filter(d => {
+    if(categoryFilter !== 'all' && d.category !== categoryFilter) return false;
+    return matchesFilters(d);
+  });
+  if(rows.length === 0){
+    app.innerHTML = `<p class="no-results">${showSoldOutOnly ? t('noSoldOutYet') : t('noMatch')}</p>`;
+    return;
+  }
+  const labels = pagerLabels();
+  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  if(page >= totalPages) page = totalPages - 1;
+  const pageRows = rows.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
+  const pagerHTML = totalPages > 1 ? `
+    <div class="pager">
+      <button class="pager-btn" onclick="firstPage()" ${page===0?'disabled':''}>${labels.first}</button>
+      <button class="pager-btn" onclick="prevPage()" ${page===0?'disabled':''}>${labels.prev}</button>
+      <span class="pager-status">${labels.status(page+1, totalPages, rows.length)}</span>
+      <button class="pager-btn" onclick="nextPage(${totalPages})" ${page===totalPages-1?'disabled':''}>${labels.next}</button>
+    </div>` : '';
+  app.innerHTML = `<div class="data-table-wrap">
+    <table>
+      <thead><tr><th></th><th>${labels.colName}</th><th>${labels.colCategory}</th><th>${labels.colStatus}</th></tr></thead>
+      <tbody>${pageRows.map(dishRowHTML).join('')}</tbody>
+    </table>
+    ${pagerHTML}
+  </div>`;
 }
 
 function render(){
   document.getElementById('selCount').textContent = selected.size;
-  document.getElementById('soldOutCount').textContent = soldOutIds.size;
+  document.getElementById('stat-line').innerHTML = statLineHTML();
   document.getElementById('soldOutBtn').disabled = selected.size === 0;
   document.getElementById('restoreBtn').disabled = selected.size === 0;
 

@@ -2637,7 +2637,14 @@ async function submitOrder(){
         docId = borrowed.id;
       }else{
         // 极小概率兜底：查不到那笔（比如它还没同步过来），直接用本机这个幂等键
-        // 把订单落地，避免两边都以为对方会交、结果谁都没交
+        // 把订单落地，避免两边都以为对方会交、结果谁都没交。这里能直接 .set()
+        // 而不用再走一遍事务，是因为刚才 attemptSubmitOrder 的事务里已经确认过
+        // 这个 idempotencyKey 当时还不存在——注意：以后任何地方要重试这个幂等键，
+        // 都必须先经过 attemptSubmitOrder 的 tx.get(orderRef) 检查，不能绕开事务
+        // 直接对着这个 id 盲发 set()/update()。万一真的撞上"这个 id 已经建过单"，
+        // Firestore 会把它判定成 update，顾客端没有登录态会被规则直接拒绝
+        // （permission-denied）——那不是真失败，必须 catch 住之后按这个 id 把
+        // 已有订单读回来当成功处理，不能当错误弹给用户
         const docRef = await withTimeout(ordersRef.doc(idempotencyKey).set({
           table: order.table, items: order.items, createdAt: order.createdAt,
           nickname: order.nickname, partySize: order.partySize,

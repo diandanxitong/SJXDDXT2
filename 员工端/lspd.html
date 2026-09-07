@@ -98,6 +98,7 @@ firebase.initializeApp({
   }
   .period-card.selectable{cursor:pointer;}
   .period-card.selected{border-color:var(--urgent);background:rgba(210,80,47,.08);}
+  .period-card.viewing{border-color:var(--warn);background:rgba(232,162,61,.08);}
   .period-checkbox{width:18px;height:18px;flex-shrink:0;accent-color:var(--urgent);cursor:pointer;}
   .period-card-main{display:flex;flex-direction:column;gap:4px;}
   .period-card-label{font-size:15px;font-weight:900;}
@@ -105,6 +106,38 @@ firebase.initializeApp({
   .period-card-revenue{font-family:'Archivo Black',sans-serif;font-size:20px;color:var(--ok);white-space:nowrap;margin-left:auto;}
 
   .empty-hint{color:var(--text-muted);font-size:14px;padding:20px 2px;}
+
+  .section-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:32px 0 4px;}
+  .section-title{font-size:16px;font-weight:900;}
+  .sales-rank-period-label{font-size:12.5px;color:var(--text-muted);margin-top:3px;}
+  .sales-rank-hint{font-size:12.5px;color:var(--text-muted);margin-bottom:12px;}
+  .sales-filter-select{
+    font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;
+    padding:8px 14px;border-radius:20px;
+    background:var(--card);border:1px solid var(--line);color:var(--text);
+  }
+  .sales-rank-box{
+    background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:8px;max-width:640px;
+  }
+  .sales-rank-list{list-style:none;display:flex;flex-direction:column;gap:6px;}
+  .sales-rank-item{
+    padding:10px 12px;display:flex;align-items:center;gap:14px;border-radius:10px;
+  }
+  .sales-rank-num{font-family:'Archivo Black',sans-serif;font-size:15px;color:var(--text-muted);width:22px;flex-shrink:0;text-align:center;}
+  .sales-rank-item.top .sales-rank-num{color:var(--warn);}
+  .sales-rank-name{flex:1;font-size:14.5px;font-weight:700;}
+  .sales-rank-cat{font-size:12px;color:var(--text-muted);white-space:nowrap;}
+  .sales-rank-qty{font-family:'Archivo Black',sans-serif;font-size:16px;color:var(--ok);white-space:nowrap;}
+  .sales-pager{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 8px 4px;flex-wrap:wrap;}
+  .pager-status{font-size:12px;color:var(--text-muted);}
+  .pager-btn{
+    font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;
+    padding:7px 14px;border-radius:20px;
+    background:none;border:1px solid var(--line);color:var(--text-muted);
+  }
+  .pager-btn:hover:not(:disabled){color:var(--text);border-color:var(--text-muted);}
+  .pager-btn:disabled{opacity:.35;cursor:default;}
 
   .modal-overlay{
     position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.65);
@@ -148,15 +181,206 @@ firebase.initializeApp({
 </div>
 <div class="period-tabs" id="period-tabs"></div>
 <div id="app"></div>
+<div class="section-header">
+  <div>
+    <h2 class="section-title">单品销量排行</h2>
+    <p class="sales-rank-period-label" id="sales-rank-period-label"></p>
+  </div>
+  <select class="sales-filter-select" id="sales-filter-select" onchange="setSalesFilter(this.value)"></select>
+</div>
+<p class="sales-rank-hint">点上面某一个周期卡片，看那个周期的销量排行</p>
+<div id="sales-rank-app"></div>
 <div id="modal-root"></div>
 
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore-compat.js"></script>
 <script>
 const db = firebase.firestore();
 db.settings({ experimentalAutoDetectLongPolling: true });
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
 // 不按日期过滤——“今日盘点”结账时写进 dailyOrders 的每一条流水都会长期留着，
 // 这里读全部记录，按周/月/季度/年重新分组，就是“历史盘点”
 const dailyOrdersRef = db.collection('dailyOrders');
+
+// 单品销量排行——统计口径是结账时 dailyOrders.items 里的实际成交份数，不是顾客端
+// 加购物车的点击次数，员工要看的是"卖了多少份"。items 里只存了下单时的菜名文本，
+// 没有 dishId/分类，所以靠下面这份跟 gqcp.html/ygjc.html 一样的静态菜单目录，按
+// 菜名反查分类——历史上改过名字或已下架的菜会落进"其他"分类，不影响销量数字本身。
+const CATEGORY_LABELS = {"soupBase": "锅底", "houseSpecial": "招牌必点", "seafood": "海鲜", "premiumBeef": "精品肉类", "meatballs": "丸子", "mushrooms": "菌菇", "vegetables": "素菜", "snacks": "凉菜/小吃", "desserts": "甜品", "drinks": "果香鲜饮", "softDrinks": "软饮/水", "tea": "茶", "fineWines": "Fine Wines", "beer": "啤酒", "other": "其他"};
+const DISH_LIST = [
+{"id": "potBeefTallow", "category": "soupBase", "name": "牛油锅"},
+{"id": "potTomato", "category": "soupBase", "name": "番茄锅（素）"},
+{"id": "potMushroom", "category": "soupBase", "name": "菌汤锅（素）"},
+{"id": "potPorkBone", "category": "soupBase", "name": "骨汤锅"},
+{"id": "potBeefPork", "category": "soupBase", "name": "牛油汤 + 骨汤锅"},
+{"id": "potBeefMushroom", "category": "soupBase", "name": "牛油汤 + 菌汤锅"},
+{"id": "potBeefTomato", "category": "soupBase", "name": "牛油汤 + 番茄锅"},
+{"id": "potTomatoPork", "category": "soupBase", "name": "番茄锅 + 骨汤锅"},
+{"id": "potTomatoMushroom", "category": "soupBase", "name": "番茄锅 + 菌汤锅"},
+{"id": "potMushroomPork", "category": "soupBase", "name": "菌汤锅 + 骨汤锅"},
+{"id": "dipSauce", "category": "soupBase", "name": "蘸料"},
+{"id": "beefTripePremium", "category": "houseSpecial", "name": "极品鲜毛肚"},
+{"id": "porkKidneySliced", "category": "houseSpecial", "name": "大刀腰片"},
+{"id": "beefTripeLayered", "category": "houseSpecial", "name": "草原千层肚"},
+{"id": "duckBlood", "category": "houseSpecial", "name": "鸭血"},
+{"id": "porkLiverTender", "category": "houseSpecial", "name": "嫩滋猪肝"},
+{"id": "malingLuncheonMeat", "category": "houseSpecial", "name": "梅林午餐肉"},
+{"id": "pigBrain", "category": "houseSpecial", "name": "鲜绿脑花"},
+{"id": "spicyTenderBeef", "category": "houseSpecial", "name": "麻辣牛肉"},
+{"id": "seasonedBeef", "category": "houseSpecial", "name": "私房嫩牛肉"},
+{"id": "chickenGizzard", "category": "houseSpecial", "name": "特色小郡肝"},
+{"id": "braisedChickenFeet", "category": "houseSpecial", "name": "特色肥鸡爪"},
+{"id": "beefTendonFresh", "category": "houseSpecial", "name": "特色肥腿筋"},
+{"id": "spicyChickenDrumstick", "category": "houseSpecial", "name": "麻辣鸡腿肉"},
+{"id": "braisedPorkIntestine", "category": "houseSpecial", "name": "特色肥肠"},
+{"id": "braisedBeefTendon", "category": "houseSpecial", "name": "特色肥牛筋儿"},
+{"id": "friedEggViral", "category": "houseSpecial", "name": "网红炸蛋"},
+{"id": "rawEgg", "category": "houseSpecial", "name": "生鸡蛋"},
+{"id": "kingPrawns8", "category": "seafood", "name": "带头大虾"},
+{"id": "seaBassSliced", "category": "seafood", "name": "海鲈鱼片"},
+{"id": "shrimpBallsHandmade", "category": "seafood", "name": "手打虾滑"},
+{"id": "babyCuttlefish", "category": "seafood", "name": "墨鱼仔"},
+{"id": "squid", "category": "seafood", "name": "鱿鱼"},
+{"id": "shrimpDumpling", "category": "seafood", "name": "虾饺"},
+{"id": "japaneseWagyu", "category": "premiumBeef", "name": "日本和牛"},
+{"id": "premiumMarbledFattyBeef", "category": "premiumBeef", "name": "极品雪花肥牛"},
+{"id": "angusBeefSlices", "category": "premiumBeef", "name": "安格斯吊龙"},
+{"id": "lambRoll", "category": "premiumBeef", "name": "羔羊卷"},
+{"id": "beefTongueFresh", "category": "premiumBeef", "name": "现切牛舌"},
+{"id": "fattyBeefRollOriginal", "category": "premiumBeef", "name": "原切肥牛"},
+{"id": "porkBellyFresh", "category": "premiumBeef", "name": "现切五花肉"},
+{"id": "thickPorkSlice", "category": "premiumBeef", "name": "现切老肉片"},
+{"id": "meatballMix", "category": "meatballs", "name": "丸子拼盘"},
+{"id": "porkMeatballsCoriander", "category": "meatballs", "name": "香菜猪肉丸"},
+{"id": "crispySausageJapanese", "category": "meatballs", "name": "日式脆皮肠"},
+{"id": "crabStick", "category": "meatballs", "name": "蟹肉棒"},
+{"id": "fuzhouFishBalls", "category": "meatballs", "name": "福州鱼丸"},
+{"id": "juicyBeefBalls", "category": "meatballs", "name": "撒尿牛丸"},
+{"id": "chickenMeatballs", "category": "meatballs", "name": "鸡肉丸"},
+{"id": "mushroomPlatter", "category": "mushrooms", "name": "菌类拼盘"},
+{"id": "shiitakeMushroom", "category": "mushrooms", "name": "香菇"},
+{"id": "enokiMushroom", "category": "mushrooms", "name": "金针菇"},
+{"id": "kingOysterMushroom", "category": "mushrooms", "name": "杏鲍菇"},
+{"id": "oysterMushroom", "category": "mushrooms", "name": "平菇"},
+{"id": "blackFungus", "category": "mushrooms", "name": "黑木耳"},
+{"id": "vegPlatter", "category": "vegetables", "name": "蔬菜拼盘"},
+{"id": "soybeanRoll", "category": "vegetables", "name": "响铃卷"},
+{"id": "beancurdSticks", "category": "vegetables", "name": "腐竹"},
+{"id": "bambooSlicesSunan", "category": "vegetables", "name": "蜀南竹笋片"},
+{"id": "driedBeanCurdSheet", "category": "vegetables", "name": "干豆皮"},
+{"id": "deepFriedTofu", "category": "vegetables", "name": "油豆腐"},
+{"id": "wulongVermicelli", "category": "vegetables", "name": "武隆粉丝"},
+{"id": "lotusRootSlices", "category": "vegetables", "name": "藕片"},
+{"id": "broccoliSprouts", "category": "vegetables", "name": "西兰花苔"},
+{"id": "riceCake", "category": "vegetables", "name": "年糕"},
+{"id": "crownDaisy", "category": "vegetables", "name": "茼蒿菜"},
+{"id": "pakChoi", "category": "vegetables", "name": "上海青"},
+{"id": "lettuce", "category": "vegetables", "name": "生菜"},
+{"id": "kelpSeaweed", "category": "vegetables", "name": "海带"},
+{"id": "konjacNoodles", "category": "vegetables", "name": "魔芋丝"},
+{"id": "chineseYam", "category": "vegetables", "name": "山药"},
+{"id": "softTofu", "category": "vegetables", "name": "豆腐"},
+{"id": "instantNoodles", "category": "vegetables", "name": "方便面"},
+{"id": "chineseCabbage", "category": "vegetables", "name": "大白菜"},
+{"id": "spinach", "category": "vegetables", "name": "菠菜"},
+{"id": "sweetCorn", "category": "vegetables", "name": "甜玉米"},
+{"id": "beanSprout", "category": "vegetables", "name": "豆芽"},
+{"id": "whiteRadish", "category": "vegetables", "name": "白萝卜"},
+{"id": "babyKelpSprouts", "category": "vegetables", "name": "海带芽"},
+{"id": "longkouVermicelli", "category": "vegetables", "name": "龙口粉丝"},
+{"id": "shreddedPotato", "category": "vegetables", "name": "千丝土豆"},
+{"id": "potatoSlices", "category": "vegetables", "name": "土豆"},
+{"id": "crispyPorkStrips", "category": "snacks", "name": "现炸酥肉"},
+{"id": "brownSugarRiceCake", "category": "snacks", "name": "红糖糍粑"},
+{"id": "blackFungusSalad", "category": "snacks", "name": "开胃黑木耳"},
+{"id": "friedKingPrawn", "category": "snacks", "name": "炸虾"},
+{"id": "kimchi", "category": "snacks", "name": "韩国泡菜"},
+{"id": "springRoll", "category": "snacks", "name": "春卷"},
+{"id": "cucumberSaladSpicy", "category": "snacks", "name": "凉拌黄瓜"},
+{"id": "friedDoughSticks", "category": "snacks", "name": "油条"},
+{"id": "housePickledVeg", "category": "snacks", "name": "秘制泡菜"},
+{"id": "eggFriedRiceClassic", "category": "snacks", "name": "特色蛋炒饭"},
+{"id": "steamedRice", "category": "snacks", "name": "白米饭"},
+{"id": "spiceBag", "category": "snacks", "name": "辣袋"},
+{"id": "mangoPomeloSago", "category": "desserts", "name": "杨枝甘露"},
+{"id": "matchaShavedIce", "category": "desserts", "name": "抹茶绵绵冰"},
+{"id": "chocoShavedIce", "category": "desserts", "name": "巧克力绵绵冰"},
+{"id": "strawberryShavedIce", "category": "desserts", "name": "草莓绵绵冰"},
+{"id": "mangoShavedIce", "category": "desserts", "name": "芒果绵绵冰"},
+{"id": "milkShavedIce", "category": "desserts", "name": "牛奶绵绵冰"},
+{"id": "cheeseCake", "category": "desserts", "name": "芝士蛋糕"},
+{"id": "brownies", "category": "desserts", "name": "布朗尼"},
+{"id": "friedSteamedBun", "category": "desserts", "name": "炸馒头"},
+{"id": "chengduRiceDumpling", "category": "desserts", "name": "老成都醪糟汤圆（黑芝麻）"},
+{"id": "iceJellyBrownSugar", "category": "desserts", "name": "特色冰粉"},
+{"id": "cheeseStrawberry", "category": "drinks", "name": "芝芝莓莓"},
+{"id": "cheeseMango", "category": "drinks", "name": "芝芝芒芒"},
+{"id": "cheeseGrape", "category": "drinks", "name": "芝芝葡萄"},
+{"id": "strawberryYakult", "category": "drinks", "name": "草莓养乐多"},
+{"id": "mangoLemonTea", "category": "drinks", "name": "芒果柠檬茶"},
+{"id": "jasmineStrawberry", "category": "drinks", "name": "茉莉草莓"},
+{"id": "passionFruitLemonTea", "category": "drinks", "name": "百香果柠檬茶"},
+{"id": "kiwiLemonTea", "category": "drinks", "name": "猕猴桃柠檬茶"},
+{"id": "honeyLightMilkTea", "category": "drinks", "name": "蜜香轻乳茶"},
+{"id": "pomegranateLemonTea", "category": "drinks", "name": "红石榴柠檬茶"},
+{"id": "jasmineGreenGrape", "category": "drinks", "name": "茉莉青提"},
+{"id": "waxberryLemonTea", "category": "drinks", "name": "杨梅柠檬茶"},
+{"id": "jasmineLightMilkTea", "category": "drinks", "name": "茉莉轻乳茶"},
+{"id": "sourPlumDrink", "category": "drinks", "name": "酸梅汤"},
+{"id": "honeyLemonTea", "category": "drinks", "name": "蜂蜜柠檬茶"},
+{"id": "wineMurariPinotGrigio", "category": "fineWines", "name": "Murari Pinot Grigio 卡斯特拉尼灰皮诺"},
+{"id": "wineBouchardSauvignonBlanc", "category": "fineWines", "name": "Bouchard Aine & Fils Sauvignon Blanc 长相思"},
+{"id": "winePeterRiesling", "category": "fineWines", "name": "Peter & Peter Riesling"},
+{"id": "wineNauMaiSauvignonBlanc", "category": "fineWines", "name": "Nau Mai Sauvignon Blanc"},
+{"id": "wineCasalVentozelaAlvarinho", "category": "fineWines", "name": "Casal de Ventozela Alvarinho 阿瓦里诺"},
+{"id": "wineDomaneWachauGruner", "category": "fineWines", "name": "Domäne Wachau Grüner Veltliner Federspiel"},
+{"id": "wineLouisJadotChardonnay", "category": "fineWines", "name": "Louis Jadot Bourgogne Chardonnay 'Couvent des Jacobins' 勃艮第霞多丽"},
+{"id": "wineMarquisGoulaineSancerre", "category": "fineWines", "name": "Marquis de Goulaine Sancerre 'Les Lorys' 桑塞尔"},
+{"id": "wineOrquestraTempranillo", "category": "fineWines", "name": "Orquestra Tempranillo 丹魄乐团"},
+{"id": "wineReserveAubeSyrahMerlot", "category": "fineWines", "name": "Reserve de L'Aube Syrah Merlot 奥布西拉梅洛珍藏"},
+{"id": "wineChateauGrandVallons", "category": "fineWines", "name": "Château Les Grand Vallons 波尔多-城堡"},
+{"id": "wineFincaMonicaCrianza", "category": "fineWines", "name": "Finca Mónica Crianza"},
+{"id": "wineFinDelMundoMalbec", "category": "fineWines", "name": "Fin del Mundo Reserva Malbec 珍藏马尔贝克"},
+{"id": "wineSuraniPrimitivo", "category": "fineWines", "name": "Surani Primitivo di Manduria"},
+{"id": "wineLouisJadotPinotNoir", "category": "fineWines", "name": "Louis Jadot Bourgogne Pinot Noir 'Couvent des Jacobins' 勃艮第黑皮诺"},
+{"id": "wineHautsLynchMoussas", "category": "fineWines", "name": "Les Hauts de Lynch Moussas 上梦多克"},
+{"id": "wineColombetteGrenacheRose", "category": "fineWines", "name": "Domaine La Colombette Grenache Rosé 歌海娜玫瑰庄"},
+{"id": "wineBerneRomanceRose", "category": "fineWines", "name": "Château de Berne Romance Rosé 普罗旺斯玫瑰"},
+{"id": "wineSerenaProsecco", "category": "fineWines", "name": "Serena Prosecco Frizzante 罗普罗蜜克(单人装20cl)"},
+{"id": "wineMontegrandeFrizzante", "category": "fineWines", "name": "Montegrande Bianco Frizzante 蒙特格兰德(瓶)"},
+{"id": "wineChampagneTheophile", "category": "fineWines", "name": "Champagne Theophile Brut NV 香槟(瓶)"},
+{"id": "wineColaRegular", "category": "softDrinks", "name": "可乐 330ml"},
+{"id": "wineColaZeroSugar", "category": "softDrinks", "name": "无糖可乐 330ml"},
+{"id": "wineColaDiet", "category": "softDrinks", "name": "健怡可乐 330ml"},
+{"id": "wineSevenUpRegular", "category": "softDrinks", "name": "七喜 300ml"},
+{"id": "wineSevenUpDiet", "category": "softDrinks", "name": "无糖七喜 300ml"},
+{"id": "wineFanta", "category": "softDrinks", "name": "芬达 Fanta 300ml"},
+{"id": "wineJdb", "category": "softDrinks", "name": "加多宝 Jiaduobao"},
+{"id": "wineAloe:drinkSmall", "category": "softDrinks", "name": "芦荟汁（小）Aloe Juice"},
+{"id": "wineAloe:drinkLarge", "category": "softDrinks", "name": "芦荟汁（大）Aloe Juice"},
+{"id": "wineSoyDrink", "category": "softDrinks", "name": "维他豆奶(小) Soy Drink"},
+{"id": "wineCoconutJuice", "category": "softDrinks", "name": "椰树牌椰汁"},
+{"id": "waterStill:drinkSmall", "category": "softDrinks", "name": "纯净水（小 330ml）"},
+{"id": "waterStill:drinkLarge", "category": "softDrinks", "name": "纯净水（大 750ml）"},
+{"id": "waterSparkling:drinkSmall", "category": "softDrinks", "name": "气泡水（小 330ml）"},
+{"id": "waterSparkling:drinkLarge", "category": "softDrinks", "name": "气泡水（大 750ml）"},
+{"id": "wineAppleJuice", "category": "softDrinks", "name": "苹果汁"},
+{"id": "wineOrangeJuice", "category": "softDrinks", "name": "橙汁"},
+{"id": "wineCranberryJuice", "category": "softDrinks", "name": "蔓越莓汁"},
+{"id": "wineTsingtao", "category": "beer", "name": "青岛啤酒 330ml"},
+{"id": "wineAsahi", "category": "beer", "name": "朝日啤酒 330ml"},
+{"id": "wineHeineken", "category": "beer", "name": "喜力啤酒 330ml"},
+{"id": "wineHeineken00", "category": "beer", "name": "喜力0.0 330ml"},
+{"id": "wineGuinness", "category": "beer", "name": "健力士 500ml"},
+{"id": "wineGuinness00", "category": "beer", "name": "健力士0.0 500ml"},
+{"id": "teaDianhong", "category": "tea", "name": "滇红茶"},
+{"id": "teaZhuyeqing", "category": "tea", "name": "竹叶青茶"},
+{"id": "teaKuqiao", "category": "tea", "name": "苦荞茶"},
+];
+const NAME_TO_CATEGORY = {};
+DISH_LIST.forEach(d => { NAME_TO_CATEGORY[d.name] = d.category; });
+
 
 function pad(n){ return String(n).padStart(2, '0'); }
 function formatPrice(v){ return '€' + v.toFixed(2); }
@@ -237,6 +461,94 @@ dailyOrdersRef.onSnapshot(snap => {
   render();
 }, err => {});
 
+let salesCategoryFilter = 'all';
+let viewPeriodKey = null;     // 销量排行现在跟着周期列表走：正在看哪个周/月/季度/年
+let salesPage = 0;
+const SALES_PAGE_SIZE = 10;
+
+function setSalesFilter(cat){
+  salesCategoryFilter = cat;
+  salesPage = 0;
+  renderSalesRank();
+}
+
+function setViewPeriod(key){
+  if(viewPeriodKey === key) return;
+  viewPeriodKey = key;
+  salesPage = 0;
+  render();
+}
+
+function salesRankPrevPage(){
+  if(salesPage > 0){ salesPage--; renderSalesRank(); }
+}
+function salesRankNextPage(totalPages){
+  if(salesPage < totalPages - 1){ salesPage++; renderSalesRank(); }
+}
+
+// 只统计当前正在看的那个周期（viewPeriodKey）里卖出的份数——跟顶部"历史累计营业额"
+// 那个全历史汇总不一样，这里是"点哪个周期看哪个周期"
+function aggregateSales(){
+  const keyFn = PERIOD_KEY_FNS[periodKind];
+  const map = new Map();
+  records.forEach(r => {
+    if(viewPeriodKey != null && keyFn(r.date) !== viewPeriodKey) return;
+    (r.items || []).forEach(it => {
+      const cat = NAME_TO_CATEGORY[it.name] || 'other';
+      if(salesCategoryFilter !== 'all' && cat !== salesCategoryFilter) return;
+      const cur = map.get(it.name) || { name: it.name, qty: 0, category: cat };
+      cur.qty += it.qty || 0;
+      map.set(it.name, cur);
+    });
+  });
+  return Array.from(map.values()).sort((a, b) => b.qty - a.qty);
+}
+
+function salesFilterOptionsHTML(){
+  const opts = ['<option value="all">全部分类</option>']
+    .concat(Object.keys(CATEGORY_LABELS).map(cat =>
+      `<option value="${cat}" ${salesCategoryFilter === cat ? 'selected' : ''}>${CATEGORY_LABELS[cat]}</option>`));
+  return opts.join('');
+}
+
+function salesRankItemHTML(item, rank){
+  return `
+    <li class="sales-rank-item ${rank <= 3 ? 'top' : ''}">
+      <span class="sales-rank-num">${rank}</span>
+      <span class="sales-rank-name">${escapeHtml(item.name)}</span>
+      <span class="sales-rank-cat">${CATEGORY_LABELS[item.category] || item.category}</span>
+      <span class="sales-rank-qty">${item.qty} 份</span>
+    </li>`;
+}
+
+function renderSalesRank(){
+  const select = document.getElementById('sales-filter-select');
+  if(select) select.innerHTML = salesFilterOptionsHTML();
+  const bucket = currentBuckets.find(b => b.key === viewPeriodKey);
+  const labelEl = document.getElementById('sales-rank-period-label');
+  if(labelEl) labelEl.textContent = bucket ? bucket.label : '';
+  const app = document.getElementById('sales-rank-app');
+  if(!loaded){ app.innerHTML = ''; return; }
+  const ranked = aggregateSales();
+  if(ranked.length === 0){
+    app.innerHTML = `<p class="empty-hint">这个周期/分类下还没有销量数据。</p>`;
+    return;
+  }
+  const totalPages = Math.max(1, Math.ceil(ranked.length / SALES_PAGE_SIZE));
+  if(salesPage >= totalPages) salesPage = totalPages - 1;
+  const pageItems = ranked.slice(salesPage * SALES_PAGE_SIZE, salesPage * SALES_PAGE_SIZE + SALES_PAGE_SIZE);
+  const pagerHTML = totalPages > 1 ? `
+    <div class="sales-pager">
+      <button class="pager-btn" onclick="salesRankPrevPage()" ${salesPage===0?'disabled':''}>‹ 上一页</button>
+      <span class="pager-status">第 ${salesPage+1} / ${totalPages} 页 · 共 ${ranked.length} 个</span>
+      <button class="pager-btn" onclick="salesRankNextPage(${totalPages})" ${salesPage===totalPages-1?'disabled':''}>下一页 ›</button>
+    </div>` : `<div class="sales-pager"><span class="pager-status">共 ${ranked.length} 个</span></div>`;
+  app.innerHTML = `<div class="sales-rank-box">
+    <ul class="sales-rank-list">${pageItems.map((item, i) => salesRankItemHTML(item, salesPage * SALES_PAGE_SIZE + i + 1)).join('')}</ul>
+    ${pagerHTML}
+  </div>`;
+}
+
 function totalRevenue(){
   return records.reduce((s, r) => s + (r.revenue || 0), 0);
 }
@@ -258,11 +570,14 @@ function groupByPeriod(kind){
     .sort((a, b) => b.key.localeCompare(a.key));
 }
 
-// 切换周/月/季度/年会换一套分组 key，之前勾选的（比如某一周）在新分组里没意义，直接清空重选
+// 切换周/月/季度/年会换一套分组 key，之前勾选的（比如某一周）在新分组里没意义，直接清空重选；
+// 正在看的周期也要清空，render() 里会自动挑新分组下最新的那个周期
 function setPeriodKind(kind){
   periodKind = kind;
   selectMode = false;
   selectedKeys = new Set();
+  viewPeriodKey = null;
+  salesPage = 0;
   render();
 }
 
@@ -337,9 +652,10 @@ function periodTabsHTML(){
 
 function periodCardHTML(b){
   const selected = selectedKeys.has(b.key);
+  const viewing = !selectMode && viewPeriodKey === b.key;
   return `
-    <li class="period-card ${selectMode ? 'selectable' : ''} ${selected ? 'selected' : ''}"
-        ${selectMode ? `onclick="toggleSelectPeriod('${b.key}')"` : ''}>
+    <li class="period-card selectable ${selected ? 'selected' : ''} ${viewing ? 'viewing' : ''}"
+        onclick="${selectMode ? `toggleSelectPeriod('${b.key}')` : `setViewPeriod('${b.key}')`}">
       ${selectMode ? `<input type="checkbox" class="period-checkbox" ${selected?'checked':''} onclick="event.stopPropagation();toggleSelectPeriod('${b.key}')">` : ''}
       <div class="period-card-main">
         <span class="period-card-label">${b.label}</span>
@@ -393,6 +709,7 @@ function render(){
     app.innerHTML = '';
     document.getElementById('header-actions').innerHTML = headerActionsHTML();
     renderModal();
+    renderSalesRank();
     return;
   }
   if(records.length === 0){
@@ -400,15 +717,20 @@ function render(){
     app.innerHTML = `<p class="empty-hint">还没有历史盘点数据——每天在接单看板点"顾客已经结账离开，移出看板"后，流水会自动记进来。</p>`;
     document.getElementById('header-actions').innerHTML = headerActionsHTML();
     renderModal();
+    renderSalesRank();
     return;
   }
   const dayCount = new Set(records.map(r => r.date)).size;
   document.getElementById('totalHint').textContent = `共 ${dayCount} 天营业数据 · ${records.length} 笔结账`;
 
   currentBuckets = groupByPeriod(periodKind);
+  if(viewPeriodKey == null || !currentBuckets.some(b => b.key === viewPeriodKey)){
+    viewPeriodKey = currentBuckets.length ? currentBuckets[0].key : null;
+  }
   app.innerHTML = `<ul class="period-list">${currentBuckets.map(periodCardHTML).join('')}</ul>`;
   document.getElementById('header-actions').innerHTML = headerActionsHTML();
   renderModal();
+  renderSalesRank();
 }
 
 render();

@@ -347,6 +347,186 @@ const dailyReportsRef = db.collection('dailyReports');
 // 沽清事件是永久流水（不像 dailyOrders 那样按天存），量也很小，直接整表读，
 // 不受上面"查看日期"下拉框影响——库存这张表看的是全部历史，不是某一天
 const soldOutEventsRef = db.collection('soldOutEvents');
+// "现在沽清了哪些菜"的权威名单——soldOutEvents 这张流水表是 2026-09-06 晚上才
+// 上线的，早于它就已经沽清、到现在还没恢复的菜，压根没有对应的 soldOut 事件，
+// 光靠 soldOutEvents 配对会完全看不出这些菜还在沽清中，所以要单独读这份现状
+// 名单，跟事件配对的结果对照着看
+const menuStatusRef = db.collection('menuStatus').doc('soldOut');
+// 名字查找：soldOutEvents 里记录过名字的直接用记录里的，没有事件记录的（上面
+// 说的那种历史缺口）就靠菜品 id 反查名字，跟 gqcp.html 用的是同一份菜单目录
+const DISH_ID_TO_NAME = {};
+const DISH_LIST = [
+{"id": "potBeefTallow", "category": "soupBase", "name": "牛油锅"},
+{"id": "potTomato", "category": "soupBase", "name": "番茄锅（素）"},
+{"id": "potMushroom", "category": "soupBase", "name": "菌汤锅（素）"},
+{"id": "potPorkBone", "category": "soupBase", "name": "骨汤锅"},
+{"id": "potBeefPork", "category": "soupBase", "name": "牛油汤 + 骨汤锅"},
+{"id": "potBeefMushroom", "category": "soupBase", "name": "牛油汤 + 菌汤锅"},
+{"id": "potBeefTomato", "category": "soupBase", "name": "牛油汤 + 番茄锅"},
+{"id": "potTomatoPork", "category": "soupBase", "name": "番茄锅 + 骨汤锅"},
+{"id": "potTomatoMushroom", "category": "soupBase", "name": "番茄锅 + 菌汤锅"},
+{"id": "potMushroomPork", "category": "soupBase", "name": "菌汤锅 + 骨汤锅"},
+{"id": "dipSauce", "category": "soupBase", "name": "蘸料"},
+{"id": "beefTripePremium", "category": "houseSpecial", "name": "极品鲜毛肚"},
+{"id": "porkKidneySliced", "category": "houseSpecial", "name": "大刀腰片"},
+{"id": "beefTripeLayered", "category": "houseSpecial", "name": "草原千层肚"},
+{"id": "duckBlood", "category": "houseSpecial", "name": "鸭血"},
+{"id": "porkLiverTender", "category": "houseSpecial", "name": "嫩滋猪肝"},
+{"id": "malingLuncheonMeat", "category": "houseSpecial", "name": "梅林午餐肉"},
+{"id": "pigBrain", "category": "houseSpecial", "name": "鲜绿脑花"},
+{"id": "spicyTenderBeef", "category": "houseSpecial", "name": "麻辣牛肉"},
+{"id": "seasonedBeef", "category": "houseSpecial", "name": "私房嫩牛肉"},
+{"id": "chickenGizzard", "category": "houseSpecial", "name": "特色小郡肝"},
+{"id": "braisedChickenFeet", "category": "houseSpecial", "name": "特色肥鸡爪"},
+{"id": "beefTendonFresh", "category": "houseSpecial", "name": "特色肥腿筋"},
+{"id": "spicyChickenDrumstick", "category": "houseSpecial", "name": "麻辣鸡腿肉"},
+{"id": "braisedPorkIntestine", "category": "houseSpecial", "name": "特色肥肠"},
+{"id": "braisedBeefTendon", "category": "houseSpecial", "name": "特色肥牛筋儿"},
+{"id": "friedEggViral", "category": "houseSpecial", "name": "网红炸蛋"},
+{"id": "rawEgg", "category": "houseSpecial", "name": "生鸡蛋"},
+{"id": "kingPrawns8", "category": "seafood", "name": "带头大虾"},
+{"id": "seaBassSliced", "category": "seafood", "name": "海鲈鱼片"},
+{"id": "shrimpBallsHandmade", "category": "seafood", "name": "手打虾滑"},
+{"id": "babyCuttlefish", "category": "seafood", "name": "墨鱼仔"},
+{"id": "squid", "category": "seafood", "name": "鱿鱼"},
+{"id": "shrimpDumpling", "category": "seafood", "name": "虾饺"},
+{"id": "japaneseWagyu", "category": "premiumBeef", "name": "日本和牛"},
+{"id": "premiumMarbledFattyBeef", "category": "premiumBeef", "name": "极品雪花肥牛"},
+{"id": "angusBeefSlices", "category": "premiumBeef", "name": "安格斯吊龙"},
+{"id": "lambRoll", "category": "premiumBeef", "name": "羔羊卷"},
+{"id": "beefTongueFresh", "category": "premiumBeef", "name": "现切牛舌"},
+{"id": "fattyBeefRollOriginal", "category": "premiumBeef", "name": "原切肥牛"},
+{"id": "porkBellyFresh", "category": "premiumBeef", "name": "现切五花肉"},
+{"id": "thickPorkSlice", "category": "premiumBeef", "name": "现切老肉片"},
+{"id": "meatballMix", "category": "meatballs", "name": "丸子拼盘"},
+{"id": "porkMeatballsCoriander", "category": "meatballs", "name": "香菜猪肉丸"},
+{"id": "crispySausageJapanese", "category": "meatballs", "name": "日式脆皮肠"},
+{"id": "crabStick", "category": "meatballs", "name": "蟹肉棒"},
+{"id": "fuzhouFishBalls", "category": "meatballs", "name": "福州鱼丸"},
+{"id": "juicyBeefBalls", "category": "meatballs", "name": "撒尿牛丸"},
+{"id": "chickenMeatballs", "category": "meatballs", "name": "鸡肉丸"},
+{"id": "mushroomPlatter", "category": "mushrooms", "name": "菌类拼盘"},
+{"id": "shiitakeMushroom", "category": "mushrooms", "name": "香菇"},
+{"id": "enokiMushroom", "category": "mushrooms", "name": "金针菇"},
+{"id": "kingOysterMushroom", "category": "mushrooms", "name": "杏鲍菇"},
+{"id": "oysterMushroom", "category": "mushrooms", "name": "平菇"},
+{"id": "blackFungus", "category": "mushrooms", "name": "黑木耳"},
+{"id": "vegPlatter", "category": "vegetables", "name": "蔬菜拼盘"},
+{"id": "soybeanRoll", "category": "vegetables", "name": "响铃卷"},
+{"id": "beancurdSticks", "category": "vegetables", "name": "腐竹"},
+{"id": "bambooSlicesSunan", "category": "vegetables", "name": "蜀南竹笋片"},
+{"id": "driedBeanCurdSheet", "category": "vegetables", "name": "干豆皮"},
+{"id": "deepFriedTofu", "category": "vegetables", "name": "油豆腐"},
+{"id": "wulongVermicelli", "category": "vegetables", "name": "武隆粉丝"},
+{"id": "lotusRootSlices", "category": "vegetables", "name": "藕片"},
+{"id": "broccoliSprouts", "category": "vegetables", "name": "西兰花苔"},
+{"id": "riceCake", "category": "vegetables", "name": "年糕"},
+{"id": "crownDaisy", "category": "vegetables", "name": "茼蒿菜"},
+{"id": "pakChoi", "category": "vegetables", "name": "上海青"},
+{"id": "lettuce", "category": "vegetables", "name": "生菜"},
+{"id": "kelpSeaweed", "category": "vegetables", "name": "海带"},
+{"id": "konjacNoodles", "category": "vegetables", "name": "魔芋丝"},
+{"id": "chineseYam", "category": "vegetables", "name": "山药"},
+{"id": "softTofu", "category": "vegetables", "name": "豆腐"},
+{"id": "instantNoodles", "category": "vegetables", "name": "方便面"},
+{"id": "chineseCabbage", "category": "vegetables", "name": "大白菜"},
+{"id": "spinach", "category": "vegetables", "name": "菠菜"},
+{"id": "sweetCorn", "category": "vegetables", "name": "甜玉米"},
+{"id": "beanSprout", "category": "vegetables", "name": "豆芽"},
+{"id": "whiteRadish", "category": "vegetables", "name": "白萝卜"},
+{"id": "babyKelpSprouts", "category": "vegetables", "name": "海带芽"},
+{"id": "longkouVermicelli", "category": "vegetables", "name": "龙口粉丝"},
+{"id": "shreddedPotato", "category": "vegetables", "name": "千丝土豆"},
+{"id": "potatoSlices", "category": "vegetables", "name": "土豆"},
+{"id": "crispyPorkStrips", "category": "snacks", "name": "现炸酥肉"},
+{"id": "brownSugarRiceCake", "category": "snacks", "name": "红糖糍粑"},
+{"id": "blackFungusSalad", "category": "snacks", "name": "开胃黑木耳"},
+{"id": "friedKingPrawn", "category": "snacks", "name": "炸虾"},
+{"id": "kimchi", "category": "snacks", "name": "韩国泡菜"},
+{"id": "springRoll", "category": "snacks", "name": "春卷"},
+{"id": "cucumberSaladSpicy", "category": "snacks", "name": "凉拌黄瓜"},
+{"id": "friedDoughSticks", "category": "snacks", "name": "油条"},
+{"id": "housePickledVeg", "category": "snacks", "name": "秘制泡菜"},
+{"id": "eggFriedRiceClassic", "category": "snacks", "name": "特色蛋炒饭"},
+{"id": "steamedRice", "category": "snacks", "name": "白米饭"},
+{"id": "spiceBag", "category": "snacks", "name": "辣袋"},
+{"id": "mangoPomeloSago", "category": "desserts", "name": "杨枝甘露"},
+{"id": "matchaShavedIce", "category": "desserts", "name": "抹茶绵绵冰"},
+{"id": "chocoShavedIce", "category": "desserts", "name": "巧克力绵绵冰"},
+{"id": "strawberryShavedIce", "category": "desserts", "name": "草莓绵绵冰"},
+{"id": "mangoShavedIce", "category": "desserts", "name": "芒果绵绵冰"},
+{"id": "milkShavedIce", "category": "desserts", "name": "牛奶绵绵冰"},
+{"id": "cheeseCake", "category": "desserts", "name": "芝士蛋糕"},
+{"id": "brownies", "category": "desserts", "name": "布朗尼"},
+{"id": "friedSteamedBun", "category": "desserts", "name": "炸馒头"},
+{"id": "chengduRiceDumpling", "category": "desserts", "name": "老成都醪糟汤圆（黑芝麻）"},
+{"id": "iceJellyBrownSugar", "category": "desserts", "name": "特色冰粉"},
+{"id": "cheeseStrawberry", "category": "drinks", "name": "芝芝莓莓"},
+{"id": "cheeseMango", "category": "drinks", "name": "芝芝芒芒"},
+{"id": "cheeseGrape", "category": "drinks", "name": "芝芝葡萄"},
+{"id": "strawberryYakult", "category": "drinks", "name": "草莓养乐多"},
+{"id": "mangoLemonTea", "category": "drinks", "name": "芒果柠檬茶"},
+{"id": "jasmineStrawberry", "category": "drinks", "name": "茉莉草莓"},
+{"id": "passionFruitLemonTea", "category": "drinks", "name": "百香果柠檬茶"},
+{"id": "kiwiLemonTea", "category": "drinks", "name": "猕猴桃柠檬茶"},
+{"id": "honeyLightMilkTea", "category": "drinks", "name": "蜜香轻乳茶"},
+{"id": "pomegranateLemonTea", "category": "drinks", "name": "红石榴柠檬茶"},
+{"id": "jasmineGreenGrape", "category": "drinks", "name": "茉莉青提"},
+{"id": "waxberryLemonTea", "category": "drinks", "name": "杨梅柠檬茶"},
+{"id": "jasmineLightMilkTea", "category": "drinks", "name": "茉莉轻乳茶"},
+{"id": "sourPlumDrink", "category": "drinks", "name": "酸梅汤"},
+{"id": "honeyLemonTea", "category": "drinks", "name": "蜂蜜柠檬茶"},
+{"id": "wineMurariPinotGrigio", "category": "fineWines", "name": "Murari Pinot Grigio 卡斯特拉尼灰皮诺"},
+{"id": "wineBouchardSauvignonBlanc", "category": "fineWines", "name": "Bouchard Aine & Fils Sauvignon Blanc 长相思"},
+{"id": "winePeterRiesling", "category": "fineWines", "name": "Peter & Peter Riesling"},
+{"id": "wineNauMaiSauvignonBlanc", "category": "fineWines", "name": "Nau Mai Sauvignon Blanc"},
+{"id": "wineCasalVentozelaAlvarinho", "category": "fineWines", "name": "Casal de Ventozela Alvarinho 阿瓦里诺"},
+{"id": "wineDomaneWachauGruner", "category": "fineWines", "name": "Domäne Wachau Grüner Veltliner Federspiel"},
+{"id": "wineLouisJadotChardonnay", "category": "fineWines", "name": "Louis Jadot Bourgogne Chardonnay 'Couvent des Jacobins' 勃艮第霞多丽"},
+{"id": "wineMarquisGoulaineSancerre", "category": "fineWines", "name": "Marquis de Goulaine Sancerre 'Les Lorys' 桑塞尔"},
+{"id": "wineOrquestraTempranillo", "category": "fineWines", "name": "Orquestra Tempranillo 丹魄乐团"},
+{"id": "wineReserveAubeSyrahMerlot", "category": "fineWines", "name": "Reserve de L'Aube Syrah Merlot 奥布西拉梅洛珍藏"},
+{"id": "wineChateauGrandVallons", "category": "fineWines", "name": "Château Les Grand Vallons 波尔多-城堡"},
+{"id": "wineFincaMonicaCrianza", "category": "fineWines", "name": "Finca Mónica Crianza"},
+{"id": "wineFinDelMundoMalbec", "category": "fineWines", "name": "Fin del Mundo Reserva Malbec 珍藏马尔贝克"},
+{"id": "wineSuraniPrimitivo", "category": "fineWines", "name": "Surani Primitivo di Manduria"},
+{"id": "wineLouisJadotPinotNoir", "category": "fineWines", "name": "Louis Jadot Bourgogne Pinot Noir 'Couvent des Jacobins' 勃艮第黑皮诺"},
+{"id": "wineHautsLynchMoussas", "category": "fineWines", "name": "Les Hauts de Lynch Moussas 上梦多克"},
+{"id": "wineColombetteGrenacheRose", "category": "fineWines", "name": "Domaine La Colombette Grenache Rosé 歌海娜玫瑰庄"},
+{"id": "wineBerneRomanceRose", "category": "fineWines", "name": "Château de Berne Romance Rosé 普罗旺斯玫瑰"},
+{"id": "wineSerenaProsecco", "category": "fineWines", "name": "Serena Prosecco Frizzante 罗普罗蜜克(单人装20cl)"},
+{"id": "wineMontegrandeFrizzante", "category": "fineWines", "name": "Montegrande Bianco Frizzante 蒙特格兰德(瓶)"},
+{"id": "wineChampagneTheophile", "category": "fineWines", "name": "Champagne Theophile Brut NV 香槟(瓶)"},
+{"id": "wineColaRegular", "category": "softDrinks", "name": "可乐 330ml"},
+{"id": "wineColaZeroSugar", "category": "softDrinks", "name": "无糖可乐 330ml"},
+{"id": "wineColaDiet", "category": "softDrinks", "name": "健怡可乐 330ml"},
+{"id": "wineSevenUpRegular", "category": "softDrinks", "name": "七喜 300ml"},
+{"id": "wineSevenUpDiet", "category": "softDrinks", "name": "无糖七喜 300ml"},
+{"id": "wineFanta", "category": "softDrinks", "name": "芬达 Fanta 300ml"},
+{"id": "wineJdb", "category": "softDrinks", "name": "加多宝 Jiaduobao"},
+{"id": "wineAloe:drinkSmall", "category": "softDrinks", "name": "芦荟汁（小）Aloe Juice"},
+{"id": "wineAloe:drinkLarge", "category": "softDrinks", "name": "芦荟汁（大）Aloe Juice"},
+{"id": "wineSoyDrink", "category": "softDrinks", "name": "维他豆奶(小) Soy Drink"},
+{"id": "wineCoconutJuice", "category": "softDrinks", "name": "椰树牌椰汁"},
+{"id": "waterStill:drinkSmall", "category": "softDrinks", "name": "纯净水（小 330ml）"},
+{"id": "waterStill:drinkLarge", "category": "softDrinks", "name": "纯净水（大 750ml）"},
+{"id": "waterSparkling:drinkSmall", "category": "softDrinks", "name": "气泡水（小 330ml）"},
+{"id": "waterSparkling:drinkLarge", "category": "softDrinks", "name": "气泡水（大 750ml）"},
+{"id": "wineAppleJuice", "category": "softDrinks", "name": "苹果汁"},
+{"id": "wineOrangeJuice", "category": "softDrinks", "name": "橙汁"},
+{"id": "wineCranberryJuice", "category": "softDrinks", "name": "蔓越莓汁"},
+{"id": "wineTsingtao", "category": "beer", "name": "青岛啤酒 330ml"},
+{"id": "wineAsahi", "category": "beer", "name": "朝日啤酒 330ml"},
+{"id": "wineHeineken", "category": "beer", "name": "喜力啤酒 330ml"},
+{"id": "wineHeineken00", "category": "beer", "name": "喜力0.0 330ml"},
+{"id": "wineGuinness", "category": "beer", "name": "健力士 500ml"},
+{"id": "wineGuinness00", "category": "beer", "name": "健力士0.0 500ml"},
+{"id": "teaDianhong", "category": "tea", "name": "滇红茶"},
+{"id": "teaZhuyeqing", "category": "tea", "name": "竹叶青茶"},
+{"id": "teaKuqiao", "category": "tea", "name": "苦荞茶"},
+];
+DISH_LIST.forEach(d => { DISH_ID_TO_NAME[d.id] = d.name; });
+
 
 // 功能分类按钮：一天的数据也有好几张表，按用途分组，点哪组看哪组
 const SYSDIAG_CATEGORIES = [
@@ -384,12 +564,14 @@ async function sysDiagInit(){
   const resultsEl = document.getElementById('sysdiag-results');
   if(resultsEl) resultsEl.innerHTML = '<p class="empty-note">加载中…</p>';
   try{
-    const [reportsSnap, soldOutSnap] = await Promise.all([
+    const [reportsSnap, soldOutSnap, menuStatusDoc] = await Promise.all([
       dailyReportsRef.orderBy('date', 'desc').limit(60).get(),
       soldOutEventsRef.get(),
+      menuStatusRef.get(),
     ]);
     sysDiagReports = reportsSnap.docs.map(d => d.data());
-    sysDiagStockoutHTML = sysDiagRenderStockoutIntervals(soldOutSnap.docs.map(d => d.data()));
+    const currentSoldOutIds = (menuStatusDoc.exists && menuStatusDoc.data().ids) || [];
+    sysDiagStockoutHTML = sysDiagRenderStockoutIntervals(soldOutSnap.docs.map(d => d.data()), currentSoldOutIds);
   }catch(e){
     if(resultsEl) resultsEl.innerHTML = `<p class="empty-note">加载失败：${escapeHtml(e.message || e)}</p>`;
     return;
@@ -639,7 +821,14 @@ function sysDiagRenderTableAddonFrequency(orders){
 // 独立的一条时间线，按时间正序走一遍配对：遇到 soldOut 就开一段（已经开着的
 // 就当重复点击，忽略），遇到 restock 就把最近开着的那一段收尾；最后还开着
 // 没收尾的，说明这道菜现在还在沽清中，到"现在"为止算天数。
-function sysDiagRenderStockoutIntervals(events){
+//
+// currentSoldOutIds 是"沽清菜品"页当前的沽清名单（menuStatus/soldOut）——
+// soldOutEvents 这张流水表是 2026-09-06 晚上才上线的，在这之前就已经沽清、
+// 到现在还没恢复的菜，压根没留下 soldOut 事件，光靠事件配对完全看不出这些菜
+// 还在沽清中。这里拿现状名单跟配对结果对一遍：名单里有、但事件配对却查不到
+// "还开着"的那道菜，说明是统计上线前就沽清的历史缺口，补一行进去，只是标注
+// 起始时间未知，不编造一个假的开始时间。
+function sysDiagRenderStockoutIntervals(events, currentSoldOutIds){
   const byDish = new Map();
   events.slice().sort((a,b) => a.createdAt - b.createdAt).forEach(e => {
     if(!byDish.has(e.dishId)) byDish.set(e.dishId, { name: e.name, open: null, intervals: [] });
@@ -657,15 +846,21 @@ function sysDiagRenderStockoutIntervals(events){
     d.intervals.forEach(iv => rows.push({ dishId, name: d.name, start: iv.start, end: iv.end, ongoing: false }));
     if(d.open != null) rows.push({ dishId, name: d.name, start: d.open, end: null, ongoing: true });
   });
+  (currentSoldOutIds || []).forEach(dishId => {
+    const d = byDish.get(dishId);
+    if(d && d.open != null) return;  // 已经从事件配对里算出"还在沽清中"了，不用重复补
+    const name = (d && d.name) || DISH_ID_TO_NAME[dishId] || dishId;
+    rows.push({ dishId, name, start: null, end: null, ongoing: true });
+  });
   rows.sort((a,b) => (b.end || now) - (a.end || now));
   return sysDiagQueryBlock('7', '沽清区间',
     '把每道菜的沽清、恢复售卖两条记录配对起来，算出每次沽清了多久（全部历史，不受上面日期选择影响，仍在沽清中的排最前面）',
     [{label:'菜品'},{label:'沽清开始'},{label:'恢复售卖'},{label:'沽清天数',num:true}],
     rows, r => `<tr class="${r.ongoing ? 'total-row' : ''}">
       <td>${escapeHtml(r.name)}</td>
-      <td>${new Date(r.start).toLocaleString('zh-CN', { hour12:false })}</td>
+      <td>${r.start == null ? '未记录（早于统计上线）' : new Date(r.start).toLocaleString('zh-CN', { hour12:false })}</td>
       <td>${r.ongoing ? '仍在沽清中' : new Date(r.end).toLocaleString('zh-CN', { hour12:false })}</td>
-      <td class="num">${(((r.end || now) - r.start) / 86400000).toFixed(1)}</td>
+      <td class="num">${r.start == null ? '—' : (((r.end || now) - r.start) / 86400000).toFixed(1)}</td>
     </tr>`);
 }
 

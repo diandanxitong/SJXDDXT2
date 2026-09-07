@@ -114,10 +114,13 @@ service cloud.firestore {
     match /menuOverrides/{docId} {
       allow read: if true;
       allow write: if request.auth != null
-                    && request.resource.data.keys().hasOnly(['category', 'name', 'price', 'deleted', 'isNew', 'updatedAt'])
+                    && request.resource.data.keys().hasOnly(['category', 'name', 'price', 'sizePrices', 'deleted', 'isNew', 'updatedAt'])
                     && (!('category' in request.resource.data) || request.resource.data.category is string)
                     && (!('name' in request.resource.data) || (request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 60))
                     && (!('price' in request.resource.data) || (request.resource.data.price is number && request.resource.data.price >= 0 && request.resource.data.price <= 500))
+                    // sizePrices 是"规格 key -> 价格"的一份小 map（大份/小份、杯/瓶那种多规格菜品用），
+                    // 规则语法没法逐个 key 校验，只做整体是 map 这一层兜底
+                    && (!('sizePrices' in request.resource.data) || request.resource.data.sizePrices is map)
                     && (!('deleted' in request.resource.data) || request.resource.data.deleted == true)
                     && (!('isNew' in request.resource.data) || request.resource.data.isNew == true)
                     && request.resource.data.updatedAt is number;

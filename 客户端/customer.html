@@ -1601,6 +1601,11 @@ function applyOverridesToBaseDishData(overrides){
       const next = Object.assign({}, d, { i18n: Object.assign({}, d.i18n) });
       if(o.category) next.category = o.category;
       if(typeof o.price === 'number' && !next.sizes) next.price = o.price;
+      if(o.sizePrices && next.sizes){
+        next.sizes = next.sizes.map(s => (typeof o.sizePrices[s.key] === 'number')
+          ? Object.assign({}, s, { price: o.sizePrices[s.key] })
+          : s);
+      }
       if(o.name){
         LANG_ORDER.forEach(lang => {
           next.i18n[lang] = Object.assign({}, next.i18n[lang], { name: o.name });

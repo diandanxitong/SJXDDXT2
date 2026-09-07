@@ -117,7 +117,7 @@ firebase.initializeApp({
   .row-actions button:hover{color:var(--brand);}
   .tag{font-size:11px;font-weight:700;white-space:nowrap;}
   .tag-sold-out{color:var(--brand);}
-  .tag-sizes{color:var(--ink-faint);}
+  .tag-sizes{font-size:12.5px;color:var(--ink-soft);white-space:nowrap;}
   .tag-new{color:var(--ok);}
   .empty-hint{color:var(--ink-soft);font-size:13px;padding:24px 2px;max-width:520px;line-height:1.6;}
 
@@ -162,7 +162,7 @@ firebase.initializeApp({
 <header>
   <h1>商品管理</h1>
   <div class="header-actions">
-    <a class="btn btn-outline" href="gqcp.html">沽清菜品</a>
+    <a class="btn btn-danger-outline" href="gqcp.html">沽清菜品</a>
     <button class="btn btn-primary" onclick="openAddModal()">+ 新增菜品</button>
   </div>
 </header>
@@ -193,6 +193,9 @@ function escapeHtml(s){
 // 所以这里改了名字/价格，顾客端会跟着变
 const CATEGORY_ORDER = ["soupBase", "houseSpecial", "seafood", "premiumBeef", "meatballs", "mushrooms", "vegetables", "snacks", "desserts", "drinks", "softDrinks", "tea", "fineWines", "beer"];
 const CATEGORY_LABELS = {"soupBase": "锅底", "houseSpecial": "招牌必点", "seafood": "海鲜", "premiumBeef": "精品肉类", "meatballs": "丸子", "mushrooms": "菌菇", "vegetables": "素菜", "snacks": "凉菜/小吃", "desserts": "甜品", "drinks": "果香鲜饮", "softDrinks": "软饮/水", "tea": "茶", "fineWines": "Fine Wines", "beer": "啤酒"};
+// 多规格菜品（大份/小份、杯/瓶……）用的规格标签，跟顾客端 customer.html 里
+// 同一套 size key 对应
+const SIZE_LABELS = { large: "大", small: "小", glass: "杯", bottle: "瓶", drinkSmall: "小", drinkLarge: "大" };
 const BASE_CATALOG = [
 {"id": "potBeefTallow", "category": "soupBase", "name": "牛油锅", "price": 16.6},
 {"id": "potTomato", "category": "soupBase", "name": "番茄锅（素）", "price": 15.6},
@@ -404,12 +407,17 @@ menuStatusRef.onSnapshot(snap => {
 function mergedRows(){
   const rows = BASE_CATALOG.map(d => {
     const o = overridesById.get(d.id);
+    const sizes = d.sizes
+      ? d.sizes.map(s => (o && o.sizePrices && typeof o.sizePrices[s.key] === 'number')
+          ? Object.assign({}, s, { price: o.sizePrices[s.key] })
+          : s)
+      : null;
     return {
       id: d.id,
       category: (o && o.category) || d.category,
       name: (o && o.name) || d.name,
-      price: d.sizes ? null : ((o && typeof o.price === 'number') ? o.price : d.price),
-      sizes: d.sizes || null,
+      price: sizes ? null : ((o && typeof o.price === 'number') ? o.price : d.price),
+      sizes,
       deleted: !!(o && o.deleted),
       isNew: false,
       hasOverride: !!o,
@@ -457,12 +465,16 @@ function categoryFilterOptionsHTML(){
 }
 
 function formatPrice(v){ return v == null ? '' : '€' + v.toFixed(2); }
+function sizeLabel(key){ return SIZE_LABELS[key] || key; }
+function sizesPriceHTML(sizes){
+  return sizes.map(s => `${sizeLabel(s.key)} ${formatPrice(s.price)}`).join(' / ');
+}
 
 function rowHTML(r){
   const rowClass = [r.deleted ? 'row-deleted' : '', r.isNew ? 'row-new' : ''].filter(Boolean).join(' ');
   const soldOut = soldOutIds.has(r.id);
   const priceCell = r.sizes
-    ? `<span class="tag tag-sizes">多规格</span>`
+    ? `<span class="tag-sizes">${sizesPriceHTML(r.sizes)}</span>`
     : formatPrice(r.price);
   const actions = r.deleted
     ? `<button onclick="openRestoreModal('${r.id}')">恢复</button>`
@@ -549,6 +561,12 @@ function closeModal(){
   renderModal();
 }
 
+function onSizeSelectChange(){
+  const sel = document.getElementById('form-size-key');
+  const opt = sel.selectedOptions[0];
+  document.getElementById('form-price').value = parseFloat(opt.dataset.price).toFixed(2);
+}
+
 async function submitEditForm(){
   const row = findRow(modal.id);
   const name = (document.getElementById('form-name').value || '').trim();
@@ -557,7 +575,14 @@ async function submitEditForm(){
   const priceStr = priceInput ? priceInput.value.trim() : '';
   if(!name){ saveError = '请输入菜品名称'; renderModal(); return; }
   const payload = { category, name, updatedAt: Date.now() };
-  if(priceInput){
+  if(row.sizes){
+    const price = parseFloat(priceStr);
+    if(!priceStr || isNaN(price) || price < 0){ saveError = '请输入正确的价格'; renderModal(); return; }
+    const sizeKey = document.getElementById('form-size-key').value;
+    const existing = overridesById.get(modal.id);
+    const sizePrices = Object.assign({}, existing && existing.sizePrices, { [sizeKey]: price });
+    payload.sizePrices = sizePrices;
+  }else if(priceInput){
     const price = parseFloat(priceStr);
     if(!priceStr || isNaN(price) || price < 0){ saveError = '请输入正确的价格'; renderModal(); return; }
     payload.price = price;
@@ -595,6 +620,15 @@ async function submitAddForm(){
 }
 
 async function confirmDelete(){
+  const userEl = document.getElementById('del-auth-user');
+  const passEl = document.getElementById('del-auth-pass');
+  const userInput = (userEl && userEl.value || '').trim();
+  const passInput = (passEl && passEl.value) || '';
+  if(userInput !== 'admingk' || passInput !== '666666'){
+    const err = document.getElementById('del-auth-error');
+    if(err) err.textContent = '账号或密码错误';
+    return;
+  }
   const { id, isNew } = modal;
   modal = null;
   renderModal();
@@ -670,7 +704,16 @@ function renderModal(){
             <select id="form-category" class="field-input">${categorySelectHTML(row.category)}</select>
           </div>
           ${row.sizes
-            ? `<p class="field-note">该菜品是多规格定价（大份/小份或杯/瓶），暂不支持在这里改价格。</p>`
+            ? `<div class="field">
+                <label class="field-label">规格</label>
+                <select id="form-size-key" class="field-input" onchange="onSizeSelectChange()">
+                  ${row.sizes.map(s => `<option value="${s.key}" data-price="${s.price}">${sizeLabel(s.key)}</option>`).join('')}
+                </select>
+              </div>
+              <div class="field">
+                <label class="field-label">价格（€）</label>
+                <input type="text" inputmode="decimal" id="form-price" class="field-input" value="${row.sizes[0].price.toFixed(2)}" autocomplete="off">
+              </div>`
             : `<div class="field">
                 <label class="field-label">价格（€）</label>
                 <input type="text" inputmode="decimal" id="form-price" class="field-input" value="${row.price.toFixed(2)}" autocomplete="off">
@@ -693,6 +736,15 @@ function renderModal(){
         <div class="modal-box">
           <p class="modal-title">下架「${escapeHtml(row.name)}」？</p>
           <p class="confirm-sub">${modal.isNew ? '这是新增的菜品，删除后无法恢复。' : '下架后顾客扫码点单将看不到这道菜，随时可以在列表里点"恢复"。'}</p>
+          <div class="field">
+            <label class="field-label">管理员账号</label>
+            <input type="text" id="del-auth-user" class="field-input" autocomplete="off">
+          </div>
+          <div class="field">
+            <label class="field-label">管理员密码</label>
+            <input type="password" id="del-auth-pass" class="field-input" autocomplete="off" onkeydown="if(event.key==='Enter') confirmDelete()">
+          </div>
+          <p class="field-error" id="del-auth-error"></p>
           <div class="modal-actions">
             <button class="btn btn-outline" onclick="closeModal()">取消</button>
             <button class="btn btn-danger" onclick="confirmDelete()">${modal.isNew ? '确认删除' : '确认下架'}</button>

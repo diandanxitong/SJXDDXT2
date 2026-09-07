@@ -1746,9 +1746,11 @@ function clearSharedCart(){
 // 这样顾客之后再加菜下单，才不会把这些已经成功的菜又带上去重复下单
 function reconcilePendingSubmits(){
   if(!state.pendingSubmitAttempts.length || !liveTableOrders.length) return;
+  let anyResolved = false;
   state.pendingSubmitAttempts = state.pendingSubmitAttempts.filter(attempt => {
     const matched = liveTableOrders.find(o => o.createdAt === attempt.createdAt && itemsSignature(o.items) === attempt.signature);
     if(!matched) return true;
+    anyResolved = true;
     attempt.dishIds.forEach((dishId, idx) => {
       const attemptedQty = attempt.items[idx].qty;
       const cur = state.items[dishId];
@@ -1760,6 +1762,11 @@ function reconcilePendingSubmits(){
     });
     return false;
   });
+  // 确认过"这次提交其实成功了"，说明这份共享草稿里对应的内容已经变成正式订单——
+  // 顺手清一次草稿，不然万一当时清空草稿那个请求也卡住/超时了，同桌其他设备会
+  // 一直以为这些菜"还没提交"，继续叠加甚至重复下单（这里补的是清空草稿本身可能
+  // 跟建单一样超时的那个缺口，跟建单成功与否是两件事）
+  if(anyResolved) clearSharedCart();
 }
 
 function onTableOrdersChanged(){
@@ -2557,11 +2564,19 @@ async function submitOrder(){
     table: state.table, items, createdAt: Date.now(),
     nickname: state.orderNickname || '', partySize: state.orderPartySize || 1,
   };
+  const signature = itemsSignature(items);
+
+  // 本机是不是已经有一次"内容完全一样、还没确认成没成功"的提交挂着——如果有，
+  // 说明这次点"确认下单"其实是在重试上一次可能只是超时、其实已经成功的那次尝试。
+  // 网络差的时候，真实重试间隔可能远超下面 3 秒/15 秒那两道限时检查的窗口，所以
+  // 认出"这是同一次尝试的重试"之后，要去查一次服务器上有没有这笔单子，不设时间
+  // 上限——只要签名对得上，就认定是它，不再重新建一笔
+  const staleAttempt = state.pendingSubmitAttempts.find(a => a.signature === signature);
 
   // 提交请求可能卡住/超时，但服务器那边实际上已经建单成功——先记一笔"提交过什么"，
   // 万一等下报错/卡住，本桌订单实时监听那边收到这笔单子推送时能对上号，自动把这些菜
   // 从购物车扣掉（见 reconcilePendingSubmits），不会等到成功回执才清购物车
-  const pendingAttempt = { dishIds: itemDishIds, items, createdAt: order.createdAt, signature: itemsSignature(items) };
+  const pendingAttempt = { dishIds: itemDishIds, items, createdAt: order.createdAt, signature };
   state.pendingSubmitAttempts.push(pendingAttempt);
 
   let docId = null;
@@ -2570,10 +2585,17 @@ async function submitOrder(){
     priorOrders = await fetchTableOrders(state.table);
     order.isAddOn = priorOrders.length > 0;
 
-    // 两道去重保护：命中任何一道，都不再重复建单，直接借用已经存在的那一笔当作
+    if(staleAttempt){
+      docId = findRecentDuplicateOrder(priorOrders, items, Infinity);
+      docId = docId && docId.id;
+    }
+
+    // 三道去重保护：命中任何一道，都不再重复建单，直接借用已经存在的那一笔当作
     // 这次提交的结果——不提示、不报错，安安静静跳去下单成功页，反正前面已经下成了
-    docId = findRecentDuplicateOrder(priorOrders, items, 3000);
-    docId = docId && docId.id;
+    if(!docId){
+      docId = findRecentDuplicateOrder(priorOrders, items, 3000);
+      docId = docId && docId.id;
+    }
     if(!docId){
       docId = await claimSharedCartAndSubmit(order);
       if(!docId){

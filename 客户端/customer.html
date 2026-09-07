@@ -70,6 +70,13 @@
     content:"";position:absolute;top:0;left:0;right:0;height:4px;
     background:linear-gradient(90deg,var(--cinnabar),var(--gold) 50%,var(--cinnabar));
   }
+  /* 员工代客点单常用平板横放操作——横屏时把这套本来按手机竖屏设计的单栏
+     布局适度放宽，不然中间会挤成一条窄栏、两边全是空白。只放宽宽度，
+     内部卡片/按钮排布不变，风险最小 */
+  @media (orientation:landscape){
+    body.staff-mode #app{max-width:760px;}
+    body.staff-mode .bottom-bar-inner{max-width:720px;}
+  }
   .eyebrow{
     font-size:12px;letter-spacing:.14em;color:var(--gold-ink);
     text-transform:uppercase;font-weight:700;
@@ -1586,11 +1593,15 @@ function isDishVisible(id){ return !ZH_ONLY_DISH_IDS.includes(id) || state.lang 
 
 const params = new URLSearchParams(location.search);
 const urlTable = params.get('table');
+// 员工代客点单（从 index.html 总控台"员工代客点单"进来，带 ?staff=1）：不用看
+// 欢迎动画、也不用选语言，直接进选桌/点菜——员工是替客人操作，不是客人自己在看
+const isStaffMode = params.get('staff') === '1';
+document.body.classList.toggle('staff-mode', isStaffMode);
 
 let state = {
   table: urlTable || null,
   lockedByUrl: !!urlTable,
-  screen: 'welcome',
+  screen: isStaffMode ? (urlTable ? 'menu' : 'pick') : 'welcome',
   lang: 'zh',
   welcomeVisible: false,
   langMenuOpen: false,

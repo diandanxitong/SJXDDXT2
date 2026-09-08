@@ -1,3 +1,4 @@
 .claude/settings.local.json
 scripts/node_modules/
 .impeccable/
+.firebase/

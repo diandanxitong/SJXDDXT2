@@ -107,14 +107,12 @@
     background:linear-gradient(90deg, var(--gold-line), transparent 85%);
   }
   /* ---------- panda nav ----------
-     On the menu screen it's docked inline in the header (.menu-panda-slot)
-     so it scrolls away with the page instead of floating forever; #panda-nav
-     is the fixed fallback root used on the other (less-visited) screens. */
-  /* "我的" 在上、语言切换在下，竖着排在右上角——"我的"点了直接跳"我的订单"页，
-     不再经过下拉菜单；语言切换是独立按钮，图标用 lang.webp（那个通用的"文/A"
-     翻译图标） */
+     固定悬浮在右上角，所有屏幕（含菜单页）都一样，跟着页面滚动一直跟随，
+     不会滚走（顾客要求的：2026-09-08 之前菜单页是嵌在页头里的，会随内容
+     滚出屏幕）。"我的"在上、语言切换在下，竖着排——"我的"点了直接跳"我的
+     订单"页，不再经过下拉菜单；语言切换是独立按钮，图标用 lang.webp（那个
+     通用的"文/A"翻译图标） */
   #panda-nav{position:fixed;top:18px;right:18px;z-index:60;display:flex;flex-direction:column;align-items:flex-end;gap:10px;}
-  .menu-panda-slot{position:relative;z-index:56;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:10px;justify-self:end;min-width:0;}
   .panda-overlay{position:fixed;inset:0;z-index:55;background:none;border:none;padding:0;margin:0;cursor:default;}
   .my-order-btn{
     position:relative;z-index:56;
@@ -133,7 +131,7 @@
     font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;
     border:1.5px solid var(--bg-soft);
   }
-  .my-order-label{font-size:11.5px;font-weight:700;color:var(--text-muted);}
+  .my-order-label{font-size:13.5px;font-weight:800;color:var(--text-muted);white-space:nowrap;}
   .my-order-btn:hover .my-order-label{color:var(--gold-ink);}
 
   /* ---------- menu ---------- */
@@ -233,6 +231,25 @@
     0%{opacity:0;transform:translateX(-50%) translateY(-10px) scale(.94);}
     10%{opacity:1;transform:translateX(-50%) translateY(0) scale(1);}
     85%{opacity:1;transform:translateX(-50%) translateY(0) scale(1);}
+    100%{opacity:0;transform:translateX(-50%) translateY(-8px) scale(.96);}
+  }
+
+  /* ---------- 页面顶部的"刚刚有人下单啦~"小气泡：一闪而过，1s 内自己淡出，
+     跟上面 nag-toast（2.6s，提醒顾客漏选项时用，要看得清楚）用途不同，
+     所以单独一套动画，不复用同一个 keyframes ---------- */
+  .order-bubble{
+    position:fixed;left:50%;top:14px;z-index:90;transform:translateX(-50%);
+    max-width:82vw;text-align:center;pointer-events:none;
+    background:linear-gradient(160deg,var(--jade) 0%,var(--jade-dark) 100%);
+    color:#fff;font-size:13px;font-weight:800;line-height:1.4;
+    padding:9px 16px;border-radius:14px;border:1px solid var(--gold-line);
+    box-shadow:0 14px 32px rgba(0,0,0,.45);
+    animation:order-bubble-life 1s ease forwards;
+  }
+  @keyframes order-bubble-life{
+    0%{opacity:0;transform:translateX(-50%) translateY(-10px) scale(.94);}
+    15%{opacity:1;transform:translateX(-50%) translateY(0) scale(1);}
+    60%{opacity:1;transform:translateX(-50%) translateY(0) scale(1);}
     100%{opacity:0;transform:translateX(-50%) translateY(-8px) scale(.96);}
   }
   .dish-panel{flex:1;min-width:0;padding-right:16px;}
@@ -1047,7 +1064,7 @@ const I18N = {
   zh:{
     appTitle:"WELCOME~",
     tablePrefix:"桌 ", tableEyebrow:"桌号",
-    menuTitle:"菜单", myPot:"我的", cart:"购物车",
+    menuTitle:"菜单", cart:"购物车",
     addToCart:"加入购物车", addToCartSub:"小纠结？先丢进购物车！",
     callWaiter:"呼叫服务员", callWaiterSub:"随叫随到~", calling:"呼叫中…", waiterCalled:"已呼叫服务员！",
     orderNow:"立即下单", orderNowSub:"不再犹豫！", ordering:"下单中…",
@@ -1077,7 +1094,7 @@ const I18N = {
   zhHant:{
     appTitle:'WELCOME~',
     tablePrefix:'桌 ', tableEyebrow:'桌號',
-    menuTitle:'菜單', myPot:'我的', cart:'購物車',
+    menuTitle:'菜單', cart:'購物車',
     addToCart:'加入購物車', addToCartSub:'小糾結？先丟進購物車！',
     callWaiter:'呼叫服務員', callWaiterSub:'隨叫隨到~', calling:'呼叫中…', waiterCalled:'已呼叫服務員！',
     orderNow:'立即下單', orderNowSub:'不再猶豫！', ordering:'下單中…',
@@ -1107,7 +1124,7 @@ const I18N = {
   en:{
     appTitle:"WELCOME~",
     tablePrefix:"Table ", tableEyebrow:"Table",
-    menuTitle:"Menu", myPot:"Mine", cart:"Cart",
+    menuTitle:"Menu", cart:"Cart",
     addToCart:"Add to Cart", addToCartSub:"Still deciding? Add it to your cart!",
     callWaiter:"Call Waiter", callWaiterSub:"At Your Service~", calling:"Calling…", waiterCalled:"Waiter called!",
     orderNow:"Order Now", orderNowSub:"No Hesitation!", ordering:"Ordering…",
@@ -1138,7 +1155,7 @@ const I18N = {
   it:{
     appTitle:"WELCOME~",
     tablePrefix:"Tavolo ", tableEyebrow:"Tavolo",
-    menuTitle:"Menu", myPot:"Il Mio", cart:"Carrello",
+    menuTitle:"Menu", cart:"Carrello",
     addToCart:"Aggiungi al Carrello", addToCartSub:"Ancora indeciso? Mettilo nel carrello!",
     callWaiter:"Chiama il Cameriere", callWaiterSub:"Sempre al Tuo Servizio~", calling:"Chiamata in corso…", waiterCalled:"Cameriere chiamato!",
     orderNow:"Ordina Ora", orderNowSub:"Senza Esitazioni!", ordering:"Ordinazione in corso…",
@@ -1169,7 +1186,7 @@ const I18N = {
   fr:{
     appTitle:"WELCOME~",
     tablePrefix:"Table ", tableEyebrow:"Table",
-    menuTitle:"Menu", myPot:"Le Mien", cart:"Panier",
+    menuTitle:"Menu", cart:"Panier",
     addToCart:"Ajouter au Panier", addToCartSub:"Pas encore décidé ? Mettez-le dans le panier !",
     callWaiter:"Appeler le Serveur", callWaiterSub:"Toujours à Votre Service ~", calling:"Appel en cours…", waiterCalled:"Serveur appelé !",
     orderNow:"Commander", orderNowSub:"Sans Hésitation !", ordering:"Commande en cours…",
@@ -1200,7 +1217,7 @@ const I18N = {
   es:{
     appTitle:"WELCOME~",
     tablePrefix:"Mesa ", tableEyebrow:"Mesa",
-    menuTitle:"Menú", myPot:"Mío", cart:"Carrito",
+    menuTitle:"Menú", cart:"Carrito",
     addToCart:"Añadir al Carrito", addToCartSub:"¿Aún indeciso? ¡Añádelo al carrito!",
     callWaiter:"Llamar al Camarero", callWaiterSub:"Siempre a tu Servicio~", calling:"Llamando…", waiterCalled:"¡Camarero llamado!",
     orderNow:"Pedir Ahora", orderNowSub:"¡Sin Dudarlo!", ordering:"Pidiendo…",
@@ -1905,7 +1922,7 @@ function onTableOrdersChanged(){
   if(knownOrderIds !== null){
     const hasNewFromOthers = foodOrders.some(o => !knownOrderIds.has(o.id) && !myOwnOrderIds.has(o.id));
     if(hasNewFromOthers && state.screen === 'menu'){
-      showNagToast(t('someoneOrderedMsg'), 'info');
+      showOrderBubble(t('someoneOrderedMsg'));
     }
   }
   knownOrderIds = curIds;
@@ -2210,6 +2227,18 @@ function showNagToast(msg, kind){
   toast.textContent = msg;
   document.body.appendChild(toast);
   toast.addEventListener('animationend', (ev)=>{ if(ev.target === toast) toast.remove(); });
+}
+
+// "刚刚有人下单啦~"专用：一闪而过，1s 内自己淡出，跟 showNagToast 用的是
+// 不同一套动画/样式（.order-bubble，见 CSS），不是共用 nag-toast 改参数
+function showOrderBubble(msg){
+  const existing = document.querySelector('.order-bubble');
+  if(existing) existing.remove();
+  const bubble = document.createElement('div');
+  bubble.className = 'order-bubble';
+  bubble.textContent = msg;
+  document.body.appendChild(bubble);
+  bubble.addEventListener('animationend', (ev)=>{ if(ev.target === bubble) bubble.remove(); });
 }
 
 // 下单校验没过关时统一处理：弹提示 + 跳回菜单对应分类 + 分类按钮红色频闪一下
@@ -2566,16 +2595,12 @@ function skipUpsell(){
   submitOrder();
 }
 
-// On the menu screen the button is docked inline in the header
-// (#menu-panda-slot), so it scrolls away instead of floating forever.
-// Everywhere else it falls back to the fixed #panda-nav root. Either way,
-// called on its own (e.g. when the order-count badge changes) it only
-// repaints that one slot, not the whole screen behind it (so the menu's
-// dish cards never flash/re-mount).
+// 一直用固定定位的 #panda-nav 这个根节点，包括菜单页——顾客要求这个按钮
+// 一直悬浮跟随，不要随页面滚动走（2026-09-08 之前菜单页是嵌在页头里随内容
+// 滚走的，现在统一成一直浮在右上角）。只重画这一个节点，不重画整个屏幕
+// 背后的内容（菜单的菜品卡片不会跟着闪一下/重新挂载）。
 function renderPandaNav(){
-  const inlineSlot = document.getElementById('menu-panda-slot');
-  document.getElementById('panda-nav').innerHTML = inlineSlot ? '' : (state.screen === 'welcome' ? '' : pandaNavHTML());
-  if(inlineSlot) inlineSlot.innerHTML = pandaNavHTML();
+  document.getElementById('panda-nav').innerHTML = state.screen === 'welcome' ? '' : pandaNavHTML();
 }
 
 function totalCount(){
@@ -3161,7 +3186,6 @@ function menuHTML(){
         <div class="menu-logo-row">
           <img class="menu-logo" src="../image/LOGO/logo.webp" alt="SJX Cheng Du Hotpot"/>
         </div>
-        <div id="menu-panda-slot" class="menu-panda-slot"></div>
       </div>
       <div class="masthead-rule"></div>
     </header>
@@ -3439,12 +3463,12 @@ function pandaNavHTML(){
   if(!state.table) return '';
   const orderCount = tableOrderCount();
   return `
-    <button class="my-order-btn" onclick="goToMyOrder()" aria-label="${t('myPot')}">
+    <button class="my-order-btn" onclick="goToMyOrder()" aria-label="${t('myOrder')}">
       <span class="panda-avatar">
         <img src="../image/LOGO/panda.webp" alt=""/>
         ${orderCount > 0 ? `<span class="panda-order-badge">${orderCount}</span>` : ''}
       </span>
-      <span class="my-order-label">${t('myPot')}</span>
+      <span class="my-order-label">${t('myOrder')}</span>
     </button>
     <button class="my-order-btn" onclick="toggleLangSwitcher()" aria-label="${t('languageLabel')}">
       <span class="panda-avatar"><img src="../image/LOGO/lang.webp" alt=""/></span>

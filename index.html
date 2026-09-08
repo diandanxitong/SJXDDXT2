@@ -392,6 +392,41 @@ firebase.initializeApp({
               </div>
               <div class="stat-value" id="stat-total-orders">—</div>
             </div>
+            <div class="stat-card">
+              <div class="stat-card-head">
+                <span class="stat-label">总扫码点单营业额</span>
+                <svg class="stat-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+                  <ellipse cx="10" cy="5.3" rx="6" ry="2"/>
+                  <path d="M4 5.3v4c0 1.1 2.7 2 6 2s6-.9 6-2v-4"/>
+                  <path d="M4 9.3v4c0 1.1 2.7 2 6 2s6-.9 6-2v-4"/>
+                  <line x1="10" y1="4" x2="10" y2="6.6" stroke-width="1.1"/>
+                </svg>
+              </div>
+              <div class="stat-value" id="stat-total-revenue">—</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card-head">
+                <span class="stat-label">日均桌数</span>
+                <svg class="stat-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="4.5" y1="15" x2="4.5" y2="10.8"/>
+                  <line x1="9" y1="15" x2="9" y2="6.2"/>
+                  <line x1="13.5" y1="15" x2="13.5" y2="9"/>
+                  <line x1="3" y1="9.3" x2="16" y2="9.3" stroke-dasharray="1.6 1.6"/>
+                </svg>
+              </div>
+              <div class="stat-value" id="stat-avg-tables">—</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card-head">
+                <span class="stat-label">平均客单价</span>
+                <svg class="stat-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3.3" y="6" width="13.4" height="9.2" rx="1.6"/>
+                  <path d="M3.3 9.2h13.4"/>
+                  <circle cx="13.4" cy="11.9" r="1" fill="currentColor" stroke="none"/>
+                </svg>
+              </div>
+              <div class="stat-value" id="stat-per-table">—</div>
+            </div>
           </div>
         </div>
 
@@ -504,12 +539,34 @@ dailyOrdersRef.onSnapshot(function(snap){
   var todayAddOns = todayRecords.reduce(function(s, r){ return s + (r.addOnBatchCount || 0); }, 0);
   var todayRevenue = todayRecords.reduce(function(s, r){ return s + (r.revenue || 0); }, 0);
   var totalOrders = all.reduce(function(s, r){ return s + batchCountOf(r); }, 0);
+  var totalRevenue = all.reduce(function(s, r){ return s + (r.revenue || 0); }, 0);
+
+  // 日均桌数：每条记录本来就是"一桌一次结账"，按日期把桌号去重计数，
+  // 再对出现过记录的天数取平均——不是"总桌次 / 7"这种固定天数，开业没满
+  // 一周或者中间歇业的日子不该被强行摊薄
+  var tablesByDate = {};
+  all.forEach(function(r){
+    if(!tablesByDate[r.date]) tablesByDate[r.date] = new Set();
+    tablesByDate[r.date].add(r.table);
+  });
+  var activeDates = Object.keys(tablesByDate);
+  var avgTablesPerDay = activeDates.length
+    ? activeDates.reduce(function(s, d){ return s + tablesByDate[d].size; }, 0) / activeDates.length
+    : 0;
+
+  // 平均客单价：总营业额 / 总结账次数（每条记录就是一次结账），不是除以桌数——
+  // 同一桌可能分批加菜但只结一次账，记录数才是真正的"单"数。是全部历史数据算
+  // 出来的平均值，不是"今天"这一天的客单价
+  var perTable = all.length ? totalRevenue / all.length : 0;
 
   document.getElementById('stat-tables').textContent = tables.size;
   document.getElementById('stat-orders').textContent = todayOrders;
   document.getElementById('stat-revenue').textContent = formatPrice(todayRevenue);
   document.getElementById('stat-addons').textContent = todayAddOns;
   document.getElementById('stat-total-orders').textContent = totalOrders;
+  document.getElementById('stat-total-revenue').textContent = formatPrice(totalRevenue);
+  document.getElementById('stat-avg-tables').textContent = avgTablesPerDay.toFixed(1);
+  document.getElementById('stat-per-table').textContent = formatPrice(perTable);
 
   buildTrend(all, todayStr);
 }, function(){});

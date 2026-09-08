@@ -15,21 +15,44 @@
 
   var overlay = null;
 
+  // 页面之间跳转，每个页面都会重新跑一遍这套登录检查，遮罩会跟着重新挂载一次——
+  // 之前遮罩背景写死是深色（#1B1613），但各页面自己的主题不统一：员工端大部分
+  // 页面是浅色底（--paper），但接单看板/员工加菜/操作日志这几个是特意做成深色底
+  // 的。写死深色在浅色页面上就是一闪一块黑；如果反过来写死浅色，深色页面又会
+  // 反过来闪一下白。所以这里改成运行时读当前页面自己 :root 里定义的主题变量——
+  // 不管页面用的是哪一套命名（浅色页面是 --paper/--ink/--hairline，深色页面是
+  // --bg/--text/--line），挑第一个存在的，取不到才退回浅色默认值
+  function themeColors(){
+    var cs = getComputedStyle(document.documentElement);
+    function pick(a, b){
+      var v = (cs.getPropertyValue(a) || '').trim();
+      if (v) return v;
+      v = (cs.getPropertyValue(b) || '').trim();
+      return v;
+    }
+    return {
+      bg: pick('--paper', '--bg') || '#FDFCF9',
+      fg: pick('--ink', '--text') || '#1C1712',
+      line: pick('--hairline', '--line') || '#E6E0D6'
+    };
+  }
+
   // 先挂一个遮罩挡住页面内容，此时还不知道到底有没有登录过，不能先把表单
   // 画出来——真登录过的人会在 onAuthStateChanged 回调里看到一闪而过的表单，
   // 体验上像是"又要登一次"。真正的表单要等确认没登录了才由 showForm() 填进去。
-  // 遮罩里先放一个转圈的 loading，不然纯黑屏一下，员工会以为系统卡住了
+  // 遮罩里先放一个转圈的 loading，不然纯色屏一下，员工会以为系统卡住了
   function buildBlocker(){
+    var theme = themeColors();
     var el = document.createElement('div');
     el.id = 'staff-auth-overlay';
-    el.style.cssText = 'position:fixed;inset:0;z-index:2147483647;background:#1B1613;' +
+    el.style.cssText = 'position:fixed;inset:0;z-index:2147483647;background:' + theme.bg + ';' +
       'display:flex;align-items:center;justify-content:center;' +
       'font-family:"PingFang SC","Microsoft YaHei",sans-serif;' +
       'opacity:1;transition:opacity .15s ease;';
     el.innerHTML =
       '<svg width="30" height="30" viewBox="0 0 20 20" fill="none">' +
-        '<circle cx="10" cy="10" r="8" stroke="#3D332B" stroke-width="2"/>' +
-        '<path d="M10 2a8 8 0 0 1 8 8" stroke="#E3421F" stroke-width="2" stroke-linecap="round">' +
+        '<circle cx="10" cy="10" r="8" stroke="' + theme.line + '" stroke-width="2"/>' +
+        '<path d="M10 2a8 8 0 0 1 8 8" stroke="' + theme.fg + '" stroke-width="2" stroke-linecap="round">' +
           '<animateTransform attributeName="transform" type="rotate" from="0 10 10" to="360 10 10" dur="0.7s" repeatCount="indefinite"/>' +
         '</path>' +
       '</svg>';
@@ -38,15 +61,16 @@
 
   function showForm(){
     if (!overlay) return;
+    var theme = themeColors();
     overlay.innerHTML =
       '<div style="width:100%;max-width:320px;padding:24px;box-sizing:border-box;">' +
-        '<h2 style="margin:0 0 20px;font-size:18px;text-align:center;color:#F3ECE1;">员工登录</h2>' +
+        '<h2 style="margin:0 0 20px;font-size:18px;text-align:center;color:' + theme.fg + ';">员工登录</h2>' +
         '<input id="staff-auth-user" autocomplete="off" placeholder="用户名" ' +
           'style="width:100%;box-sizing:border-box;padding:12px;margin-bottom:10px;border-radius:8px;' +
-          'border:1px solid #3D332B;background:#2A2119;color:#F3ECE1;font-size:15px;">' +
+          'border:1px solid ' + theme.line + ';background:' + theme.bg + ';color:' + theme.fg + ';font-size:15px;">' +
         '<input id="staff-auth-pass" type="password" autocomplete="off" placeholder="密码" ' +
           'style="width:100%;box-sizing:border-box;padding:12px;margin-bottom:10px;border-radius:8px;' +
-          'border:1px solid #3D332B;background:#2A2119;color:#F3ECE1;font-size:15px;">' +
+          'border:1px solid ' + theme.line + ';background:' + theme.bg + ';color:' + theme.fg + ';font-size:15px;">' +
         '<div id="staff-auth-error" style="color:#E3421F;font-size:13px;min-height:18px;margin-bottom:8px;"></div>' +
         '<button id="staff-auth-submit" ' +
           'style="width:100%;padding:12px;border-radius:8px;border:none;background:#E3421F;' +

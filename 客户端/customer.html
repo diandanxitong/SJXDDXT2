@@ -1678,9 +1678,9 @@ function watchSharedCart(table){
     const data = snap.data();
     const incoming = (data && data.items) || {};
 
-    // 整份清空信号：clearSharedCart() 是整份 .set({items:{}})覆盖整份文档，
-    // 跟下面 pushSharedCartItem 的逐项 merge 不一样——就算同桌的菜一道道被本机
-    // 删光，merge 也只会把这些 key 留成 null，文档不会变成真正的空对象 {}。
+    // 整份清空信号：attemptSubmitOrder 的事务建单成功时会整份 tx.set(draftRef,
+    // {items:{}}) 覆盖整份文档，跟下面 pushSharedCartItem 的逐项 merge 不一样——
+    // 就算同桌的菜一道道被本机删光，merge 也不会让文档变成真正的空对象 {}。
     // 所以"文档存在、但 items 是空对象"只有一种可能：同桌某台设备（不一定是
     // 本机）已经成功下单并清空了草稿。这时候本机手里如果还留着一堆"待提交"的菜，
     // 必须跟着清空，不然本机稍后再点"确认下单"，会把这些其实已经下过的菜重复
@@ -1732,43 +1732,114 @@ function pushSharedCartItem(id){
   }, { merge: true }).catch(()=>{});
 }
 
-// 下单成功后草稿要清空——这一轮选的菜已经变成正式订单了，留着会让同桌其他人
-// 以为这些菜还没提交，继续叠加甚至重复下单
-function clearSharedCart(){
-  if(!state.table) return;
-  tableCartsRef.doc(state.table).set({ items: {}, updatedAt: Date.now() }).catch(()=>{});
+// dishIds/items（两个下标对齐的并行数组，见 submitOrder）转成 [{id,qty}]，是
+// sessionStorage 里存的格式，也是下面精确划账函数认的格式——只留划账用得到的
+// 两个字段，不整份存 items（避免菜单改动、字段变化导致存量数据格式对不上）
+function toDishQtyPairs(dishIds, items){
+  return dishIds.map((id, idx) => ({ id, qty: items[idx].qty }));
+}
+
+// 按 dishQtyPairs 记录的数量，把一次已经确认成功的提交从本地购物车和共享草稿里
+// 都精确划掉——都是按数量扣减，不是整体清零/整体清空。
+// 本地购物车这边直接改内存，立刻生效；共享草稿这边必须在事务里现读现减，不能假设
+// 草稿此刻是"干净"的——本机自己在等确认期间如果又碰了一下这道菜（比如手滑又点了
+// 一次"+"，以为还没提交上），会把它重新写回共享草稿，这时候需要精确扣掉这次核对
+// 确认的那部分数量，剩下的（不管是本机后来又加的，还是同桌别人加的）原样保留，
+// 不能像早先那版一样对整个草稿文档做一次整体覆盖清空
+async function reconcileDishQtyPairs(table, dishQtyPairs){
+  if(!dishQtyPairs || !dishQtyPairs.length) return;
+
+  dishQtyPairs.forEach(({ id, qty }) => {
+    const cur = state.items[id];
+    if(!cur) return;
+    const newQty = Math.max(0, cur.qty - qty);
+    if(newQty === 0) delete state.items[id];
+    else state.items[id] = Object.assign({}, cur, { qty: newQty });
+    updateItemUI(id);
+  });
+
+  if(!table) return;
+  const draftRef = tableCartsRef.doc(table);
+  try{
+    await db.runTransaction(async tx => {
+      const draftSnap = await tx.get(draftRef);
+      if(!draftSnap.exists) return;
+      const draftItems = Object.assign({}, draftSnap.data().items || {});
+      let changed = false;
+      dishQtyPairs.forEach(({ id, qty }) => {
+        const entry = draftItems[id];
+        if(!entry) return;
+        const remaining = Math.max(0, (entry.qty || 0) - qty);
+        draftItems[id] = Object.assign({}, entry, { qty: remaining });
+        changed = true;
+      });
+      if(changed) tx.set(draftRef, { items: draftItems, updatedAt: Date.now() }, { merge: true });
+    });
+  }catch(e){
+    // 精确划账这一步失败（比如网络问题），不影响本地购物车已经做完的扣减——
+    // 共享草稿这边留着没扣的部分不算错误，最坏情况是下一次核对（被动监听或者
+    // 下次点确认前的主动核对）还会再试一次，多试几次没有副作用
+  }
 }
 
 // 核对"卡住/报错"的下单尝试是不是其实已经成功了：本桌订单的实时推送里只要出现一笔
 // id 跟某次 pendingSubmitAttempt 的幂等键精确对上号的订单，就说明那次不是真的
-// 失败，是网络太差、没等到确认——把这次提交的这些菜从本地购物车划掉（按提交时的
-// 数量扣，不是直接清零，万一顾客等待期间又把同一道菜加了更多，剩下的量还留着），
-// 这样顾客之后再加菜下单，才不会把这些已经成功的菜又带上去重复下单。
-// 用幂等键（就是这笔订单的文档 id）精确匹配，比之前"createdAt+菜品签名"两个字段
-// 一起比对更直接——同一个 id 只可能是同一笔提交，不存在巧合撞上的可能
+// 失败，是网络太差、没等到确认。用幂等键（就是这笔订单的文档 id）精确匹配，比之前
+// "createdAt+菜品签名"两个字段一起比对更直接——同一个 id 只可能是同一笔提交，
+// 不存在巧合撞上的可能
 function reconcilePendingSubmits(){
   if(!state.pendingSubmitAttempts.length || !liveTableOrders.length) return;
-  let anyResolved = false;
+  const resolved = [];
   state.pendingSubmitAttempts = state.pendingSubmitAttempts.filter(attempt => {
     const matched = liveTableOrders.find(o => o.id === attempt.idempotencyKey);
     if(!matched) return true;
-    anyResolved = true;
-    attempt.dishIds.forEach((dishId, idx) => {
-      const attemptedQty = attempt.items[idx].qty;
-      const cur = state.items[dishId];
-      if(!cur) return;
-      const newQty = Math.max(0, cur.qty - attemptedQty);
-      if(newQty === 0) delete state.items[dishId];
-      else state.items[dishId] = Object.assign({}, cur, { qty: newQty });
-      updateItemUI(dishId);
-    });
+    resolved.push(attempt);
     return false;
   });
-  // 确认过"这次提交其实成功了"，说明这份共享草稿里对应的内容已经变成正式订单——
-  // 顺手清一次草稿，不然万一当时清空草稿那个请求也卡住/超时了，同桌其他设备会
-  // 一直以为这些菜"还没提交"，继续叠加甚至重复下单（这里补的是清空草稿本身可能
-  // 跟建单一样超时的那个缺口，跟建单成功与否是两件事）
-  if(anyResolved) clearSharedCart();
+  // 被动路径，不 await——这里是监听回调，没有谁在等这个结果；划账失败可以留给
+  // 下一次监听推送或者下次下单前的主动核对再补，不用卡住当前这次回调
+  resolved.forEach(attempt => reconcileDishQtyPairs(state.table, toDishQtyPairs(attempt.dishIds, attempt.items)));
+}
+
+// 下单前主动核对一次：缓存着的旧幂等键，是不是其实已经在服务器上成功建单了。
+// 只靠 reconcilePendingSubmits 被动等实时监听不够——本机点"确认下单"这个动作
+// 不受监听是否追上的限制，网络差的时候监听推送可能跟这次提交一样慢、甚至更慢，
+// 用户完全可能在监听赶到之前就已经点了第二次确认。这里在生成新键之前直接查一次
+// 服务器（source:'server'，不吃本地监听缓存），旧键如果已经真实落地，就先把这次
+// 已经成交的内容从本地购物车和共享草稿里都精确划掉、旧键作废，再往下走——不然
+// 购物车/草稿里如果还混着已经成交过的菜（比如本机没收到确认、以为失败，用户又
+// 碰了一下那道菜的数量），会被当成"新内容"顶着新键又交一遍，变成真的重复下单。
+// 查不到 / 这次查询本身超时失败，就什么都不做，照旧走后面的指纹比对逻辑——这一步
+// 只是多一层保险，不能因为它自己失败就把整个下单流程卡住。
+//
+// 找不到 attempt（比如中途刷新过页面，state.pendingSubmitAttempts 这个内存数组
+// 被重置了）不代表这次核对就没法做精确划账了——getOrCreateIdempotencyKey 存键的
+// 时候，会把 dishQtyPairs 跟 { key, fingerprint } 一起存进 sessionStorage（活得过
+// 刷新），这里退化用 cached.items 兜底，两条路径最终用的是同一份 reconcileDishQtyPairs，
+// 划账结果一致
+async function reconcileStaleKeyIfResolved(table){
+  const storageKey = IDEMPOTENCY_KEY_PREFIX + table;
+  let cached = null;
+  try{ cached = JSON.parse(sessionStorage.getItem(storageKey) || 'null'); }catch(e){}
+  if(!cached) cached = memoryIdempotencyKeys[table] || null;
+  if(!cached || !cached.key) return;
+
+  let exists = false;
+  try{
+    const oldOrderSnap = await withTimeout(ordersRef.doc(cached.key).get({ source: 'server' }), 5000);
+    exists = oldOrderSnap.exists;
+  }catch(e){ return; }
+  if(!exists) return;
+
+  const attempt = state.pendingSubmitAttempts.find(a => a.idempotencyKey === cached.key);
+  const dishQtyPairs = attempt ? toDishQtyPairs(attempt.dishIds, attempt.items) : (cached.items || []);
+  if(attempt){
+    state.pendingSubmitAttempts = state.pendingSubmitAttempts.filter(a => a !== attempt);
+  }
+  // 这一步要 await：下面 submitOrder 紧接着就要用（划账后的）购物车重新算这次
+  // 真正要提交的内容，必须先等精确划账做完，不能让它在后台自己跑
+  await reconcileDishQtyPairs(table, dishQtyPairs);
+  clearIdempotencyKey(table);
 }
 
 function onTableOrdersChanged(){
@@ -2469,8 +2540,12 @@ function totalCount(){
 }
 
 function resetToMenu(){
+  // 这里只清本机的本地视图，不额外整份覆盖共享草稿——下单成功那次清空草稿的
+  // 写入，跟建单在同一个 Firestore 事务里，不存在"建单成功但草稿没清"这种独立
+  // 失败的情况，不需要在这里补一次。补一次反而有风险：如果用户在下单成功、看
+  // 确认页这段时间里，同桌别的设备已经开始点下一轮、往共享草稿里加了新东西，
+  // 这里的整份清空会把那些新内容一起静默抹掉
   state.items = {};
-  clearSharedCart();   // 兜底：万一下单成功那次清空共享草稿的请求没发出去，这里再清一次
   state.lastOrder = null;
   state.orderNickname = '';
   state.orderPartySize = 2;
@@ -2507,7 +2582,8 @@ function findRecentDuplicateOrder(candidateOrders, items, windowMs){
 }
 
 // 幂等键：代表"这一次提交这份内容"这个意图，不是"这一桌这一轮确认下单"这个
-// 大概念——键必须跟内容绑在一起。存的是 { key, fingerprint }：取键的时候先比
+// 大概念——键必须跟内容绑在一起。存的是 { key, fingerprint, items }（items 是
+// [{id,qty}]，供刷新页面之后 reconcileStaleKeyIfResolved 精确划账用）：取键的时候先比
 // 一下这次要提交的内容跟上次存的指纹是否一样，一样才复用同一个 key（重试，
 // 不管隔了多久）；不一样（比如顾客看到"失败"以为没提交上，往购物车又加了一道
 // 菜再重试）就必须发一把新键——不然会命中上一次那个只有旧内容的订单文档，
@@ -2517,25 +2593,29 @@ function findRecentDuplicateOrder(candidateOrders, items, windowMs){
 // 不耐烦习惯性刷新页面），关掉标签页/换一桌自动作废，不会被"员工测试机"或者
 // "顾客下次光顾同一桌"这种无关场景污染
 const IDEMPOTENCY_KEY_PREFIX = 'pendingOrderKey:';
-let memoryIdempotencyKeys = {};   // sessionStorage 不可用时的内存兜底，按桌号存 { key, fingerprint }
+let memoryIdempotencyKeys = {};   // sessionStorage 不可用时的内存兜底，按桌号存 { key, fingerprint, items }
 function genIdempotencyKey(){
   try{ if(window.crypto && crypto.randomUUID) return crypto.randomUUID(); }catch(e){}
   return 'k' + Date.now().toString(36) + Math.random().toString(36).slice(2);
 }
-function getOrCreateIdempotencyKey(table, items){
+// itemDishIds 是跟 items 下标对齐的菜品 id 数组（见 submitOrder）——存进
+// sessionStorage 的 dishQtyPairs 就是靠它转出来的，供页面刷新之后
+// reconcileStaleKeyIfResolved 精确划账用（详见那边的说明）
+function getOrCreateIdempotencyKey(table, items, itemDishIds){
   const storageKey = IDEMPOTENCY_KEY_PREFIX + table;
   const fingerprint = itemsSignature(items);
+  const dishQtyPairs = toDishQtyPairs(itemDishIds, items);
   try{
     let cached = null;
     try{ cached = JSON.parse(sessionStorage.getItem(storageKey) || 'null'); }catch(e){ cached = null; }
     if(cached && cached.key && cached.fingerprint === fingerprint) return cached.key;
-    const fresh = { key: genIdempotencyKey(), fingerprint };
+    const fresh = { key: genIdempotencyKey(), fingerprint, items: dishQtyPairs };
     sessionStorage.setItem(storageKey, JSON.stringify(fresh));
     return fresh.key;
   }catch(e){
     const cached = memoryIdempotencyKeys[table];
     if(cached && cached.fingerprint === fingerprint) return cached.key;
-    const fresh = { key: genIdempotencyKey(), fingerprint };
+    const fresh = { key: genIdempotencyKey(), fingerprint, items: dishQtyPairs };
     memoryIdempotencyKeys[table] = fresh;
     return fresh.key;
   }
@@ -2627,6 +2707,16 @@ async function submitOrder(){
   if(state.submitting || totalCount() === 0) return;
   state.submitting = true; render();
 
+  // 先主动核对一次，上一把还留着的幂等键是不是其实已经成功了——见
+  // reconcileStaleKeyIfResolved 的说明。核对完如果购物车因此被划空了
+  // （这次要交的内容其实早就交过了），就当无事发生，不用再提交一次
+  await reconcileStaleKeyIfResolved(state.table);
+  if(totalCount() === 0){
+    state.submitting = false;
+    render();
+    return;
+  }
+
   const items = [];
   const itemDishIds = [];
   MENU.forEach(d => {
@@ -2647,7 +2737,7 @@ async function submitOrder(){
     table: state.table, items, createdAt: Date.now(),
     nickname: state.orderNickname || '', partySize: state.orderPartySize || 1,
   };
-  const idempotencyKey = getOrCreateIdempotencyKey(state.table, items);
+  const idempotencyKey = getOrCreateIdempotencyKey(state.table, items, itemDishIds);
 
   // 提交请求可能卡住/超时，但服务器那边实际上已经建单成功——先记一笔"提交过什么、
   // 用的哪个幂等键"，万一等下报错/卡住，本桌订单实时监听那边收到这笔单子推送时
@@ -2711,7 +2801,14 @@ async function submitOrder(){
   // 非关键的后续查询万一失败，倒过来把已经下成的单打成"下单失败"，逼着顾客/员工
   // 再点一次提交、变成真的重复下单（2026-09-07 发现的问题：卡在下单页看着像
   // 没提交成功，其实订单早就进去了）
-  clearSharedCart();
+  //
+  // 这里不额外整份覆盖共享草稿：不管 docId 是从哪条分支拿到的——
+  // attemptSubmitOrder 的事务建单（建单和清空草稿是同一个事务，不会一个成
+  // 一个不成）、alreadyExists（复用的是本机之前那次已经建好的单，那次的事务
+  // 早就清过草稿）、borrowed（复用同桌别人建的单，人家的事务也早清过）、还是
+  // 兜底直接 .set()（进这条分支前已经确认过草稿是空的）——草稿在这一刻之前
+  // 都已经被正确处理过了。这里再补一次整份清空，唯一的效果是冒着把这段等待
+  // 期间同桌别的设备新加的内容一起静默抹掉的风险，没有任何东西是它修复的
   clearIdempotencyKey(state.table);
   state.pendingSubmitAttempts = state.pendingSubmitAttempts.filter(a => a !== pendingAttempt);
 

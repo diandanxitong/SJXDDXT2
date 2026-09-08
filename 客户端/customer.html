@@ -110,8 +110,9 @@
      On the menu screen it's docked inline in the header (.menu-panda-slot)
      so it scrolls away with the page instead of floating forever; #panda-nav
      is the fixed fallback root used on the other (less-visited) screens. */
-  /* "我的" 在上、语言切换在下，竖着排在右上角——语言切换是从"我的"下拉菜单里
-     搬出来的独立按钮，图标用 lang.webp（那个通用的"文/A"翻译图标） */
+  /* "我的" 在上、语言切换在下，竖着排在右上角——"我的"点了直接跳"我的订单"页，
+     不再经过下拉菜单；语言切换是独立按钮，图标用 lang.webp（那个通用的"文/A"
+     翻译图标） */
   #panda-nav{position:fixed;top:18px;right:18px;z-index:60;display:flex;flex-direction:column;align-items:flex-end;gap:10px;}
   .menu-panda-slot{position:relative;z-index:56;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:10px;justify-self:end;min-width:0;}
   .panda-overlay{position:fixed;inset:0;z-index:55;background:none;border:none;padding:0;margin:0;cursor:default;}
@@ -121,23 +122,19 @@
     padding:0;font-family:inherit;color:var(--text);
   }
   .panda-avatar{
+    position:relative;
     width:32px;height:32px;flex-shrink:0;
     display:flex;align-items:center;justify-content:center;line-height:1;
   }
   .panda-avatar img{display:block;width:100%;height:100%;object-fit:contain;}
+  .panda-order-badge{
+    position:absolute;top:-5px;right:-7px;min-width:16px;height:16px;padding:0 3px;
+    border-radius:999px;background:var(--cinnabar);color:#fff;
+    font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;
+    border:1.5px solid var(--bg-soft);
+  }
   .my-order-label{font-size:11.5px;font-weight:700;color:var(--text-muted);}
   .my-order-btn:hover .my-order-label{color:var(--gold-ink);}
-  .panda-dropdown{
-    position:relative;z-index:56;margin-top:8px;min-width:136px;
-    background:var(--card);border:1px solid var(--gold-line);border-radius:12px;
-    overflow:hidden;box-shadow:0 10px 26px rgba(0,0,0,.5);
-  }
-  .panda-dropdown button{
-    display:block;width:100%;text-align:left;background:none;border:none;color:var(--text);
-    font-size:13.5px;font-weight:700;padding:12px 16px;cursor:pointer;font-family:inherit;
-  }
-  .panda-dropdown button+button{border-top:1px solid var(--card-line);}
-  .panda-dropdown button:hover{background:var(--bg-soft);color:var(--cinnabar);}
 
   /* ---------- menu ---------- */
   .menu-title-row{
@@ -621,6 +618,23 @@
   .my-order-card .order-summary li{padding:11px 0;}
   .my-order-card .order-summary li + li{border-top:1px dashed var(--card-line);}
   .my-order-note{font-size:12.5px;color:var(--gold-ink);margin:14px 0 0;}
+
+  /* ---------- 我的订单：按下单批次展示，字号比其它页面的 order-summary 大一档 ---------- */
+  .my-order-batch{margin-bottom:20px;}
+  .my-order-batch-time{
+    font-weight:900;font-size:15.5px;color:var(--gold-ink);margin:0 0 8px;
+    display:flex;align-items:center;gap:8px;
+  }
+  .my-order-batch-tag{
+    font-size:11px;font-weight:800;color:var(--jade);border:1px solid var(--jade);
+    border-radius:20px;padding:2px 9px;
+  }
+  .my-order-screen .order-summary li{font-size:17px;padding:15px 0;}
+  .my-order-screen .order-line-price{font-size:15px;}
+  .my-order-screen .spice-tag{font-size:12.5px;padding:3px 10px;}
+  .my-order-screen .order-total-line{font-size:15px;}
+  .my-order-grand-total{margin-top:4px;}
+  .my-order-grand-total .order-total-line{font-size:17px;}
   .text-link-btn{
     background:none;border:none;color:var(--cinnabar);font-weight:700;font-size:14px;
     cursor:pointer;padding:14px 0 0;font-family:inherit;display:block;
@@ -1033,7 +1047,7 @@ const I18N = {
   zh:{
     appTitle:"WELCOME~",
     tablePrefix:"桌 ", tableEyebrow:"桌号",
-    menuTitle:"菜单", myPot:"我的", cart:"购物车", orderedItems:"已点菜品",
+    menuTitle:"菜单", myPot:"我的", cart:"购物车",
     addToCart:"加入购物车", addToCartSub:"小纠结？先丢进购物车！",
     callWaiter:"呼叫服务员", callWaiterSub:"随叫随到~", calling:"呼叫中…", waiterCalled:"已呼叫服务员！",
     orderNow:"立即下单", orderNowSub:"不再犹豫！", ordering:"下单中…",
@@ -1049,6 +1063,7 @@ const I18N = {
     allergensBtn:"过敏原", allergensModalTitle:"过敏原说明", allergenTapHint:"点击查看过敏原", totalLabel:"合计", perPersonSuffix:" /人",
     orderReviewTitle:"确认订单", nicknamePlaceholder:"如果愿意请留下昵称哦~", partySizeLabel:"请选择您的就餐人数",
     upsellTitle:"忘了点什么？", shuffleUpsellBtn:"换一批", addToOrderBtn:"加入到当前订单", laterBtn:"以后再说",
+    dupWarnTitle:"您有多项单品重复哦~", dupWarnBodyWithNew:"这份点单跟最近一笔订单的锅底和好几道菜都一样，是不是不小心又点了一遍整份？", dupWarnBodyNoNew:"这份点单跟最近一笔订单几乎一模一样，是不是不小心又点了一遍？", dupWarnNewListLabel:"真正新增的只有：", dupWarnOnlyNewBtn:"只提交新增的", dupWarnSubmitAllBtn:"确认，整份再下一单", dupWarnCancelLink:"我再想想，先返回购物车",
     categories:{ soupBase:"锅底", houseSpecial:"招牌必点", seafood:"海鲜", premiumBeef:"精品肉类", meatballs:"丸子", mushrooms:"菌菇", vegetables:"素菜", snacks:"凉菜/小吃", desserts:"甜品", drinks:"果香鲜饮", softDrinks:"软饮/水", tea:"茶", fineWines:"Fine Wines", beer:"啤酒" },
     spice:["微辣","中辣","特辣"],
     soldOutMsg:"暂时售罄，抱歉！",
@@ -1057,11 +1072,12 @@ const I18N = {
     soupBaseNote:"鸳鸯锅可选特辣/中辣/微辣",
     missingSoupBaseMsg:"忘记选择锅底了哦~",
     addOnTagPrefix:"加菜给：",
+    myOrderBatchAddOnTag:"加菜", myOrderGrandTotal:"本桌合计", someoneOrderedMsg:"刚刚有人下单啦~ 👆",
   },
   zhHant:{
     appTitle:'WELCOME~',
     tablePrefix:'桌 ', tableEyebrow:'桌號',
-    menuTitle:'菜單', myPot:'我的', cart:'購物車', orderedItems:'已點菜品',
+    menuTitle:'菜單', myPot:'我的', cart:'購物車',
     addToCart:'加入購物車', addToCartSub:'小糾結？先丟進購物車！',
     callWaiter:'呼叫服務員', callWaiterSub:'隨叫隨到~', calling:'呼叫中…', waiterCalled:'已呼叫服務員！',
     orderNow:'立即下單', orderNowSub:'不再猶豫！', ordering:'下單中…',
@@ -1077,6 +1093,7 @@ const I18N = {
     allergensBtn:'過敏原', allergensModalTitle:'過敏原說明', allergenTapHint:'點擊查看過敏原', totalLabel:'合計', perPersonSuffix:' /人',
     orderReviewTitle:'確認訂單', nicknamePlaceholder:'如果願意請留下暱稱哦~', partySizeLabel:'請選擇您的就餐人數',
     upsellTitle:'忘了點什麼？', shuffleUpsellBtn:'換一批', addToOrderBtn:'加入到當前訂單', laterBtn:'以後再說',
+    dupWarnTitle:'您有多項單品重複哦~', dupWarnBodyWithNew:'這份點單跟最近一筆訂單的鍋底和好幾道菜都一樣，是不是不小心又點了一遍整份？', dupWarnBodyNoNew:'這份點單跟最近一筆訂單幾乎一模一樣，是不是不小心又點了一遍？', dupWarnNewListLabel:'真正新增的只有：', dupWarnOnlyNewBtn:'只提交新增的', dupWarnSubmitAllBtn:'確認，整份再下一單', dupWarnCancelLink:'我再想想，先返回購物車',
     categories:{ soupBase:'鍋底', houseSpecial:'招牌必點', seafood:'海鮮', premiumBeef:'精品肉類', meatballs:'丸子', mushrooms:'菌菇', vegetables:'素菜', snacks:'涼菜/小吃', desserts:'甜品', drinks:'果香鮮飲', softDrinks:'軟飲/水', tea:'茶', fineWines:'Fine Wines', beer:'啤酒' },
     spice:['微辣','中辣','特辣'],
     soldOutMsg:'暫時售罄，抱歉！',
@@ -1085,11 +1102,12 @@ const I18N = {
     soupBaseNote:'鴛鴦鍋可選特辣/中辣/微辣',
     missingSoupBaseMsg:'忘記選擇鍋底了哦~',
     addOnTagPrefix:'加菜給：',
+    myOrderBatchAddOnTag:'加菜', myOrderGrandTotal:'本桌合計', someoneOrderedMsg:'剛剛有人下單啦~ 👆',
   },
   en:{
     appTitle:"WELCOME~",
     tablePrefix:"Table ", tableEyebrow:"Table",
-    menuTitle:"Menu", myPot:"Mine", cart:"Cart", orderedItems:"Items Ordered",
+    menuTitle:"Menu", myPot:"Mine", cart:"Cart",
     addToCart:"Add to Cart", addToCartSub:"Still deciding? Add it to your cart!",
     callWaiter:"Call Waiter", callWaiterSub:"At Your Service~", calling:"Calling…", waiterCalled:"Waiter called!",
     orderNow:"Order Now", orderNowSub:"No Hesitation!", ordering:"Ordering…",
@@ -1105,6 +1123,7 @@ const I18N = {
     allergensBtn:"Allergens", allergensModalTitle:"Allergen Guide", allergenTapHint:"Tap to view allergen", totalLabel:"Total", perPersonSuffix:" / person",
     orderReviewTitle:"Confirm Order", nicknamePlaceholder:"Got a nickname? Totally optional~", partySizeLabel:"Select your party size",
     upsellTitle:"Forgot Something?", shuffleUpsellBtn:"Shuffle", addToOrderBtn:"Add to Order", laterBtn:"Later",
+    dupWarnTitle:"Looks Like a Repeat Order", dupWarnBodyWithNew:"This order shares the same soup base and several dishes with a recent order — did you mean to re-order the whole thing by accident?", dupWarnBodyNoNew:"This order is almost identical to a recent order — did you mean to submit it again by accident?", dupWarnNewListLabel:"Only these are actually new:", dupWarnOnlyNewBtn:"Only Submit What's New", dupWarnSubmitAllBtn:"Yes, Submit the Whole Order Again", dupWarnCancelLink:"Let me check my cart again",
     categories:{ soupBase:"Soup Base", houseSpecial:"Signature Must-Haves", seafood:"Seafood", premiumBeef:"Premium Meats", meatballs:"Meatballs", mushrooms:"Mushrooms", vegetables:"Vegetables", snacks:"Snacks", desserts:"Desserts", drinks:"Handmade Fresh Juice Drinks", softDrinks:"Soft Drinks & Water", tea:"Tea", fineWines:"Fine Wines", beer:"Beer" },
     spice:["Mild","Medium","Extra Spicy"],
     soldOutMsg:"Sorry, temporarily sold out~",
@@ -1114,11 +1133,12 @@ const I18N = {
     soupPotNote:"Not a dish — comes with a giant pot for your food to swim in!",
     missingSoupBaseMsg:"Don't forget to pick a soup base~",
     addOnTagPrefix:"Add-on for: ",
+    myOrderBatchAddOnTag:"Add-on", myOrderGrandTotal:"Table Total", someoneOrderedMsg:"Someone just ordered~ 👆",
   },
   it:{
     appTitle:"WELCOME~",
     tablePrefix:"Tavolo ", tableEyebrow:"Tavolo",
-    menuTitle:"Menu", myPot:"Il Mio", cart:"Carrello", orderedItems:"Piatti Ordinati",
+    menuTitle:"Menu", myPot:"Il Mio", cart:"Carrello",
     addToCart:"Aggiungi al Carrello", addToCartSub:"Ancora indeciso? Mettilo nel carrello!",
     callWaiter:"Chiama il Cameriere", callWaiterSub:"Sempre al Tuo Servizio~", calling:"Chiamata in corso…", waiterCalled:"Cameriere chiamato!",
     orderNow:"Ordina Ora", orderNowSub:"Senza Esitazioni!", ordering:"Ordinazione in corso…",
@@ -1134,6 +1154,7 @@ const I18N = {
     allergensBtn:"Allergeni", allergensModalTitle:"Guida agli Allergeni", allergenTapHint:"Tocca per vedere l'allergene", totalLabel:"Totale", perPersonSuffix:" / persona",
     orderReviewTitle:"Conferma Ordine", nicknamePlaceholder:"Un nickname a piacere~ nessun obbligo", partySizeLabel:"Seleziona il numero di persone",
     upsellTitle:"Hai Dimenticato Qualcosa?", shuffleUpsellBtn:"Cambia", addToOrderBtn:"Aggiungi all'Ordine", laterBtn:"Più Tardi",
+    dupWarnTitle:"Sembra un Ordine Duplicato", dupWarnBodyWithNew:"Questo ordine condivide la stessa base zuppa e diversi piatti con un ordine recente — hai per caso rifatto tutto l'ordine per errore?", dupWarnBodyNoNew:"Questo ordine è quasi identico a un ordine recente — l'hai inviato di nuovo per errore?", dupWarnNewListLabel:"Solo questi sono davvero nuovi:", dupWarnOnlyNewBtn:"Invia Solo i Nuovi", dupWarnSubmitAllBtn:"Sì, Invia di Nuovo Tutto l'Ordine", dupWarnCancelLink:"Fammi ricontrollare il carrello",
     categories:{ soupBase:"Base Zuppa", houseSpecial:"Specialità Imperdibili", seafood:"Frutti di Mare", premiumBeef:"Carni Pregiate", meatballs:"Polpette", mushrooms:"Funghi", vegetables:"Verdure", snacks:"Snack", desserts:"Dessert", drinks:"Bevande Fresche Artigianali", softDrinks:"Bevande Analcoliche e Acqua", tea:"Tè", fineWines:"Fine Wines", beer:"Birra" },
     spice:["Poco Piccante","Piccante","Molto Piccante"],
     soldOutMsg:"Siamo spiacenti, momentaneamente esaurito~",
@@ -1143,11 +1164,12 @@ const I18N = {
     soupPotNote:"Non è un piatto — arriva con una pentola gigante dove il tuo cibo andrà a nuotare!",
     missingSoupBaseMsg:"Non dimenticare di scegliere una base zuppa~",
     addOnTagPrefix:"Extra per: ",
+    myOrderBatchAddOnTag:"Extra", myOrderGrandTotal:"Totale Tavolo", someoneOrderedMsg:"Qualcuno ha appena ordinato~ 👆",
   },
   fr:{
     appTitle:"WELCOME~",
     tablePrefix:"Table ", tableEyebrow:"Table",
-    menuTitle:"Menu", myPot:"Le Mien", cart:"Panier", orderedItems:"Plats Commandés",
+    menuTitle:"Menu", myPot:"Le Mien", cart:"Panier",
     addToCart:"Ajouter au Panier", addToCartSub:"Pas encore décidé ? Mettez-le dans le panier !",
     callWaiter:"Appeler le Serveur", callWaiterSub:"Toujours à Votre Service ~", calling:"Appel en cours…", waiterCalled:"Serveur appelé !",
     orderNow:"Commander", orderNowSub:"Sans Hésitation !", ordering:"Commande en cours…",
@@ -1163,6 +1185,7 @@ const I18N = {
     allergensBtn:"Allergènes", allergensModalTitle:"Guide des Allergènes", allergenTapHint:"Touchez pour voir l'allergène", totalLabel:"Total", perPersonSuffix:" / personne",
     orderReviewTitle:"Confirmer la Commande", nicknamePlaceholder:"Un surnom si tu veux~ rien d'obligatoire", partySizeLabel:"Sélectionnez le nombre de convives",
     upsellTitle:"Vous Avez Oublié Quelque Chose ?", shuffleUpsellBtn:"Changer", addToOrderBtn:"Ajouter à la Commande", laterBtn:"Plus Tard",
+    dupWarnTitle:"On dirait une Commande en Double", dupWarnBodyWithNew:"Cette commande partage la même base de bouillon et plusieurs plats avec une commande récente — avez-vous refait toute la commande par erreur ?", dupWarnBodyNoNew:"Cette commande est presque identique à une commande récente — l'avez-vous renvoyée par erreur ?", dupWarnNewListLabel:"Seuls ceux-ci sont vraiment nouveaux :", dupWarnOnlyNewBtn:"Envoyer Seulement les Nouveaux", dupWarnSubmitAllBtn:"Oui, Renvoyer Toute la Commande", dupWarnCancelLink:"Laissez-moi revérifier mon panier",
     categories:{ soupBase:"Base de Bouillon", houseSpecial:"Incontournables Signature", seafood:"Fruits de Mer", premiumBeef:"Viandes Premium", meatballs:"Boulettes", mushrooms:"Champignons", vegetables:"Légumes", snacks:"En-cas", desserts:"Desserts", drinks:"Boissons Fraîches Artisanales", softDrinks:"Boissons Sans Alcool et Eau", tea:"Thé", fineWines:"Fine Wines", beer:"Bière" },
     spice:["Peu Épicé","Épicé","Très Épicé"],
     soldOutMsg:"Désolé, temporairement épuisé~",
@@ -1172,11 +1195,12 @@ const I18N = {
     soupPotNote:"Pas un plat — livré avec une marmite géante où votre nourriture ira nager !",
     missingSoupBaseMsg:"N'oubliez pas de choisir une base de bouillon~",
     addOnTagPrefix:"Extra pour : ",
+    myOrderBatchAddOnTag:"Extra", myOrderGrandTotal:"Total Table", someoneOrderedMsg:"Quelqu'un vient de commander~ 👆",
   },
   es:{
     appTitle:"WELCOME~",
     tablePrefix:"Mesa ", tableEyebrow:"Mesa",
-    menuTitle:"Menú", myPot:"Mío", cart:"Carrito", orderedItems:"Platos Pedidos",
+    menuTitle:"Menú", myPot:"Mío", cart:"Carrito",
     addToCart:"Añadir al Carrito", addToCartSub:"¿Aún indeciso? ¡Añádelo al carrito!",
     callWaiter:"Llamar al Camarero", callWaiterSub:"Siempre a tu Servicio~", calling:"Llamando…", waiterCalled:"¡Camarero llamado!",
     orderNow:"Pedir Ahora", orderNowSub:"¡Sin Dudarlo!", ordering:"Pidiendo…",
@@ -1192,6 +1216,7 @@ const I18N = {
     allergensBtn:"Alérgenos", allergensModalTitle:"Guía de Alérgenos", allergenTapHint:"Toca para ver el alérgeno", totalLabel:"Total", perPersonSuffix:" / persona",
     orderReviewTitle:"Confirmar Pedido", nicknamePlaceholder:"Ponte un apodo si quieres~ sin presión", partySizeLabel:"Selecciona tu número de comensales",
     upsellTitle:"¿Olvidaste Algo?", shuffleUpsellBtn:"Cambiar", addToOrderBtn:"Añadir al Pedido", laterBtn:"Más Tarde",
+    dupWarnTitle:"Parece un Pedido Duplicado", dupWarnBodyWithNew:"Este pedido comparte la misma base de sopa y varios platos con un pedido reciente — ¿repetiste todo el pedido por error?", dupWarnBodyNoNew:"Este pedido es casi idéntico a un pedido reciente — ¿lo enviaste de nuevo por error?", dupWarnNewListLabel:"Solo estos son realmente nuevos:", dupWarnOnlyNewBtn:"Enviar Solo lo Nuevo", dupWarnSubmitAllBtn:"Sí, Enviar Todo el Pedido de Nuevo", dupWarnCancelLink:"Déjame revisar mi carrito de nuevo",
     categories:{ soupBase:"Base de Sopa", houseSpecial:"Imprescindibles de la Casa", seafood:"Marisco", premiumBeef:"Carnes Premium", meatballs:"Albóndigas", mushrooms:"Setas", vegetables:"Verduras", snacks:"Aperitivos", desserts:"Postres", drinks:"Bebidas Frescas Artesanales", softDrinks:"Refrescos y Agua", tea:"Té", fineWines:"Fine Wines", beer:"Cerveza" },
     spice:["Poco Picante","Picante","Muy Picante"],
     soldOutMsg:"Lo sentimos, agotado temporalmente~",
@@ -1201,6 +1226,7 @@ const I18N = {
     soupPotNote:"No es un plato — viene con una olla gigante donde tu comida irá a nadar!",
     missingSoupBaseMsg:"No olvides elegir una base de sopa~",
     addOnTagPrefix:"Extra para: ",
+    myOrderBatchAddOnTag:"Extra", myOrderGrandTotal:"Total de la Mesa", someoneOrderedMsg:"¡Alguien acaba de pedir~ 👆",
   },
 };
 
@@ -1329,6 +1355,11 @@ function displaySpice(zhSpice){
   return idx >= 0 ? tSpice(idx) : zhSpice;
 }
 function formatPrice(v){ return '€' + v.toFixed(2); }
+// "我的订单"页按批次（每一份 order 文档本身就是一次下单批次）展示时间用——用
+// 顾客手机自己的系统语言/时区格式化，不用额外维护一套多语言时间格式
+function formatOrderTime(ms){
+  return new Date(ms).toLocaleTimeString(undefined, { hour:'2-digit', minute:'2-digit' });
+}
 function dishUnitPrice(d, item){
   if(d.sizes){
     const key = (item && item.size) || defaultSizeKey(d);
@@ -1624,9 +1655,8 @@ let state = {
   lastOrder: null,
   submitting: false,
   callingWaiter: false,
-  myOrderItems: null,
+  myOrders: null,       // 本桌所有订单原始文档，按 createdAt 升序——"我的订单"页按批次展示要用
   myOrderLoading: false,
-  pandaMenuOpen: false,
   allergenInfoOpen: false,
   cartPopupOpen: false,
   orderNickname: '',
@@ -1636,6 +1666,9 @@ let state = {
   upsellItems: [],        // 4 randomly-picked dish ids currently shown in the upsell modal
   upsellSelected: {},     // { dishId: true }
   upsellQueue: [],        // "换一批"要按这个队列走：洗过牌、还没展示过的菜品 id，取完一轮再重新洗牌
+  dupWarnOpen: false,      // 模糊重复下单提醒弹窗是否展开（见 findLikelyDuplicateSubmission）
+  dupWarnPending: null,    // { duplicateIds, newIds }：当前这次待确认的重复检测结果
+  dupCheckResolved: false, // 这一轮点单尝试里，顾客是否已经对重复提醒做过一次选择（避免重复弹窗）
   // 网络不好时，下单请求可能一直卡着/超时报错，但其实服务器那边已经建单成功了——本地
   // 购物车这时候不敢清空（万一是真的失败了），就先记一笔"提交过什么、什么时候提交的"
   // 在这里，等后面本桌订单的实时监听推送过来一条对得上号的订单，就知道那次其实是成功的，
@@ -1653,6 +1686,14 @@ let welcomeTimer = null;
 let liveTableOrdersUnsub = null;
 let liveTableOrders = [];
 let liveTableOrdersLoaded = false;
+
+// "刚刚有人下单啦~"顶部气泡用的两份记录：
+// - knownOrderIds：上一次推送时见过的订单 id 集合，null 表示还没建立过基线（首次
+//   加载）——首次加载看到的都是本桌已有的历史订单，不能当成"新单"弹一轮
+// - myOwnOrderIds：本机自己提交成功过的订单 id（在 submitOrder 里落地），即使
+//   它们对 knownOrderIds 来说是"新出现的"，也不弹——这个提示是给"别人下单了"用的
+let knownOrderIds = null;
+let myOwnOrderIds = new Set();
 
 function watchTableOrders(table){
   if(liveTableOrdersUnsub){ liveTableOrdersUnsub(); liveTableOrdersUnsub = null; }
@@ -1846,8 +1887,8 @@ function onTableOrdersChanged(){
   const foodOrders = liveTableOrders.filter(o => !o.call);
   reconcilePendingSubmits();
 
-  if(state.myOrderItems !== null){
-    state.myOrderItems = mergeItems(foodOrders);
+  if(state.myOrders !== null){
+    state.myOrders = foodOrders.slice().sort((a,b) => a.createdAt - b.createdAt);
   }
 
   if(state.lastOrder){
@@ -1856,6 +1897,19 @@ function onTableOrdersChanged(){
     state.lastOrder.removed = !doc;
     if(doc && doc.status) state.lastOrder.status = doc.status;
   }
+
+  // "刚刚有人下单啦~"：只在菜单浏览页提示，且只提示不是本机自己刚提交的新单——
+  // 首次建立基线（knownOrderIds 还是 null）不提示，不然一进页面就对着本桌已有
+  // 的历史订单弹一轮
+  const curIds = new Set(foodOrders.map(o => o.id));
+  if(knownOrderIds !== null){
+    const hasNewFromOthers = foodOrders.some(o => !knownOrderIds.has(o.id) && !myOwnOrderIds.has(o.id));
+    if(hasNewFromOthers && state.screen === 'menu'){
+      showNagToast(t('someoneOrderedMsg'), 'info');
+    }
+  }
+  knownOrderIds = curIds;
+  renderPandaNav();
 
   if(state.screen === 'myOrder' || state.screen === 'confirm') render();
 }
@@ -1894,7 +1948,6 @@ function selectLanguage(code){
 function setLanguage(code){
   applyLanguage(code);
   state.langSwitcherOpen = false;
-  state.pandaMenuOpen = false;
   render();
 }
 
@@ -1904,7 +1957,6 @@ function toggleWelcomeLangMenu(){
 }
 
 function toggleLangSwitcher(){
-  state.pandaMenuOpen = false;
   state.langSwitcherOpen = !state.langSwitcherOpen;
   render();
 }
@@ -2163,7 +2215,6 @@ function showNagToast(msg, kind){
 // 下单校验没过关时统一处理：弹提示 + 跳回菜单对应分类 + 分类按钮红色频闪一下
 function jumpToCategoryWithWarning(category, message){
   showNagToast(message);
-  state.pandaMenuOpen = false;
   state.cartPopupOpen = false;
   state.screen = 'menu';
   state.activeCategory = category;
@@ -2247,12 +2298,13 @@ function showAllergenPopup(event, code){
 }
 
 function goToMyOrder(){
-  state.pandaMenuOpen = false;
   if(state.screen !== 'myOrder') screenHistory.push(state.screen);
   state.screen = 'myOrder';
   // liveTableOrders 从选桌那一刻就在实时监听了，通常这里已经有数据，不用再等一次网络请求
   state.myOrderLoading = !liveTableOrdersLoaded;
-  state.myOrderItems = liveTableOrdersLoaded ? mergeItems(liveTableOrders.filter(o => !o.call)) : null;
+  state.myOrders = liveTableOrdersLoaded
+    ? liveTableOrders.filter(o => !o.call).sort((a,b) => a.createdAt - b.createdAt)
+    : null;
   render();
 }
 
@@ -2372,7 +2424,6 @@ async function callWaiter(){
 }
 
 function goToCart(){
-  state.pandaMenuOpen = false;
   if(state.screen !== 'cart') screenHistory.push(state.screen);
   state.screen = 'cart';
   render();
@@ -2382,11 +2433,13 @@ function goToOrderReview(){
   if(totalCount() === 0) return;
   const check = validateCartForCheckout();
   if(!check.ok){ jumpToCategoryWithWarning(check.category, check.message); return; }
-  state.pandaMenuOpen = false;
   if(state.screen !== 'orderReview') screenHistory.push(state.screen);
   state.screen = 'orderReview';
   state.upsellShown = false;
   state.upsellOpen = false;
+  state.dupCheckResolved = false;
+  state.dupWarnOpen = false;
+  state.dupWarnPending = null;
   render();
 }
 
@@ -2516,23 +2569,13 @@ function skipUpsell(){
 // On the menu screen the button is docked inline in the header
 // (#menu-panda-slot), so it scrolls away instead of floating forever.
 // Everywhere else it falls back to the fixed #panda-nav root. Either way,
-// toggling the dropdown only repaints that one slot, not the whole screen
-// behind it (so the menu's dish cards never flash/re-mount).
+// called on its own (e.g. when the order-count badge changes) it only
+// repaints that one slot, not the whole screen behind it (so the menu's
+// dish cards never flash/re-mount).
 function renderPandaNav(){
   const inlineSlot = document.getElementById('menu-panda-slot');
   document.getElementById('panda-nav').innerHTML = inlineSlot ? '' : (state.screen === 'welcome' ? '' : pandaNavHTML());
   if(inlineSlot) inlineSlot.innerHTML = pandaNavHTML();
-}
-
-function togglePandaMenu(){
-  state.pandaMenuOpen = !state.pandaMenuOpen;
-  renderPandaNav();
-}
-
-function closePandaMenu(){
-  if(!state.pandaMenuOpen) return;
-  state.pandaMenuOpen = false;
-  renderPandaNav();
 }
 
 function totalCount(){
@@ -2553,6 +2596,9 @@ function resetToMenu(){
   state.upsellOpen = false;
   state.upsellItems = [];
   state.upsellSelected = {};
+  state.dupCheckResolved = false;
+  state.dupWarnOpen = false;
+  state.dupWarnPending = null;
   screenHistory = [];
   state.screen = 'menu';
   render();
@@ -2579,6 +2625,54 @@ function findRecentDuplicateOrder(candidateOrders, items, windowMs){
   const now = Date.now();
   const sig = itemsSignature(items);
   return candidateOrders.find(o => (now - o.createdAt) < windowMs && itemsSignature(o.items) === sig) || null;
+}
+
+// 模糊重复下单提醒：跟上面"完全一致"的判重不是一回事——那一套只拦得住内容
+// 逐字节相同的场景（本机重试/同桌抢草稿）。这里专门抓"内容高度重叠但不完全
+// 一样"的可疑场景，比如同桌不小心把上一轮几乎整份菜又点了一遍（只是顺手换了
+// 个份量、少选一样东西）。命中不直接拦下或吞掉——那样风险太高，万一真的是
+// 顾客自己想再点一轮一样的菜，会造成真实丢单；只是弹窗交给顾客自己确认。
+// 判重口径（10 分钟内 / 单量 > 5 / 锅底重复 / 至少 5 道菜重复）都是产品侧定的
+// 经验值，不是什么精确算法。
+const DUP_WARN_WINDOW_MS = 10 * 60 * 1000;
+const DUP_WARN_MIN_TOTAL_ITEMS = 5;   // 这一轮提交单品数"超过五个"才需要检查
+const DUP_WARN_MIN_OVERLAP = 5;       // 跟历史订单至少"五个单品重复"才算数
+
+// 一份订单的 items 里，真正算"锅底"的那些菜品 id（排除蘸料——蘸料也挂在
+// soupBase 分类下方便导航，但换蘸料不算换锅底，见 tableAlreadyHasSoupBase）
+function orderSoupBaseIds(items){
+  const ids = new Set();
+  (items || []).forEach(it => {
+    const id = ZH_NAME_TO_ID[it.name];
+    const dish = id && MENU_BY_ID[id];
+    if(dish && dish.category === 'soupBase' && dish.sub !== 'dipSauce') ids.add(id);
+  });
+  return ids;
+}
+
+// itemDishIds 是这次要提交的购物车对应的菜品 id 列表（见 submitOrder）。返回
+// null（没命中）或者 { matchedOrder, overlapIds }（命中，overlapIds 是这次提交
+// 里跟 matchedOrder 重复的那些菜品 id）
+function findLikelyDuplicateSubmission(priorOrders, items, itemDishIds){
+  if(items.length <= DUP_WARN_MIN_TOTAL_ITEMS) return null;
+  const curSoupIds = orderSoupBaseIds(items);
+  if(curSoupIds.size === 0) return null;
+  const curDishIds = new Set(itemDishIds);
+  const now = Date.now();
+
+  const candidates = (priorOrders || []).filter(o => !o.call && (now - o.createdAt) < DUP_WARN_WINDOW_MS);
+  for(const o of candidates){
+    const oSoupIds = orderSoupBaseIds(o.items);
+    if(oSoupIds.size === 0) continue;
+    const sameSoup = [...curSoupIds].some(id => oSoupIds.has(id));
+    if(!sameSoup) continue;
+    const oDishIds = new Set((o.items || []).map(it => ZH_NAME_TO_ID[it.name]).filter(Boolean));
+    const overlapIds = itemDishIds.filter(id => oDishIds.has(id));
+    if(overlapIds.length >= DUP_WARN_MIN_OVERLAP){
+      return { matchedOrder: o, overlapIds: new Set(overlapIds) };
+    }
+  }
+  return null;
 }
 
 // 幂等键：代表"这一次提交这份内容"这个意图，不是"这一桌这一轮确认下单"这个
@@ -2811,6 +2905,8 @@ async function submitOrder(){
   // 期间同桌别的设备新加的内容一起静默抹掉的风险，没有任何东西是它修复的
   clearIdempotencyKey(state.table);
   state.pendingSubmitAttempts = state.pendingSubmitAttempts.filter(a => a !== pendingAttempt);
+  // 记一笔"这是本机自己下的单"，"刚刚有人下单啦~"那个提示气泡靠这个跳过自己
+  myOwnOrderIds.add(docId);
 
   // 订单已经落地，立刻翻到下单成功页，不再等任何额外的网络请求——summaryItems
   // （这一桌目前一共点了什么）先用手头已有的数据拼一版，这在绝大多数情况下就是
@@ -3147,31 +3243,48 @@ function excludesTagsHTML(excludes){
   return excludes.map(k => `<span class="spice-tag">${tOption(k)}</span>`).join('');
 }
 
+// 单个菜品行，"我的订单"批次列表和下单确认页的汇总卡片都在用同一套 orderLineHTML
+function myOrderItemLineHTML(it){
+  const dish = MENU_BY_ID[ZH_NAME_TO_ID[it.name]];
+  return orderLineHTML({
+    name: displayDishName(it.name),
+    qty: it.qty,
+    spice: dish && dish.spicy ? displaySpice(it.spice) : '',
+    price: it.price,
+    extra: (it.size ? `<span class="spice-tag">${tSize(it.size)}</span>` : '') + (it.cookMethod ? `<span class="spice-tag">${tCookMethod(it.cookMethod)}</span>` : '') + (it.soupBase ? `<span class="spice-tag">${tSoupBase(it.soupBase)}</span>` : '') + (it.drink ? `<span class="spice-tag">${tDrink(it.drink)}</span>` : '') + excludesTagsHTML(it.excludes) + (it.forDish ? `<span class="spice-tag add-on-tag">${t('addOnTagPrefix')}${displayDishName(it.forDish)}</span>` : ''),
+  });
+}
+
+// "我的订单"按批次展示：本桌每一份 order 文档本身就是顾客的一次下单动作，不再像
+// 旧版那样把所有批次的菜合并成一份看不出先后顺序的汇总——按下单时间分开展示，
+// 一眼能看出"几点几分下了什么"
+function myOrderBatchHTML(order){
+  const items = order.items || [];
+  const subtotal = items.reduce((s,it)=> s + (it.price||0)*it.qty, 0);
+  return `
+    <div class="my-order-batch">
+      <p class="my-order-batch-time">${formatOrderTime(order.createdAt)}${order.isAddOn ? ` <span class="my-order-batch-tag">${t('myOrderBatchAddOnTag')}</span>` : ''}</p>
+      <ul class="order-summary">
+        ${items.map(myOrderItemLineHTML).join('')}
+        ${totalRowHTML(subtotal)}
+      </ul>
+    </div>`;
+}
+
 function myOrderHTML(){
-  const items = state.myOrderItems || [];
-  const total = items.reduce((s,it)=> s + (it.price||0)*it.qty, 0);
+  const orders = state.myOrders || [];
+  const grandTotal = orders.reduce((s,o) => s + (o.items||[]).reduce((s2,it)=> s2 + (it.price||0)*it.qty, 0), 0);
   return `
     ${backRowHTML()}
-    <div class="confirm-screen">
+    <div class="confirm-screen my-order-screen">
       <p class="eyebrow">${t('tableEyebrow')} ${escapeHtml(displayTableName(state.table))}</p>
       <h2 style="margin-top:6px;">${t('myOrder')}</h2>
       ${state.myOrderLoading
         ? `<p class="hint">${t('loading')}</p>`
-        : items.length === 0
+        : orders.length === 0
           ? `<p class="hint">${t('noOrderYet')}</p>`
-          : `<ul class="order-summary">
-              ${items.map(it=>{
-                const dish = MENU_BY_ID[ZH_NAME_TO_ID[it.name]];
-                return orderLineHTML({
-                  name: displayDishName(it.name),
-                  qty: it.qty,
-                  spice: dish && dish.spicy ? displaySpice(it.spice) : '',
-                  price: it.price,
-                  extra: (it.size ? `<span class="spice-tag">${tSize(it.size)}</span>` : '') + (it.cookMethod ? `<span class="spice-tag">${tCookMethod(it.cookMethod)}</span>` : '') + (it.soupBase ? `<span class="spice-tag">${tSoupBase(it.soupBase)}</span>` : '') + (it.drink ? `<span class="spice-tag">${tDrink(it.drink)}</span>` : '') + excludesTagsHTML(it.excludes) + (it.forDish ? `<span class="spice-tag add-on-tag">${t('addOnTagPrefix')}${displayDishName(it.forDish)}</span>` : ''),
-                });
-              }).join('')}
-              ${totalRowHTML(total)}
-            </ul>
+          : `${orders.map(myOrderBatchHTML).join('')}
+            ${orders.length > 1 ? `<ul class="order-summary my-order-grand-total"><li class="order-total-line"><span>${t('myOrderGrandTotal')}</span><span>${formatPrice(grandTotal)}</span></li></ul>` : ''}
             <p class="hint">${t('removeHint')}</p>`
       }
       <button class="ghost-btn" onclick="goBack()">${t('backToMenu')}</button>
@@ -3315,23 +3428,28 @@ function upsellTilesHTML(){
   }).join('');
 }
 
+// 本桌目前一共有几笔正式订单（呼叫服务员的 call 单不算），下单成功就会跟着涨——
+// 徽标数字用这个，而不是"未读/新增"之类的已读状态，因为没有账号体系，没地方存
+// "这台设备看没看过"，干脆就是"这一桌现在一共有几笔"，简单直接，不用引入新状态
+function tableOrderCount(){
+  return liveTableOrdersLoaded ? liveTableOrders.filter(o => !o.call).length : 0;
+}
+
 function pandaNavHTML(){
   if(!state.table) return '';
+  const orderCount = tableOrderCount();
   return `
-    ${state.pandaMenuOpen ? `<button class="panda-overlay" onclick="closePandaMenu()" aria-label="${t('closeMenu')}"></button>` : ''}
-    <button class="my-order-btn" onclick="togglePandaMenu()" aria-label="${t('myPot')}" aria-expanded="${state.pandaMenuOpen}">
-      <span class="panda-avatar"><img src="../image/LOGO/panda.webp" alt=""/></span>
+    <button class="my-order-btn" onclick="goToMyOrder()" aria-label="${t('myPot')}">
+      <span class="panda-avatar">
+        <img src="../image/LOGO/panda.webp" alt=""/>
+        ${orderCount > 0 ? `<span class="panda-order-badge">${orderCount}</span>` : ''}
+      </span>
       <span class="my-order-label">${t('myPot')}</span>
     </button>
     <button class="my-order-btn" onclick="toggleLangSwitcher()" aria-label="${t('languageLabel')}">
       <span class="panda-avatar"><img src="../image/LOGO/lang.webp" alt=""/></span>
       <span class="my-order-label">${LANG_META[state.lang].native}</span>
-    </button>
-    ${state.pandaMenuOpen ? `
-      <div class="panda-dropdown">
-        <button onclick="goToCart()">${t('cart')}</button>
-        <button onclick="goToMyOrder()">${t('orderedItems')}</button>
-      </div>` : ''}`;
+    </button>`;
 }
 
 function chefCookingHTML(){

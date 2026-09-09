@@ -237,24 +237,43 @@
     100%{opacity:0;transform:translateX(-50%) translateY(-8px) scale(.96);}
   }
 
-  /* ---------- 页面顶部的"刚刚有人下单啦~"小气泡：一闪而过，1s 内自己淡出，
-     跟上面 nag-toast（2.6s，提醒顾客漏选项时用，要看得清楚）用途不同，
-     所以单独一套动画，不复用同一个 keyframes ---------- */
-  .order-bubble{
-    position:fixed;left:50%;top:14px;z-index:90;transform:translateX(-50%);
-    max-width:82vw;text-align:center;pointer-events:none;
+  /* ---------- 页面顶部"有小伙伴成功下单啦"跑马灯：见 queueOrderAnnouncement /
+     playNextOrderMarquee。不管顾客当前在客户端哪个页面（菜单/购物车/确认单/
+     我的订单……）都固定在页面最顶部展示，跟这个人具体在看哪个页面无关。
+     一条消息必须完整滚完（animationend 才算这条播完），不会被下一条打断——
+     多条消息用队列排队播，不用旧版 .order-bubble 那种"来了新的就地替换、
+     直接吃掉上一条"的做法（那样如果同时有好几桌一起下单，后面几笔会悄悄
+     被吞掉，顾客完全看不到）。右侧"我的订单"按钮全程固定在跑马灯最右边，
+     不随文字滚动，方便顾客看到提示后随手点进去核对。 ---------- */
+  .order-marquee-bar{
+    position:fixed;left:0;right:0;top:0;z-index:97;
+    display:flex;align-items:stretch;height:40px;
     background:linear-gradient(160deg,var(--jade) 0%,var(--jade-dark) 100%);
-    color:#fff;font-size:13px;font-weight:800;line-height:1.4;
-    padding:9px 16px;border-radius:14px;border:1px solid var(--gold-line);
-    box-shadow:0 14px 32px rgba(0,0,0,.45);
-    animation:order-bubble-life 1s ease forwards;
+    box-shadow:0 10px 24px rgba(0,0,0,.35);
+    animation:order-marquee-bar-in .22s ease;
   }
-  @keyframes order-bubble-life{
-    0%{opacity:0;transform:translateX(-50%) translateY(-10px) scale(.94);}
-    15%{opacity:1;transform:translateX(-50%) translateY(0) scale(1);}
-    60%{opacity:1;transform:translateX(-50%) translateY(0) scale(1);}
-    100%{opacity:0;transform:translateX(-50%) translateY(-8px) scale(.96);}
+  @keyframes order-marquee-bar-in{
+    from{ transform:translateY(-100%); }
+    to{ transform:translateY(0); }
   }
+  .order-marquee-track{ flex:1; min-width:0; position:relative; overflow:hidden; }
+  .order-marquee-text{
+    position:absolute; left:0; top:0; height:100%;
+    display:flex; align-items:center; white-space:nowrap;
+    color:#fff; font-size:13px; font-weight:800; padding:0 4px;
+    animation-name:order-marquee-scroll; animation-timing-function:linear; animation-fill-mode:forwards;
+  }
+  @keyframes order-marquee-scroll{
+    from{ transform:translateX(100vw); }
+    to{ transform:translateX(-100%); }
+  }
+  .order-marquee-cta{
+    flex-shrink:0; display:flex; align-items:center; gap:4px;
+    padding:0 16px; border:none; cursor:pointer; font-family:inherit;
+    white-space:nowrap; color:#fff; font-size:12.5px; font-weight:800;
+    background:linear-gradient(90deg, rgba(20,40,30,0) 0%, rgba(20,40,30,.32) 34%, rgba(20,40,30,.32) 100%);
+  }
+  .order-marquee-cta:active{ opacity:.75; }
   .dish-panel{flex:1;min-width:0;padding-right:16px;}
   .category-note{
     font-size:12px;line-height:1.5;color:var(--text-muted);
@@ -952,6 +971,7 @@
 <body>
 <div id="app"></div>
 <div id="panda-nav"></div>
+<div id="order-marquee-root"></div>
 <div id="cart-popup-root"></div>
 <div id="allergen-popup-root"></div>
 
@@ -1091,8 +1111,9 @@ const I18N = {
     perPieceSuffix:" /件",
     soupBaseNote:"鸳鸯锅可选特辣/中辣/微辣",
     missingSoupBaseMsg:"忘记选择锅底了哦~",
+    soupBaseAlreadyOrderedMsg:"本桌已经点过锅底啦，一桌只能点一份哦~",
     addOnTagPrefix:"加菜给：",
-    myOrderBatchAddOnTag:"加菜", myOrderGrandTotal:"本桌合计", someoneOrderedMsg:"刚刚有人下单啦~ 👆",
+    myOrderBatchAddOnTag:"加菜", myOrderGrandTotal:"本桌合计", orderAnnouncePrefix:"有小伙伴成功下单啦：",
   },
   zhHant:{
     appTitle:'WELCOME~',
@@ -1121,8 +1142,9 @@ const I18N = {
     perPieceSuffix:' /件',
     soupBaseNote:'鴛鴦鍋可選特辣/中辣/微辣',
     missingSoupBaseMsg:'忘記選擇鍋底了哦~',
+    soupBaseAlreadyOrderedMsg:'本桌已經點過鍋底啦，一桌只能點一份哦~',
     addOnTagPrefix:'加菜給：',
-    myOrderBatchAddOnTag:'加菜', myOrderGrandTotal:'本桌合計', someoneOrderedMsg:'剛剛有人下單啦~ 👆',
+    myOrderBatchAddOnTag:'加菜', myOrderGrandTotal:'本桌合計', orderAnnouncePrefix:'有小夥伴成功下單啦：',
   },
   en:{
     appTitle:"WELCOME~",
@@ -1152,8 +1174,9 @@ const I18N = {
     soupBaseNote:"Two-Flavour Pot: choose Extra/Medium/Mild spicy",
     soupPotNote:"Not a dish — comes with a giant pot for your food to swim in!",
     missingSoupBaseMsg:"Don't forget to pick a soup base~",
+    soupBaseAlreadyOrderedMsg:"This table already ordered a soup base — only one per table~",
     addOnTagPrefix:"Add-on for: ",
-    myOrderBatchAddOnTag:"Add-on", myOrderGrandTotal:"Table Total", someoneOrderedMsg:"Someone just ordered~ 👆",
+    myOrderBatchAddOnTag:"Add-on", myOrderGrandTotal:"Table Total", orderAnnouncePrefix:"A friend just placed an order: ",
   },
   it:{
     appTitle:"WELCOME~",
@@ -1183,8 +1206,9 @@ const I18N = {
     soupBaseNote:"Pentola a Due Sapori: piccante extra/medio/leggero a scelta",
     soupPotNote:"Non è un piatto — arriva con una pentola gigante dove il tuo cibo andrà a nuotare!",
     missingSoupBaseMsg:"Non dimenticare di scegliere una base zuppa~",
+    soupBaseAlreadyOrderedMsg:"Questo tavolo ha già ordinato una base zuppa: una sola per tavolo~",
     addOnTagPrefix:"Extra per: ",
-    myOrderBatchAddOnTag:"Extra", myOrderGrandTotal:"Totale Tavolo", someoneOrderedMsg:"Qualcuno ha appena ordinato~ 👆",
+    myOrderBatchAddOnTag:"Extra", myOrderGrandTotal:"Totale Tavolo", orderAnnouncePrefix:"Un amico ha appena ordinato: ",
   },
   fr:{
     appTitle:"WELCOME~",
@@ -1214,8 +1238,9 @@ const I18N = {
     soupBaseNote:"Marmite Deux Saveurs : extra/moyen/léger épicé au choix",
     soupPotNote:"Pas un plat — livré avec une marmite géante où votre nourriture ira nager !",
     missingSoupBaseMsg:"N'oubliez pas de choisir une base de bouillon~",
+    soupBaseAlreadyOrderedMsg:"Cette table a déjà commandé une base de bouillon, une seule par table~",
     addOnTagPrefix:"Extra pour : ",
-    myOrderBatchAddOnTag:"Extra", myOrderGrandTotal:"Total Table", someoneOrderedMsg:"Quelqu'un vient de commander~ 👆",
+    myOrderBatchAddOnTag:"Extra", myOrderGrandTotal:"Total Table", orderAnnouncePrefix:"Un ami vient de passer une commande : ",
   },
   es:{
     appTitle:"WELCOME~",
@@ -1245,8 +1270,9 @@ const I18N = {
     soupBaseNote:"Olla de Dos Sabores: extra/medio/suave picante a elegir",
     soupPotNote:"No es un plato — viene con una olla gigante donde tu comida irá a nadar!",
     missingSoupBaseMsg:"No olvides elegir una base de sopa~",
+    soupBaseAlreadyOrderedMsg:"Esta mesa ya pidió una base de sopa, solo una por mesa~",
     addOnTagPrefix:"Extra para: ",
-    myOrderBatchAddOnTag:"Extra", myOrderGrandTotal:"Total de la Mesa", someoneOrderedMsg:"¡Alguien acaba de pedir~ 👆",
+    myOrderBatchAddOnTag:"Extra", myOrderGrandTotal:"Total de la Mesa", orderAnnouncePrefix:"Un amigo acaba de hacer un pedido: ",
   },
 };
 
@@ -1707,13 +1733,21 @@ let liveTableOrdersUnsub = null;
 let liveTableOrders = [];
 let liveTableOrdersLoaded = false;
 
-// "刚刚有人下单啦~"顶部气泡用的两份记录：
+// "有小伙伴成功下单啦"顶部跑马灯用的两份记录：
 // - knownOrderIds：上一次推送时见过的订单 id 集合，null 表示还没建立过基线（首次
-//   加载）——首次加载看到的都是本桌已有的历史订单，不能当成"新单"弹一轮
+//   加载）——首次加载看到的都是本桌已有的历史订单，不能当成"新单"播一轮
 // - myOwnOrderIds：本机自己提交成功过的订单 id（在 submitOrder 里落地），即使
-//   它们对 knownOrderIds 来说是"新出现的"，也不弹——这个提示是给"别人下单了"用的
+//   它们对 knownOrderIds 来说是"新出现的"，也不播——这个提示是给"别人下单了"用的
 let knownOrderIds = null;
 let myOwnOrderIds = new Set();
+
+// 跑马灯播放队列：一次快照里可能同时出现好几笔别人的新单（比如同桌好几台手机
+// 前后脚提交、这次监听刚好一起推过来），每一笔都要完整播完才轮到下一笔，不能
+// 互相打断——所以用队列串起来，而不是像旧版 .order-bubble 那样"来了新的就地
+// 顶掉上一条"。orderMarqueePlaying 标记当前是不是正有一条在播，避免并发触发
+// 两条动画抢同一个 DOM 节点。
+let orderMarqueeQueue = [];
+let orderMarqueePlaying = false;
 
 function watchTableOrders(table){
   if(liveTableOrdersUnsub){ liveTableOrdersUnsub(); liveTableOrdersUnsub = null; }
@@ -1918,15 +1952,15 @@ function onTableOrdersChanged(){
     if(doc && doc.status) state.lastOrder.status = doc.status;
   }
 
-  // "刚刚有人下单啦~"：只在菜单浏览页提示，且只提示不是本机自己刚提交的新单——
-  // 首次建立基线（knownOrderIds 还是 null）不提示，不然一进页面就对着本桌已有
-  // 的历史订单弹一轮
+  // "有小伙伴成功下单啦"顶部跑马灯：不看顾客现在停在客户端哪个页面，只要不是
+  // 本机自己刚提交的新单就播——首次建立基线（knownOrderIds 还是 null）不播，
+  // 不然一进页面就对着本桌已有的历史订单播一轮
   const curIds = new Set(foodOrders.map(o => o.id));
   if(knownOrderIds !== null){
-    const hasNewFromOthers = foodOrders.some(o => !knownOrderIds.has(o.id) && !myOwnOrderIds.has(o.id));
-    if(hasNewFromOthers && state.screen === 'menu'){
-      showOrderBubble(t('someoneOrderedMsg'));
-    }
+    const newFromOthers = foodOrders
+      .filter(o => !knownOrderIds.has(o.id) && !myOwnOrderIds.has(o.id))
+      .sort((a,b) => a.createdAt - b.createdAt);
+    newFromOthers.forEach(queueOrderAnnouncement);
   }
   knownOrderIds = curIds;
   renderPandaNav();
@@ -2081,9 +2115,36 @@ function getItem(id){
   };
 }
 
+// 防呆：同一桌（同一个二维码）全程只能点一份锅底——见 tableAlreadyHasSoupBase
+// 顶部那段真实事故说明（顾客把加点的锅底当成普通汤菜又点了一份）。这里在锅底类
+// 菜品（isSoupPot，排除蘸料）上做两层拦截，只在"从 0 加到有"这一下触发：
+// ①本桌是不是已经点过一份真锅底了（不管是本机之前提交过、还是同桌另一台设备
+//   提交过，tableAlreadyHasSoupBase 已经查过 liveTableOrders）——命中就直接拦，
+//   连购物车都不让加进去，弹提示请联系服务员
+// ②购物车里（含同桌共享草稿同步过来的）是不是已经选了另一款还没提交的锅底——
+//   命中就把那一款清零换成这一款，当成单选处理，不让两款一起叠在购物车里
+// 锅底数量本身也封顶在 1（Math.min(1, ...)），不像其它菜品能一路加到 20
 function changeQty(id, delta){
+  const d = MENU_BY_ID[id];
   const cur = getItem(id);
-  const qty = Math.max(0, Math.min(20, cur.qty + delta));
+
+  if(delta > 0 && cur.qty <= 0 && d && isSoupPot(d)){
+    if(tableAlreadyHasSoupBase()){
+      showNagToast(t('soupBaseAlreadyOrderedMsg'));
+      return;
+    }
+    MENU.forEach(other => {
+      if(other.id === id || !isSoupPot(other)) return;
+      const otherItem = getItem(other.id);
+      if(otherItem.qty <= 0) return;
+      state.items[other.id] = Object.assign({}, otherItem, { qty: 0 });
+      updateItemUI(other.id);
+      pushSharedCartItem(other.id);
+    });
+  }
+
+  const cap = (d && isSoupPot(d)) ? 1 : 20;
+  const qty = Math.max(0, Math.min(cap, cur.qty + delta));
   state.items[id] = { qty, spice: cur.spice, size: cur.size, excludes: cur.excludes, cookMethod: cur.cookMethod };
   if(delta > 0 && qty > cur.qty){ celebrateAddToCart(); logDishClick(id); }
   updateItemUI(id);
@@ -2232,16 +2293,56 @@ function showNagToast(msg, kind){
   toast.addEventListener('animationend', (ev)=>{ if(ev.target === toast) toast.remove(); });
 }
 
-// "刚刚有人下单啦~"专用：一闪而过，1s 内自己淡出，跟 showNagToast 用的是
-// 不同一套动画/样式（.order-bubble，见 CSS），不是共用 nag-toast 改参数
-function showOrderBubble(msg){
-  const existing = document.querySelector('.order-bubble');
-  if(existing) existing.remove();
-  const bubble = document.createElement('div');
-  bubble.className = 'order-bubble';
-  bubble.textContent = msg;
-  document.body.appendChild(bubble);
-  bubble.addEventListener('animationend', (ev)=>{ if(ev.target === bubble) bubble.remove(); });
+// 把一笔"别人刚下的单"拼成跑马灯要念的一整句话：✅ + 前缀 + 逐道菜"菜名 x数量"，
+// 用 displayDishName 而不是订单里存的原始中文名，保证外语顾客看到的也是翻译过的
+// 菜名（订单文档里 items[].name 永远是中文，是给厨房看的，见 buildOrderItemsFromDraft）
+function buildOrderAnnounceMsg(order){
+  const isCJK = state.lang === 'zh' || state.lang === 'zhHant';
+  const sep = isCJK ? '，' : ', ';
+  const itemsText = (order.items || [])
+    .map(it => `${displayDishName(it.name)} x${it.qty}`)
+    .join(sep);
+  return `✅ ${t('orderAnnouncePrefix')}${itemsText}`;
+}
+
+// 排进跑马灯播放队列，不立即播——playNextOrderMarquee 里的 animationend 回调
+// 会在上一条真正播完之后才取下一条，保证每一笔"别人下的单"都完整滚过一遍，
+// 不会被后一笔紧跟着覆盖掉（旧版 .order-bubble 是"来新的就地替换"，同时来好几
+// 笔时后面几笔会被静默吞掉，顾客根本看不到）
+function queueOrderAnnouncement(order){
+  orderMarqueeQueue.push(buildOrderAnnounceMsg(order));
+  playNextOrderMarquee();
+}
+
+function playNextOrderMarquee(){
+  if(orderMarqueePlaying) return;
+  const msg = orderMarqueeQueue.shift();
+  if(!msg) return;
+  orderMarqueePlaying = true;
+  showOrderMarquee(msg);
+}
+
+// 滚动速度按文字长短给一个大致匀速的时长（太短会读不完就飞走，太长又拖沓）；
+// 不追求逐像素精确计算滚动距离——from 状态用 100vw（够把整条文字先推到视口右
+// 边界外），to 状态用 translateX(-100%)（相对自身宽度，不管文字多长，滚到这个
+// 状态时一定已经完全滚出左边界），两头对不齐的那点误差用户感知不到
+function showOrderMarquee(msg){
+  const root = document.getElementById('order-marquee-root');
+  const duration = Math.max(6, Math.min(16, msg.length * 0.22));
+  root.innerHTML = `
+    <div class="order-marquee-bar">
+      <div class="order-marquee-track">
+        <span class="order-marquee-text" style="animation-duration:${duration}s;">${escapeHtml(msg)}</span>
+      </div>
+      <button class="order-marquee-cta" onclick="goToMyOrder()">${escapeHtml(t('myOrder'))}</button>
+    </div>`;
+  const textEl = root.querySelector('.order-marquee-text');
+  textEl.addEventListener('animationend', (ev)=>{
+    if(ev.target !== textEl) return;
+    root.innerHTML = '';
+    orderMarqueePlaying = false;
+    playNextOrderMarquee();
+  });
 }
 
 // 下单校验没过关时统一处理：弹提示 + 跳回菜单对应分类 + 分类按钮红色频闪一下

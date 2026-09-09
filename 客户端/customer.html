@@ -259,13 +259,19 @@
   .order-marquee-bar{
     position:fixed;left:0;right:0;top:0;z-index:97;
     display:flex;align-items:stretch;height:54px;
-    background:linear-gradient(160deg,var(--jade) 0%,var(--jade-dark) 100%);
+    background:linear-gradient(160deg, rgba(47,122,94,.82) 0%, rgba(36,95,73,.82) 100%);
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
     box-shadow:0 10px 24px rgba(0,0,0,.35);
     animation:order-marquee-bar-in .22s ease;
   }
   @keyframes order-marquee-bar-in{
     from{ transform:translateY(-100%); }
     to{ transform:translateY(0); }
+  }
+  /* 左边这截是固定文案，不跟着滚——只有具体菜品那段才滚动播放，见 showOrderMarquee */
+  .order-marquee-prefix{
+    flex-shrink:0;display:flex;align-items:center;white-space:nowrap;
+    padding:0 2px 0 16px;color:#fff;font-size:15px;font-weight:900;
   }
   .order-marquee-track{ flex:1; min-width:0; position:relative; overflow:hidden; }
   .order-marquee-text{
@@ -2437,16 +2443,17 @@ function showNagToast(msg, kind){
   toast.addEventListener('animationend', (ev)=>{ if(ev.target === toast) toast.remove(); });
 }
 
-// 把一笔"别人刚下的单"拼成跑马灯要念的一整句话：✅ + 前缀 + 逐道菜"菜名 x数量"，
-// 用 displayDishName 而不是订单里存的原始中文名，保证外语顾客看到的也是翻译过的
-// 菜名（订单文档里 items[].name 永远是中文，是给厨房看的，见 buildOrderItemsFromDraft）
-function buildOrderAnnounceMsg(order){
+// 把一笔"别人刚下的单"拆成跑马灯要用的两截：prefix（"✅ 有小伙伴成功下单啦："）
+// 固定不动，items（逐道菜"菜名 x数量"）才滚动播放——用 displayDishName 而不是
+// 订单里存的原始中文名，保证外语顾客看到的也是翻译过的菜名（订单文档里
+// items[].name 永远是中文，是给厨房看的，见 buildOrderItemsFromDraft）
+function buildOrderAnnounceParts(order){
   const isCJK = state.lang === 'zh' || state.lang === 'zhHant';
   const sep = isCJK ? '，' : ', ';
-  const itemsText = (order.items || [])
+  const items = (order.items || [])
     .map(it => `${displayDishName(it.name)} x${it.qty}`)
     .join(sep);
-  return `✅ ${t('orderAnnouncePrefix')}${itemsText}`;
+  return { prefix: `✅ ${t('orderAnnouncePrefix')}`, items };
 }
 
 // 排进跑马灯播放队列，不立即播——playNextOrderMarquee 里的 animationend 回调
@@ -2454,29 +2461,30 @@ function buildOrderAnnounceMsg(order){
 // 不会被后一笔紧跟着覆盖掉（旧版 .order-bubble 是"来新的就地替换"，同时来好几
 // 笔时后面几笔会被静默吞掉，顾客根本看不到）
 function queueOrderAnnouncement(order){
-  orderMarqueeQueue.push(buildOrderAnnounceMsg(order));
+  orderMarqueeQueue.push(buildOrderAnnounceParts(order));
   playNextOrderMarquee();
 }
 
 function playNextOrderMarquee(){
   if(orderMarqueePlaying) return;
-  const msg = orderMarqueeQueue.shift();
-  if(!msg) return;
+  const parts = orderMarqueeQueue.shift();
+  if(!parts) return;
   orderMarqueePlaying = true;
-  showOrderMarquee(msg);
+  showOrderMarquee(parts);
 }
 
-// 滚动速度按文字长短给一个大致匀速的时长（太短会读不完就飞走，太长又拖沓）；
+// 滚动速度按菜品文字长短给一个大致匀速的时长（太短会读不完就飞走，太长又拖沓）；
 // 不追求逐像素精确计算滚动距离——from 状态用 100vw（够把整条文字先推到视口右
 // 边界外），to 状态用 translateX(-100%)（相对自身宽度，不管文字多长，滚到这个
 // 状态时一定已经完全滚出左边界），两头对不齐的那点误差用户感知不到
-function showOrderMarquee(msg){
+function showOrderMarquee(parts){
   const root = document.getElementById('order-marquee-root');
-  const duration = Math.max(6, Math.min(16, msg.length * 0.22));
+  const duration = Math.max(6, Math.min(16, parts.items.length * 0.22));
   root.innerHTML = `
     <div class="order-marquee-bar">
+      <span class="order-marquee-prefix">${escapeHtml(parts.prefix)}</span>
       <div class="order-marquee-track">
-        <span class="order-marquee-text" style="animation-duration:${duration}s;">${escapeHtml(msg)}</span>
+        <span class="order-marquee-text" style="animation-duration:${duration}s;">${escapeHtml(parts.items)}</span>
       </div>
       <button class="order-marquee-cta" onclick="goToMyOrder()">${escapeHtml(t('myOrder'))}</button>
     </div>`;

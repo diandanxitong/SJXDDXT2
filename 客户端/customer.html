@@ -268,10 +268,11 @@
     from{ transform:translateY(-100%); }
     to{ transform:translateY(0); }
   }
-  /* 左边这截是固定文案，不跟着滚——只有具体菜品那段才滚动播放，见 showOrderMarquee */
+  /* 左边这截是固定文案，不跟着滚——只有具体菜品那段才滚动播放，见 showOrderMarquee。
+     字号比菜品文字小一档，视觉上让"谁下单了"当引子、"点了什么"是主角 */
   .order-marquee-prefix{
     flex-shrink:0;display:flex;align-items:center;white-space:nowrap;
-    padding:0 2px 0 16px;color:#fff;font-size:15px;font-weight:900;
+    padding:0 2px 0 16px;color:#fff;font-size:12.5px;font-weight:800;
   }
   .order-marquee-track{ flex:1; min-width:0; position:relative; overflow:hidden; }
   .order-marquee-text{
@@ -280,6 +281,7 @@
     color:#fff; font-size:15px; font-weight:800; padding:0 4px;
     animation-name:order-marquee-scroll; animation-timing-function:linear; animation-fill-mode:forwards;
   }
+  .order-marquee-qty{ color:var(--gold-hi); font-weight:900; }
   @keyframes order-marquee-scroll{
     from{ transform:translateX(100vw); }
     to{ transform:translateX(-100%); }
@@ -1183,7 +1185,7 @@ const I18N = {
     missingSoupBaseMsg:"忘记选择锅底了哦~",
     soupBaseAlreadyOrderedMsg:"本桌已经点过锅底啦，一桌只能点一份哦~",
     addOnTagPrefix:"加菜给：",
-    myOrderBatchAddOnTag:"加菜", myOrderGrandTotal:"本桌合计", orderAnnouncePrefix:"有小伙伴成功下单啦：",
+    myOrderBatchAddOnTag:"加菜", myOrderGrandTotal:"本桌合计", orderAnnouncePrefix:"有朋友成功下单~：",
     batchStampConfirmed:"已下单成功", batchStampWaiting:"等待中，请稍后~",
   },
   zhHant:{
@@ -1215,7 +1217,7 @@ const I18N = {
     missingSoupBaseMsg:'忘記選擇鍋底了哦~',
     soupBaseAlreadyOrderedMsg:'本桌已經點過鍋底啦，一桌只能點一份哦~',
     addOnTagPrefix:'加菜給：',
-    myOrderBatchAddOnTag:'加菜', myOrderGrandTotal:'本桌合計', orderAnnouncePrefix:'有小夥伴成功下單啦：',
+    myOrderBatchAddOnTag:'加菜', myOrderGrandTotal:'本桌合計', orderAnnouncePrefix:'有朋友成功下單~：',
     batchStampConfirmed:'已下單成功', batchStampWaiting:'等待中，請稍後~',
   },
   en:{
@@ -2443,17 +2445,21 @@ function showNagToast(msg, kind){
   toast.addEventListener('animationend', (ev)=>{ if(ev.target === toast) toast.remove(); });
 }
 
-// 把一笔"别人刚下的单"拆成跑马灯要用的两截：prefix（"✅ 有小伙伴成功下单啦："）
-// 固定不动，items（逐道菜"菜名 x数量"）才滚动播放——用 displayDishName 而不是
-// 订单里存的原始中文名，保证外语顾客看到的也是翻译过的菜名（订单文档里
-// items[].name 永远是中文，是给厨房看的，见 buildOrderItemsFromDraft）
+// 把一笔"别人刚下的单"拆成跑马灯要用的两截：prefix（"有朋友成功下单~："）固定
+// 不动，itemsHTML（逐道菜"菜名 x数量"，数量部分单独包一层 span 上亮金色）才
+// 滚动播放——用 displayDishName 而不是订单里存的原始中文名，保证外语顾客看到
+// 的也是翻译过的菜名（订单文档里 items[].name 永远是中文，是给厨房看的，见
+// buildOrderItemsFromDraft）。itemsText 是同一份内容的纯文本版，只用来估算
+// 滚动时长，不拼进 HTML。
 function buildOrderAnnounceParts(order){
   const isCJK = state.lang === 'zh' || state.lang === 'zhHant';
   const sep = isCJK ? '，' : ', ';
-  const items = (order.items || [])
-    .map(it => `${displayDishName(it.name)} x${it.qty}`)
+  const dishes = (order.items || []).map(it => ({ name: displayDishName(it.name), qty: it.qty }));
+  const itemsText = dishes.map(d => `${d.name} x${d.qty}`).join(sep);
+  const itemsHTML = dishes
+    .map(d => `${escapeHtml(d.name)} <span class="order-marquee-qty">x${d.qty}</span>`)
     .join(sep);
-  return { prefix: `✅ ${t('orderAnnouncePrefix')}`, items };
+  return { prefix: t('orderAnnouncePrefix'), itemsText, itemsHTML };
 }
 
 // 排进跑马灯播放队列，不立即播——playNextOrderMarquee 里的 animationend 回调
@@ -2479,12 +2485,12 @@ function playNextOrderMarquee(){
 // 状态时一定已经完全滚出左边界），两头对不齐的那点误差用户感知不到
 function showOrderMarquee(parts){
   const root = document.getElementById('order-marquee-root');
-  const duration = Math.max(6, Math.min(16, parts.items.length * 0.22));
+  const duration = Math.max(6, Math.min(16, parts.itemsText.length * 0.22));
   root.innerHTML = `
     <div class="order-marquee-bar">
       <span class="order-marquee-prefix">${escapeHtml(parts.prefix)}</span>
       <div class="order-marquee-track">
-        <span class="order-marquee-text" style="animation-duration:${duration}s;">${escapeHtml(parts.items)}</span>
+        <span class="order-marquee-text" style="animation-duration:${duration}s;">${parts.itemsHTML}</span>
       </div>
       <button class="order-marquee-cta" onclick="goToMyOrder()">${escapeHtml(t('myOrder'))}</button>
     </div>`;

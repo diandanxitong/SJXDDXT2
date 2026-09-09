@@ -107,10 +107,13 @@
     background:linear-gradient(90deg, var(--gold-line), transparent 85%);
   }
   /* ---------- panda nav ----------
-     On the menu screen it's docked inline in the header (.menu-panda-slot)
-     so it scrolls away with the page instead of floating forever（2026-09-08
-     试过让它一直悬浮跟随，顾客说不要又改回来了）; #panda-nav is the
-     fixed fallback root used on the other (less-visited) screens. */
+     每个页面都把 #menu-panda-slot 这个 id 嵌在自己的顶部布局里（菜单页在
+     header 里，其它页在 .screen-top-row 里，见 screenTopRowHTML），renderPandaNav
+     每次都会优先找这个 id 原地挂载——所以熊猫"我的订单"/语言切换这两个按钮在
+     全部页面上都是跟着内容一起滚走的嵌入式布局，不是悬浮在视口上的固定定位
+     （2026-09-08 试过做成一直悬浮跟随，顾客说不要；2026-09-09 进一步把"不悬浮"
+     从菜单页推广到全部页面）。#panda-nav 保留作为兜底（万一哪个页面漏加了
+     slot），正常情况下用不到。 */
   /* "我的订单"在上、语言切换在下，竖着排在右上角——"我的订单"点了直接跳
      "我的订单"页，不再经过下拉菜单；语言切换是独立按钮，图标用 lang.webp
      （那个通用的"文/A"翻译图标） */
@@ -134,8 +137,16 @@
     font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;
     border:1.5px solid var(--bg-soft);
   }
-  .my-order-label{font-size:13.5px;font-weight:800;color:var(--text-muted);white-space:nowrap;}
-  .my-order-btn:hover .my-order-label{color:var(--gold-ink);}
+  /* 之前是纯文字（13.5px、无边框），顾客反馈要加个框、字再大一点 */
+  .my-order-label{
+    font-size:15px;font-weight:800;color:var(--text-muted);white-space:nowrap;
+    border:1.5px solid var(--card-line);border-radius:20px;padding:6px 12px;background:var(--card);
+  }
+  .my-order-btn:hover .my-order-label{color:var(--gold-ink);border-color:var(--gold-line);}
+
+  /* cart/购物车确认/下单成功/我的订单 四个页面共用：左边返回按钮，右边熊猫
+     导航槽（#menu-panda-slot），见 screenTopRowHTML */
+  .screen-top-row{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:14px 24px 0;}
 
   /* ---------- menu ---------- */
   .menu-title-row{
@@ -672,12 +683,15 @@
   .ghost-btn:hover{color:var(--gold-ink);border-color:var(--gold-line);}
 
   .back-row{text-align:left;padding:14px 24px 0;}
+  /* 之前是纯文字链接（13px、无边框），顾客反馈不够醒目——改成实心边框的
+     胶囊按钮，字号也加大一档，跟页面里其它按钮的可点击感一致 */
   .back-btn{
-    background:none;border:none;color:var(--text-muted);
-    font-size:13px;font-weight:700;cursor:pointer;padding:6px 2px;
-    font-family:inherit;
+    display:inline-flex;align-items:center;gap:6px;
+    background:var(--card);border:1.5px solid var(--card-line);color:var(--text);
+    font-size:15.5px;font-weight:800;cursor:pointer;padding:10px 18px;border-radius:14px;
+    font-family:inherit;box-shadow:0 2px 8px rgba(59,44,30,.08);
   }
-  .back-btn:hover{color:var(--gold-ink);}
+  .back-btn:hover{color:var(--gold-ink);border-color:var(--gold-line);}
 
   .my-order-card{
     margin-top:32px;text-align:left;
@@ -702,6 +716,10 @@
   .my-order-batch-tag{
     font-size:11px;font-weight:800;color:var(--jade);border:1px solid var(--jade);
     border-radius:20px;padding:2px 9px;
+  }
+  .my-order-batch-nickname{
+    font-size:11px;font-weight:800;color:var(--text-muted);border:1px solid var(--card-line);
+    border-radius:20px;padding:2px 9px;overflow-wrap:anywhere;
   }
   /* 每个批次卡片右上角盖一个线条章，跟顾客直接说"到底送厨房了没"——绿色实心边框
      ="已下单成功"（staff 已确认、送进厨房），红色="等待中"（还在等 staff 确认）。
@@ -1775,6 +1793,52 @@ let state = {
 };
 
 let screenHistory = [];   // 记录来源页面，供“返回”按钮回退用
+
+// ---------- 浏览器原生返回键（手机物理返回键/浏览器返回箭头/侧滑返回手势）
+// 接入应用内部的 screenHistory 栈 ----------
+// screenHistory 原来只服务于页面内"←返回"按钮，跟浏览器自己的 history 完全没
+// 关联——顾客按手机物理返回键/浏览器自带的返回箭头，浏览器只会按它自己那份
+// （从来没写入过任何状态的）history 走，实际效果是直接离开这个页面，而不是
+// 回到 app 内的上一屏。
+//
+// 这里没有让 popstate 处理器去"读浏览器 history entry 里存的 state 直接切屏"——
+// 试过那个做法，但 screenHistory 不是单纯的"访问顺序"：submitOrder() 下单成功
+// 跳到 confirm 屏时故意 push('menu')，跳过了 orderReview（不想让顾客点返回又
+// 看到一份已经提交过的订单确认页），这一步会让 screenHistory 记的"上一屏"
+// 跟浏览器真实的前进顺序（…→orderReview→confirm）对不上；如果原生返回键去走
+// 浏览器自己那份真实顺序，会把顾客送回一个已经过时的 orderReview 页，而不是
+// screenHistory 原本想去的 menu。
+//
+// 改成更简单也更保险的办法：浏览器 history 只负责"制造深度"，让原生返回键
+// 有触发 popstate 的机会（不然默认行为是直接离开页面）；popstate 触发后，
+// 具体切到哪一屏完全交给 goBack() 那同一套逻辑决定——原生返回键和"←返回"按钮
+// 永远走同一份判断，不会各自维护一份、互相打架。
+let historySyncedScreen; // undefined = 还没同步过（首次 render 用 replaceState 补一条基线记录，不占用一次"前进"）
+let suppressPopstateHandling = false;
+
+function syncBrowserHistory(){
+  if(state.screen === historySyncedScreen) return;
+  try{
+    if(historySyncedScreen === undefined) history.replaceState({ s: 1 }, '', location.href);
+    else history.pushState({ s: 1 }, '', location.href);
+  }catch(e){
+    // 极少数限制了 History API 的嵌入式 webview：什么都不做，"←返回"按钮和
+    // 页面内导航都不受影响，只是原生返回键这层增强用不上
+  }
+  historySyncedScreen = state.screen;
+}
+
+window.addEventListener('popstate', () => {
+  // 这次 popstate 是 goBack() 自己调用 history.back() 引出的回声，不是顾客
+  // 真的按了原生返回键——已经在 goBack() 里同步切过屏了，这里跳过，不要
+  // 再切一次（不然等于连续 pop 两次，会多跳过一屏）
+  if(suppressPopstateHandling){ suppressPopstateHandling = false; return; }
+  if(screenHistory.length === 0) return;   // app 内没有更多能退的了，交给浏览器默认行为处理（比如真的离开页面）
+  const prev = screenHistory.pop();
+  state.screen = prev;
+  render();
+});
+
 let welcomeTimer = null;
 
 // 本桌订单的实时镜像：一旦选定桌号就一直监听，不管顾客在看菜单/下单确认页/我的订单页。
@@ -2153,11 +2217,39 @@ function goBack(){
   if(!prev) return;
   state.screen = prev;
   render();
+  // 顺手让浏览器自己的 history 深度也退一步，不然原生返回键那边的"余量"会
+  // 越攒越多——不指望它成功、也不靠它决定切到哪一屏（那件事上面已经做完了），
+  // 纯粹是让原生返回键之后按下去的次数尽量对得上。suppressPopstateHandling
+  // 是为了让 history.back() 引出的那次 popstate 别又跟着 pop 一次
+  // screenHistory（不然等于连续退两屏）；如果这次浏览器压根没触发 popstate
+  // （极少数环境），400ms 后自动放开这个标记，不会卡死后续真正的原生返回键
+  try{
+    suppressPopstateHandling = true;
+    history.back();
+    setTimeout(() => { suppressPopstateHandling = false; }, 400);
+  }catch(e){
+    suppressPopstateHandling = false;
+  }
 }
 
 function backRowHTML(){
   if(screenHistory.length === 0) return '';
   return `<div class="back-row"><button class="back-btn" onclick="goBack()" aria-label="${t('back')}">← ${t('back')}</button></div>`;
+}
+
+// cart/购物车确认/下单成功/我的订单 这四个页面之前各自只有一个 backRowHTML()，
+// 熊猫"我的订单"/语言切换按钮要么不显示、要么退回 #panda-nav 那个固定悬浮定位
+// （跟着页面滚动一直飘在右上角）——顾客反馈不要悬浮，要跟菜单页一样嵌在页面
+// 顶部随内容一起滚走。这里把返回按钮跟熊猫导航槽拼进同一行，槽复用
+// #menu-panda-slot 这个 id（renderPandaNav 已经会优先找它并原地挂载），不用
+// 改 renderPandaNav 本身的逻辑，这四个页面就都自动变成"嵌入式、不悬浮"了。
+// 没有返回按钮时用一个空 <span> 占位，保证 space-between 还是把导航槽推到最右边
+function screenTopRowHTML(){
+  return `
+    <div class="screen-top-row">
+      ${screenHistory.length > 0 ? `<button class="back-btn" onclick="goBack()" aria-label="${t('back')}">← ${t('back')}</button>` : '<span></span>'}
+      <div id="menu-panda-slot" class="menu-panda-slot"></div>
+    </div>`;
 }
 
 function getItem(id){
@@ -3505,6 +3597,8 @@ function myOrderItemLineHTML(it){
 // "我的订单"按批次展示：本桌每一份 order 文档本身就是顾客的一次下单动作，不再像
 // 旧版那样把所有批次的菜合并成一份看不出先后顺序的汇总——按下单时间分开展示，
 // 一眼能看出"几点几分下了什么"
+// order.nickname 是顾客自己填的自由文本（下单前可选填），显示前必须转义——
+// 跟 state.table 一样是"塞进 innerHTML 的顾客输入"，见 escapeHtml 顶部的说明
 function myOrderBatchHTML(order){
   const items = order.items || [];
   const subtotal = items.reduce((s,it)=> s + (it.price||0)*it.qty, 0);
@@ -3512,7 +3606,11 @@ function myOrderBatchHTML(order){
   return `
     <div class="my-order-batch">
       <span class="batch-status-stamp ${isConfirmed ? 'stamp-green' : 'stamp-red'}">${isConfirmed ? t('batchStampConfirmed') : t('batchStampWaiting')}</span>
-      <p class="my-order-batch-time">${formatOrderTime(order.createdAt)}${order.isAddOn ? ` <span class="my-order-batch-tag">${t('myOrderBatchAddOnTag')}</span>` : ''}</p>
+      <p class="my-order-batch-time">
+        ${formatOrderTime(order.createdAt)}
+        ${order.nickname ? `<span class="my-order-batch-nickname">${escapeHtml(order.nickname)}</span>` : ''}
+        ${order.isAddOn ? `<span class="my-order-batch-tag">${t('myOrderBatchAddOnTag')}</span>` : ''}
+      </p>
       <ul class="order-summary">
         ${items.map(myOrderItemLineHTML).join('')}
         ${totalRowHTML(subtotal)}
@@ -3524,7 +3622,7 @@ function myOrderHTML(){
   const orders = state.myOrders || [];
   const grandTotal = orders.reduce((s,o) => s + (o.items||[]).reduce((s2,it)=> s2 + (it.price||0)*it.qty, 0), 0);
   return `
-    ${backRowHTML()}
+    ${screenTopRowHTML()}
     <div class="confirm-screen my-order-screen">
       <p class="eyebrow">${t('tableEyebrow')} ${escapeHtml(displayTableName(state.table))}</p>
       <h2 style="margin-top:6px;">${t('myOrder')}</h2>
@@ -3584,7 +3682,7 @@ function cartHTML(){
   const total = items.reduce((s,it)=>s+it.price*it.qty,0);
 
   return `
-    ${backRowHTML()}
+    ${screenTopRowHTML()}
     <div class="confirm-screen">
       <p class="eyebrow">${t('tableEyebrow')} ${escapeHtml(displayTableName(state.table))}</p>
       <h2 style="margin-top:6px;">${t('cart')}</h2>
@@ -3610,7 +3708,7 @@ function orderReviewHTML(){
   const count = totalCount();
 
   return `
-    ${backRowHTML()}
+    ${screenTopRowHTML()}
     <div class="confirm-screen">
       <p class="eyebrow">${t('tableEyebrow')} ${escapeHtml(displayTableName(state.table))}</p>
       <h2 style="margin-top:6px;">${t('orderReviewTitle')}</h2>
@@ -3711,12 +3809,36 @@ function chefCookingHTML(){
     </div>`;
 }
 
+// 等待服务员确认这个页面之前跟"我的订单"页是两套展示——这里只把 state.lastOrder
+// 算好的一份合并汇总摊平显示，看不出"几点几分下了什么、谁下的、送厨房了没"。
+// 改成直接读 liveTableOrders（本桌订单的实时镜像，选桌那一刻就订阅了，见
+// watchTableOrders），跟"我的订单"页用同一份 myOrderBatchHTML 按批次展示——
+// 时间、昵称、绿/红状态章都跟着一起有了，不用再维护两份不一样的展示逻辑。
+// 这样即使 state.lastOrder.removed 为真（这一笔被工作人员删了），下面这份
+// 列表也是实时的，会自动只剩下还在的批次，不需要额外处理
+// 顾客点完这一笔的一瞬间，liveTableOrders 那个实时监听可能还没来得及推送这
+// 一笔（Firestore 事务提交和本机监听收到回声之间总有个极短的窗口）——如果直接
+// 用 liveTableOrders 拼批次列表，会有一闪而过的"这一笔怎么不在列表里"。这里
+// 用 state.lastOrder 自己已经知道的内容（items/nickname/status……）先补一份
+// 本地兜底进去，liveTableOrders 追上来之后（同一个 docId）会自然替换掉它
+function confirmBatches(order){
+  const batches = liveTableOrders.filter(o => !o.call);
+  if(order.docId && !order.removed && !batches.some(o => o.id === order.docId)){
+    batches.push({
+      id: order.docId, table: order.table, items: order.items, createdAt: order.createdAt,
+      nickname: order.nickname, partySize: order.partySize, status: order.status, isAddOn: order.isAddOn,
+    });
+  }
+  return batches.sort((a,b) => a.createdAt - b.createdAt);
+}
+
 function confirmHTML(order){
-  const total = order.summaryItems.reduce((s,it)=> s + (it.price||0)*it.qty, 0);
   const isConfirmed = order.status === 'confirmed';
+  const batches = confirmBatches(order);
+  const grandTotal = batches.reduce((s,o) => s + (o.items||[]).reduce((s2,it)=> s2 + (it.price||0)*it.qty, 0), 0);
   return `
+    ${screenTopRowHTML()}
     <div class="confirm-screen">
-      ${backRowHTML()}
       <div class="stamp-ring"><span>${order.isAddOn ? t('addOnSuccess') : t('orderPlaced')}</span></div>
       <h2>${t('tableEyebrow')} ${escapeHtml(order.table)}</h2>
       ${order.removed ? `<p class="order-removed-notice">${t('orderRemovedNotice')}</p>` : (isConfirmed ? `
@@ -3728,22 +3850,11 @@ function confirmHTML(order){
         <button class="ghost-btn" onclick="goToMyOrder()">${t('viewMyOrdersBtn')}</button>
       </div>
 
-      ${order.summaryItems.length === 0 ? '' : `
+      ${batches.length === 0 ? '' : `
       <div class="my-order-card">
         <p class="my-order-title">${t('myOrder')}</p>
-        <ul class="order-summary">
-          ${order.summaryItems.map(it=>{
-            const dish = MENU_BY_ID[ZH_NAME_TO_ID[it.name]];
-            return orderLineHTML({
-              name: displayDishName(it.name),
-              qty: it.qty,
-              spice: dish && dish.spicy ? displaySpice(it.spice) : '',
-              price: it.price,
-              extra: (it.size ? `<span class="spice-tag">${tSize(it.size)}</span>` : '') + (it.cookMethod ? `<span class="spice-tag">${tCookMethod(it.cookMethod)}</span>` : '') + (it.soupBase ? `<span class="spice-tag">${tSoupBase(it.soupBase)}</span>` : '') + (it.drink ? `<span class="spice-tag">${tDrink(it.drink)}</span>` : '') + excludesTagsHTML(it.excludes) + (it.forDish ? `<span class="spice-tag add-on-tag">${t('addOnTagPrefix')}${displayDishName(it.forDish)}</span>` : ''),
-            });
-          }).join('')}
-          ${totalRowHTML(total)}
-        </ul>
+        ${batches.map(myOrderBatchHTML).join('')}
+        ${batches.length > 1 ? `<ul class="order-summary my-order-grand-total"><li class="order-total-line"><span>${t('myOrderGrandTotal')}</span><span>${formatPrice(grandTotal)}</span></li></ul>` : ''}
         <p class="hint my-order-note">${t('removeHint')}</p>
         <button class="text-link-btn" onclick="resetToMenu()">${t('continueOrdering')} →</button>
       </div>`}
@@ -3897,6 +4008,7 @@ function render(){
   else{ stopChefCarousel(); }
   if(state.screen === 'confirm'){ playConfirmAnimations(); }
   else{ stopConfirmAnimations(); }
+  syncBrowserHistory();
 }
 
 if(state.table){

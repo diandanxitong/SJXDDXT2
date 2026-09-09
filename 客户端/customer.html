@@ -247,7 +247,7 @@
      不随文字滚动，方便顾客看到提示后随手点进去核对。 ---------- */
   .order-marquee-bar{
     position:fixed;left:0;right:0;top:0;z-index:97;
-    display:flex;align-items:stretch;height:40px;
+    display:flex;align-items:stretch;height:54px;
     background:linear-gradient(160deg,var(--jade) 0%,var(--jade-dark) 100%);
     box-shadow:0 10px 24px rgba(0,0,0,.35);
     animation:order-marquee-bar-in .22s ease;
@@ -260,7 +260,7 @@
   .order-marquee-text{
     position:absolute; left:0; top:0; height:100%;
     display:flex; align-items:center; white-space:nowrap;
-    color:#fff; font-size:13px; font-weight:800; padding:0 4px;
+    color:#fff; font-size:15px; font-weight:800; padding:0 4px;
     animation-name:order-marquee-scroll; animation-timing-function:linear; animation-fill-mode:forwards;
   }
   @keyframes order-marquee-scroll{
@@ -269,8 +269,8 @@
   }
   .order-marquee-cta{
     flex-shrink:0; display:flex; align-items:center; gap:4px;
-    padding:0 16px; border:none; cursor:pointer; font-family:inherit;
-    white-space:nowrap; color:#fff; font-size:12.5px; font-weight:800;
+    padding:0 18px; border:none; cursor:pointer; font-family:inherit;
+    white-space:nowrap; color:#fff; font-size:13.5px; font-weight:800;
     background:linear-gradient(90deg, rgba(20,40,30,0) 0%, rgba(20,40,30,.32) 34%, rgba(20,40,30,.32) 100%);
   }
   .order-marquee-cta:active{ opacity:.75; }
@@ -577,6 +577,23 @@
   }
   .call-toast-bell{font-size:48px;line-height:1;}
 
+  /* ---------- 下单/加单成功后，屏幕正中弹一个放大版对勾、同时把它下面的内容
+     模糊一下，持续约 1 秒再一起淡出——见 celebrateOrderSuccess。之前"成功了
+     没"只靠 confirm 页顶部一个印章样式的 stamp-ring，顾客反馈不够醒目、容易
+     漏看，这个是额外加的一层更抢眼的确认 ---------- */
+  .order-success-fx{
+    position:fixed;inset:0;z-index:120;pointer-events:none;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(20,14,11,0);
+    backdrop-filter:blur(0px);-webkit-backdrop-filter:blur(0px);
+    transition:background-color .28s ease, backdrop-filter .28s ease, -webkit-backdrop-filter .28s ease;
+  }
+  .order-success-fx.blurred{
+    background:rgba(20,14,11,.24);
+    backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);
+  }
+  .fx-check-big{width:92px;height:92px;filter:drop-shadow(0 12px 26px rgba(0,0,0,.4));}
+
   /* ---------- confirm screen ---------- */
   .confirm-screen{padding:56px 28px 40px;text-align:center;}
   .stamp-ring{
@@ -630,6 +647,24 @@
     background:rgba(184,64,42,.1);border:1px solid rgba(184,64,42,.35);
     border-radius:var(--radius);padding:12px 16px;margin-bottom:22px;
   }
+  /* "请稍候，服务员马上确认～"：之前跟其它次要说明文字共用 .hint（13.5px、灰色），
+     顾客反馈这一条是"还在等"这个关键状态，太容易被忽略——单独给一个带底色的
+     胶囊徽标 + 常驻呼吸的小圆点，跟已确认状态那个 chef-cooking 动画一样明确 */
+  .wait-confirm-badge{
+    display:inline-flex;align-items:center;gap:9px;
+    background:rgba(232,162,61,.14);border:1px solid var(--gold-line);color:var(--gold-ink);
+    font-size:14px;font-weight:800;padding:10px 18px;border-radius:999px;margin:0 0 26px;
+  }
+  .wait-confirm-dot{
+    width:8px;height:8px;border-radius:50%;background:var(--ember);flex-shrink:0;
+    animation:wait-confirm-pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes wait-confirm-pulse{
+    0%{box-shadow:0 0 0 0 rgba(201,80,46,.55);}
+    70%{box-shadow:0 0 0 7px rgba(201,80,46,0);}
+    100%{box-shadow:0 0 0 0 rgba(201,80,46,0);}
+  }
+  .confirm-actions-row{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
   .ghost-btn{
     background:none;border:1px solid var(--card-line);color:var(--text-muted);
     padding:11px 22px;border-radius:12px;font-size:14px;cursor:pointer;
@@ -659,7 +694,7 @@
   .my-order-note{font-size:12.5px;color:var(--gold-ink);margin:14px 0 0;}
 
   /* ---------- 我的订单：按下单批次展示，字号比其它页面的 order-summary 大一档 ---------- */
-  .my-order-batch{margin-bottom:20px;}
+  .my-order-batch{margin-bottom:20px;position:relative;}
   .my-order-batch-time{
     font-weight:900;font-size:15.5px;color:var(--gold-ink);margin:0 0 8px;
     display:flex;align-items:center;gap:8px;
@@ -668,6 +703,17 @@
     font-size:11px;font-weight:800;color:var(--jade);border:1px solid var(--jade);
     border-radius:20px;padding:2px 9px;
   }
+  /* 每个批次卡片右上角盖一个线条章，跟顾客直接说"到底送厨房了没"——绿色实心边框
+     ="已下单成功"（staff 已确认、送进厨房），红色="等待中"（还在等 staff 确认）。
+     只用边框不填色，是印章的视觉语言，跟 confirm 页那个 .stamp-ring 一脉相承 */
+  .batch-status-stamp{
+    position:absolute;top:14px;right:2px;z-index:1;pointer-events:none;
+    border:1.5px solid currentColor;border-radius:7px;
+    font-family:var(--serif-display);font-weight:700;font-size:11px;letter-spacing:.03em;
+    padding:3px 8px;transform:rotate(-7deg);background:none;white-space:nowrap;
+  }
+  .batch-status-stamp.stamp-green{color:var(--jade);}
+  .batch-status-stamp.stamp-red{color:var(--cinnabar);}
   .my-order-screen .order-summary li{font-size:17px;padding:15px 0;}
   .my-order-screen .order-line-price{font-size:15px;}
   .my-order-screen .spice-tag{font-size:12.5px;padding:3px 10px;}
@@ -1095,7 +1141,7 @@ const I18N = {
     addOnSuccess:"加单成功", orderPlaced:"已下单", waitConfirm:"请稍候，服务员马上确认～",
     kitchenSentTitle:"菜品准备中，请稍后～",
     orderRemovedNotice:"这笔订单已被工作人员删除，如有疑问请联系服务员～",
-    continueOrdering:"继续点单", myOrder:"我的订单", removeHint:"如需退菜，请联系服务员哦～",
+    continueOrdering:"继续点单", viewMyOrdersBtn:"查看已下订单", myOrder:"我的订单", removeHint:"如需退菜，请联系服务员哦～",
     loading:"加载中…", noOrderYet:"还没有点菜，去菜单看看吧～", backToMenu:"返回菜单",
     emptyCart:"购物车是空的，去菜单选几道菜吧～",
     orderFailed:"下单失败，请重试一次，或直接告诉服务员～",
@@ -1114,6 +1160,7 @@ const I18N = {
     soupBaseAlreadyOrderedMsg:"本桌已经点过锅底啦，一桌只能点一份哦~",
     addOnTagPrefix:"加菜给：",
     myOrderBatchAddOnTag:"加菜", myOrderGrandTotal:"本桌合计", orderAnnouncePrefix:"有小伙伴成功下单啦：",
+    batchStampConfirmed:"已下单成功", batchStampWaiting:"等待中，请稍后~",
   },
   zhHant:{
     appTitle:'WELCOME~',
@@ -1126,7 +1173,7 @@ const I18N = {
     addOnSuccess:'加單成功', orderPlaced:'已下單', waitConfirm:'請稍候，服務員馬上確認～',
     kitchenSentTitle:'菜品準備中，請稍候～',
     orderRemovedNotice:'這筆訂單已被工作人員刪除，如有疑問請聯繫服務員～',
-    continueOrdering:'繼續點單', myOrder:'我的訂單', removeHint:'如需退菜，請聯繫服務員哦～',
+    continueOrdering:'繼續點單', viewMyOrdersBtn:'查看已下訂單', myOrder:'我的訂單', removeHint:'如需退菜，請聯繫服務員哦～',
     loading:'加載中…', noOrderYet:'還沒有點菜，去菜單看看吧～', backToMenu:'返回菜單',
     emptyCart:'購物車是空的，去菜單選幾道菜吧～',
     orderFailed:'下單失敗，請重試一次，或直接告訴服務員～',
@@ -1145,6 +1192,7 @@ const I18N = {
     soupBaseAlreadyOrderedMsg:'本桌已經點過鍋底啦，一桌只能點一份哦~',
     addOnTagPrefix:'加菜給：',
     myOrderBatchAddOnTag:'加菜', myOrderGrandTotal:'本桌合計', orderAnnouncePrefix:'有小夥伴成功下單啦：',
+    batchStampConfirmed:'已下單成功', batchStampWaiting:'等待中，請稍後~',
   },
   en:{
     appTitle:"WELCOME~",
@@ -1157,7 +1205,7 @@ const I18N = {
     addOnSuccess:"Add-on Placed", orderPlaced:"Order Placed", waitConfirm:"Please wait, staff will confirm shortly~",
     kitchenSentTitle:"Preparing your dish, please wait~",
     orderRemovedNotice:"This order was removed by staff. Please ask your waiter if you have questions~",
-    continueOrdering:"Continue Ordering", myOrder:"My Order", removeHint:"To remove an item, please contact staff~",
+    continueOrdering:"Continue Ordering", viewMyOrdersBtn:"View My Orders", myOrder:"My Order", removeHint:"To remove an item, please contact staff~",
     loading:"Loading…", noOrderYet:"No items yet — check out the menu~", backToMenu:"Back to Menu",
     emptyCart:"Your cart is empty — pick some dishes from the menu~",
     orderFailed:"Order failed, please try again or let staff know~",
@@ -1177,6 +1225,7 @@ const I18N = {
     soupBaseAlreadyOrderedMsg:"This table already ordered a soup base — only one per table~",
     addOnTagPrefix:"Add-on for: ",
     myOrderBatchAddOnTag:"Add-on", myOrderGrandTotal:"Table Total", orderAnnouncePrefix:"A friend just placed an order: ",
+    batchStampConfirmed:"Order Placed", batchStampWaiting:"Waiting, please hold~",
   },
   it:{
     appTitle:"WELCOME~",
@@ -1189,7 +1238,7 @@ const I18N = {
     addOnSuccess:"Aggiunta Effettuata", orderPlaced:"Ordine Effettuato", waitConfirm:"Attendere, lo staff confermerà a breve~",
     kitchenSentTitle:"Piatto in preparazione, attendere~",
     orderRemovedNotice:"Questo ordine è stato rimosso dallo staff. Per domande, contatta il cameriere~",
-    continueOrdering:"Continua a Ordinare", myOrder:"Il Mio Ordine", removeHint:"Per rimuovere un piatto, contattare lo staff~",
+    continueOrdering:"Continua a Ordinare", viewMyOrdersBtn:"Vedi i Miei Ordini", myOrder:"Il Mio Ordine", removeHint:"Per rimuovere un piatto, contattare lo staff~",
     loading:"Caricamento…", noOrderYet:"Nessun piatto ancora — dai un'occhiata al menu~", backToMenu:"Torna al Menu",
     emptyCart:"Il carrello è vuoto — scegli qualche piatto dal menu~",
     orderFailed:"Ordine non riuscito, riprova o avvisa lo staff~",
@@ -1209,6 +1258,7 @@ const I18N = {
     soupBaseAlreadyOrderedMsg:"Questo tavolo ha già ordinato una base zuppa: una sola per tavolo~",
     addOnTagPrefix:"Extra per: ",
     myOrderBatchAddOnTag:"Extra", myOrderGrandTotal:"Totale Tavolo", orderAnnouncePrefix:"Un amico ha appena ordinato: ",
+    batchStampConfirmed:"Ordine Inviato", batchStampWaiting:"In attesa, un attimo~",
   },
   fr:{
     appTitle:"WELCOME~",
@@ -1221,7 +1271,7 @@ const I18N = {
     addOnSuccess:"Ajout Effectué", orderPlaced:"Commande Passée", waitConfirm:"Veuillez patienter, le personnel confirmera bientôt~",
     kitchenSentTitle:"Plat en préparation, veuillez patienter~",
     orderRemovedNotice:"Cette commande a été supprimée par le personnel. Contactez votre serveur pour toute question~",
-    continueOrdering:"Continuer à Commander", myOrder:"Ma Commande", removeHint:"Pour retirer un plat, veuillez contacter le personnel~",
+    continueOrdering:"Continuer à Commander", viewMyOrdersBtn:"Voir Mes Commandes", myOrder:"Ma Commande", removeHint:"Pour retirer un plat, veuillez contacter le personnel~",
     loading:"Chargement…", noOrderYet:"Aucun plat pour l'instant — jetez un œil au menu~", backToMenu:"Retour au Menu",
     emptyCart:"Votre panier est vide — choisissez des plats dans le menu~",
     orderFailed:"Échec de la commande, veuillez réessayer ou prévenir le personnel~",
@@ -1241,6 +1291,7 @@ const I18N = {
     soupBaseAlreadyOrderedMsg:"Cette table a déjà commandé une base de bouillon, une seule par table~",
     addOnTagPrefix:"Extra pour : ",
     myOrderBatchAddOnTag:"Extra", myOrderGrandTotal:"Total Table", orderAnnouncePrefix:"Un ami vient de passer une commande : ",
+    batchStampConfirmed:"Commande Envoyée", batchStampWaiting:"En attente, un instant~",
   },
   es:{
     appTitle:"WELCOME~",
@@ -1253,7 +1304,7 @@ const I18N = {
     addOnSuccess:"Pedido Adicional Realizado", orderPlaced:"Pedido Realizado", waitConfirm:"Espere, el personal confirmará en breve~",
     kitchenSentTitle:"Plato en preparación, espera un momento~",
     orderRemovedNotice:"Este pedido fue eliminado por el personal. Si tienes dudas, consulta al camarero~",
-    continueOrdering:"Seguir Pidiendo", myOrder:"Mi Pedido", removeHint:"Para quitar un plato, por favor contacte al personal~",
+    continueOrdering:"Seguir Pidiendo", viewMyOrdersBtn:"Ver Mis Pedidos", myOrder:"Mi Pedido", removeHint:"Para quitar un plato, por favor contacte al personal~",
     loading:"Cargando…", noOrderYet:"Aún no hay platos — eche un vistazo al menú~", backToMenu:"Volver al Menú",
     emptyCart:"Tu carrito está vacío — elige algunos platos del menú~",
     orderFailed:"Error al pedir, inténtalo de nuevo o avisa al personal~",
@@ -1273,6 +1324,7 @@ const I18N = {
     soupBaseAlreadyOrderedMsg:"Esta mesa ya pidió una base de sopa, solo una por mesa~",
     addOnTagPrefix:"Extra para: ",
     myOrderBatchAddOnTag:"Extra", myOrderGrandTotal:"Total de la Mesa", orderAnnouncePrefix:"Un amigo acaba de hacer un pedido: ",
+    batchStampConfirmed:"Pedido Enviado", batchStampWaiting:"Esperando, un momento~",
   },
 };
 
@@ -2502,6 +2554,68 @@ function celebrateAddToCart(){
     .to(toast, { autoAlpha: 0, y: -6, scale: 0.95, duration: 0.3, ease: 'power1.in' }, '+=0.5');
 }
 
+// 下单/加单成功后，屏幕正中弹一个放大版对勾（跟上面 celebrateAddToCart 同一套
+// "圆圈弹出+对勾描边+一圈脉冲"视觉语言，只是放大、居中铺满全屏），同时把它下面
+// 的内容模糊一下——顾客反馈之前 confirm 页顶部那个印章样式的 stamp-ring 不够
+// 醒目，容易漏看没注意到到底成功了没，这个是额外加的一层更抢眼的确认。
+// 只在 playConfirmAnimations 里第一次看到某个 docId 时调用一次，见那边的说明。
+function celebrateOrderSuccess(){
+  const existing = document.querySelector('.order-success-fx');
+  if(existing){
+    gsap.killTweensOf(existing.querySelectorAll('*'));
+    gsap.killTweensOf(existing);
+    existing.remove();
+  }
+
+  const fx = document.createElement('div');
+  fx.className = 'order-success-fx';
+  fx.innerHTML = `
+    <svg class="fx-check-big" viewBox="0 0 64 64" aria-hidden="true">
+      <circle class="fx-check-pulse" cx="32" cy="32" r="24" fill="none" stroke="var(--jade)" stroke-width="2"/>
+      <circle class="fx-check-circle" cx="32" cy="32" r="22" fill="var(--jade)"/>
+      <path class="fx-check-mark" d="M21 33 L28.5 40.5 L44 23" fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`;
+  document.body.appendChild(fx);
+
+  const bigCheck = fx.querySelector('.fx-check-big');
+  const circle = fx.querySelector('.fx-check-circle');
+  const pulse = fx.querySelector('.fx-check-pulse');
+  const mark = fx.querySelector('.fx-check-mark');
+  const markLen = mark.getTotalLength();
+  gsap.set(mark, { strokeDasharray: markLen, strokeDashoffset: markLen });
+
+  const cleanup = () => fx.remove();
+  // 对勾淡出的同时把模糊也去掉（CSS transition 驱动 backdrop-filter，比用 GSAP
+  // 直接animate backdrop-filter 更稳，兼容老 Safari 需要的 -webkit 前缀）——两边
+  // 时长凑得差不多长，视觉上感知不到先后
+  const fadeOut = () => {
+    fx.classList.remove('blurred');
+    gsap.to(bigCheck, { autoAlpha: 0, scale: 0.94, duration: 0.22, ease: 'power1.in' });
+    gsap.delayedCall(0.32, cleanup);
+  };
+  requestAnimationFrame(() => fx.classList.add('blurred'));
+
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    gsap.set(bigCheck, { autoAlpha: 1 });
+    gsap.set(mark, { strokeDashoffset: 0 });
+    gsap.set(pulse, { autoAlpha: 0 });
+    gsap.delayedCall(1, fadeOut);
+    return;
+  }
+
+  gsap.set(bigCheck, { transformOrigin: '50% 50%', scale: 0.6, autoAlpha: 0 });
+  gsap.set(circle, { transformOrigin: '50% 50%', scale: 0 });
+  gsap.set(pulse, { transformOrigin: '50% 50%', scale: 0.6, autoAlpha: 0 });
+
+  // 圆圈弹出到对勾画完、脉冲散开，全部播完之后再等一小段——凑起来对勾"停留"
+  // 的时间大概是 1 秒，再触发 fadeOut
+  gsap.timeline({ onComplete: () => gsap.delayedCall(0.3, fadeOut) })
+    .to(bigCheck, { autoAlpha: 1, scale: 1, duration: 0.18, ease: 'power2.out' }, 0)
+    .to(circle, { scale: 1, duration: 0.24, ease: 'back.out(2.2)' }, 0.04)
+    .to(mark, { strokeDashoffset: 0, duration: 0.22, ease: 'power2.out' }, 0.26)
+    .fromTo(pulse, { autoAlpha: 0.55, scale: 0.7 }, { autoAlpha: 0, scale: 1.5, duration: 0.4, ease: 'power1.out' }, 0.28);
+}
+
 function celebrateCallWaiter(){
   clearHotpotToast();
 
@@ -3394,8 +3508,10 @@ function myOrderItemLineHTML(it){
 function myOrderBatchHTML(order){
   const items = order.items || [];
   const subtotal = items.reduce((s,it)=> s + (it.price||0)*it.qty, 0);
+  const isConfirmed = order.status === 'confirmed';
   return `
     <div class="my-order-batch">
+      <span class="batch-status-stamp ${isConfirmed ? 'stamp-green' : 'stamp-red'}">${isConfirmed ? t('batchStampConfirmed') : t('batchStampWaiting')}</span>
       <p class="my-order-batch-time">${formatOrderTime(order.createdAt)}${order.isAddOn ? ` <span class="my-order-batch-tag">${t('myOrderBatchAddOnTag')}</span>` : ''}</p>
       <ul class="order-summary">
         ${items.map(myOrderItemLineHTML).join('')}
@@ -3606,8 +3722,11 @@ function confirmHTML(order){
       ${order.removed ? `<p class="order-removed-notice">${t('orderRemovedNotice')}</p>` : (isConfirmed ? `
         ${chefCookingHTML()}
         <p class="kitchen-sent-title">${t('kitchenSentTitle')}</p>
-      ` : `<p class="hint">${t('waitConfirm')}</p>`)}
-      <button class="ghost-btn" onclick="resetToMenu()">${t('continueOrdering')}</button>
+      ` : `<div class="wait-confirm-badge"><span class="wait-confirm-dot"></span><span>${t('waitConfirm')}</span></div>`)}
+      <div class="confirm-actions-row">
+        <button class="ghost-btn" onclick="resetToMenu()">${t('continueOrdering')}</button>
+        <button class="ghost-btn" onclick="goToMyOrder()">${t('viewMyOrdersBtn')}</button>
+      </div>
 
       ${order.summaryItems.length === 0 ? '' : `
       <div class="my-order-card">
@@ -3679,6 +3798,7 @@ function playConfirmAnimations(){
   const key = order.docId || 'local';
   if(confirmAnimState.stampDocId !== key){
     confirmAnimState.stampDocId = key;
+    celebrateOrderSuccess();
     animateStamp();
   }
   if(order.status === 'confirmed' && confirmAnimState.chefDocId !== key){

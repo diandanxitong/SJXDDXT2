@@ -77,33 +77,6 @@ firebase.initializeApp({
   .confirm-yes-btn{background:rgba(210,80,47,.18);border:1px solid var(--urgent);color:var(--urgent);}
   .confirm-yes-btn:hover{background:rgba(210,80,47,.28);}
 
-  .login-screen{display:flex;align-items:center;justify-content:center;min-height:60vh;padding:20px;}
-  .login-box{
-    position:relative;
-    background:var(--card);border:1px solid var(--line);border-radius:16px;
-    padding:30px 26px;max-width:320px;width:100%;text-align:center;
-  }
-  .login-box h1{margin-bottom:6px;}
-  .login-close-btn{
-    position:absolute;top:10px;right:10px;width:28px;height:28px;border-radius:50%;
-    border:1px solid var(--line);background:none;color:var(--text-muted);
-    font-size:15px;font-weight:900;cursor:pointer;font-family:inherit;line-height:1;
-    display:flex;align-items:center;justify-content:center;text-decoration:none;
-  }
-  .login-close-btn:hover{color:var(--text);border-color:var(--text-muted);}
-  .login-hint{font-size:13px;color:var(--text-muted);margin-bottom:22px;}
-  .login-input{
-    width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;
-    color:var(--text);font-family:inherit;font-size:14px;padding:12px 14px;margin-bottom:12px;
-  }
-  .login-input:focus{outline:none;border-color:var(--warn);}
-  .login-error{font-size:12.5px;color:var(--urgent);margin-bottom:12px;}
-  .login-btn{
-    width:100%;padding:12px;border-radius:10px;font-size:14px;font-weight:900;cursor:pointer;font-family:inherit;
-    background:rgba(232,162,61,.16);border:1.5px solid var(--warn);color:var(--warn);margin-top:4px;
-  }
-  .login-btn:hover{background:rgba(232,162,61,.26);}
-
   .empty-hint{color:var(--text-muted);font-size:14px;padding:20px 2px;}
 
   .log-list{list-style:none;display:flex;flex-direction:column;gap:8px;max-width:900px;}
@@ -205,19 +178,15 @@ function escapeHtml(s){
 db.settings({ experimentalAutoDetectLongPolling: true });
 const logsRef = db.collection('staffActionLogs');
 
-// 注意：这只是前端的一道软性关卡——这套系统没有真正的账号体系，Firestore 规则
-// 也没法按用户名密码限制读取。技术上懂一点的人可以绕过这道登录直接读到日志数据。
-// 真要做到只有管理员能看，需要接入 Firebase Authentication 才行。
-const ADMIN_USER = 'admingk';
-const ADMIN_PASS = '123';
-// 老板专用账号：登录后看到的不是这个页面表面上的"员工操作日志"，而是完整的
-// 经营数据查询台——两个账号共用同一个登录框、同一个页面标题/URL，员工只知道
-// admingk 这一个账号，看到的永远是操作日志，不会意识到还有另一套内容藏在这里。
-const OWNER_USER = 'DORIN';
-const OWNER_PASS = '822';
+// 员工操作日志不再要密码，打开页面直接看。老板专用入口藏在标题里——在日志页
+// 连续点击标题 5 次（1.5 秒内）会直接切到经营数据查询台，不用输密码，员工不会
+// 没事去连点标题，也就不会发现这里还藏着另一套内容。
+const OWNER_TITLE_CLICKS = 5;
+const OWNER_TITLE_CLICK_WINDOW = 1500;
+let ownerTitleClickCount = 0;
+let ownerTitleClickTimer = null;
 
-let authMode = null;   // null | 'staff'（员工操作日志）| 'owner'（经营数据查询台）
-let loginError = '';
+let authMode = 'staff';   // 'staff'（员工操作日志）| 'owner'（经营数据查询台）
 let logs = [];
 let logsLoaded = false;
 let clearConfirmOpen = false;
@@ -262,38 +231,16 @@ async function confirmClearLogs(){
   }catch(e){ /* 网络问题的话，onSnapshot 下次推送会看到还剩多少没删掉，可以再点一次 */ }
 }
 
-function handleLoginSubmit(){
-  const user = (document.getElementById('login-user').value || '').trim();
-  const pass = document.getElementById('login-pass').value || '';
-  if(user === ADMIN_USER && pass === ADMIN_PASS){
-    authMode = 'staff';
-    loginError = '';
-    startWatchingLogs();
-  }else if(user === OWNER_USER && pass === OWNER_PASS){
+function handleOwnerTitleClick(){
+  ownerTitleClickCount++;
+  clearTimeout(ownerTitleClickTimer);
+  ownerTitleClickTimer = setTimeout(() => { ownerTitleClickCount = 0; }, OWNER_TITLE_CLICK_WINDOW);
+  if(ownerTitleClickCount >= OWNER_TITLE_CLICKS){
+    ownerTitleClickCount = 0;
     authMode = 'owner';
-    loginError = '';
-  }else{
-    loginError = '用户名或密码错误';
+    render();
+    sysDiagInit();
   }
-  render();
-  if(authMode === 'owner') sysDiagInit();
-}
-
-function loginScreenHTML(){
-  return `
-    <div class="login-screen">
-      <div class="login-box">
-        <a class="login-close-btn" href="sjxddxtygd.html" aria-label="关闭，返回接单看板">✕</a>
-        <h1>员工操作日志</h1>
-        <p class="login-hint">此页面仅限管理员查看</p>
-        <input type="text" id="login-user" class="login-input" placeholder="用户名" autocomplete="off"
-               onkeydown="if(event.key==='Enter') document.getElementById('login-pass').focus()">
-        <input type="password" id="login-pass" class="login-input" placeholder="密码" autocomplete="off"
-               onkeydown="if(event.key==='Enter') handleLoginSubmit()">
-        ${loginError ? `<p class="login-error">${loginError}</p>` : ''}
-        <button class="login-btn" onclick="handleLoginSubmit()">登录</button>
-      </div>
-    </div>`;
 }
 
 function logRowHTML(log){
@@ -309,10 +256,9 @@ function logRowHTML(log){
 
 function appHTML(){
   if(authMode === 'owner') return sysDiagHTML();
-  if(authMode !== 'staff') return loginScreenHTML();
   const header = `
     <div class="page-header">
-      <h1>员工操作日志</h1>
+      <h1 onclick="handleOwnerTitleClick()">员工操作日志</h1>
       <button class="clear-log-btn" onclick="openClearConfirm()" ${logs.length === 0 ? 'disabled' : ''}>🗑 清除记录</button>
     </div>`;
   if(!logsLoaded) return header + `<p class="empty-hint">加载中…</p>`;
@@ -337,10 +283,10 @@ function renderModal(){
 }
 
 // ============================================================================
-// 经营数据查询台（DORIN 账号专属）：跟上面的"员工操作日志"共用同一个登录框、
-// 同一个页面外壳，只是登录进来之后 appHTML() 走了另一条分支。样式故意跟页面
-// 其它部分（深色卡片风）不一样——纯网格、等宽字体，做成"数据库查询工具"的
-// 严谨感，而不是好看的仪表盘。
+// 经营数据查询台（老板专属）：跟上面的"员工操作日志"共用同一个页面外壳，靠
+// handleOwnerTitleClick() 的标题五连击切换 appHTML() 走到这条分支，不走登录框。
+// 样式故意跟页面其它部分（深色卡片风）不一样——纯网格、等宽字体，做成"数据库
+// 查询工具"的严谨感，而不是好看的仪表盘。
 // ============================================================================
 // 每天英国/葡萄牙时间 23:50，GitHub Actions 定时任务（scripts/daily-report.mjs）
 // 会自动把"当天"的结账流水/员工操作日志/呼叫记录/单品点击打包存成一份
@@ -1100,13 +1046,10 @@ function sysDiagHTML(){
 
 function render(){
   document.getElementById('app').innerHTML = appHTML();
-  if(!authMode){
-    const el = document.getElementById('login-user');
-    if(el) el.focus();
-  }
   renderModal();
 }
 
+startWatchingLogs();
 render();
 </script>
 </body>
